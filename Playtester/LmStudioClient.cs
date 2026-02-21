@@ -20,17 +20,17 @@ internal sealed class LmStudioClient
         }
     }
 
-    public Task<string> RequestJsonActionsAsync(string tutorialPrompt, string userPrompt)
+    public Task<string> RequestJsonActionsAsync(string systemPrompt, string userPrompt)
     {
-        return RequestCompletionAsync(tutorialPrompt, userPrompt, requestJsonResponse: true);
+        return RequestCompletionAsync(systemPrompt, userPrompt, requestJsonResponse: true);
     }
 
-    public Task<string> RequestTextAsync(string tutorialPrompt, string userPrompt)
+    public Task<string> RequestTextAsync(string systemPrompt, string userPrompt)
     {
-        return RequestCompletionAsync(tutorialPrompt, userPrompt, requestJsonResponse: false);
+        return RequestCompletionAsync(systemPrompt, userPrompt, requestJsonResponse: false);
     }
 
-    private async Task<string> RequestCompletionAsync(string tutorialPrompt, string userPrompt, bool requestJsonResponse)
+    private async Task<string> RequestCompletionAsync(string systemPrompt, string userPrompt, bool requestJsonResponse)
     {
         object payload;
         if (requestJsonResponse)
@@ -43,7 +43,7 @@ internal sealed class LmStudioClient
                 response_format = BuildJsonSchemaResponseFormat(),
                 messages = new object[]
                 {
-                    new { role = "system", content = tutorialPrompt },
+                    new { role = "system", content = systemPrompt },
                     new { role = "user", content = userPrompt }
                 }
             };
@@ -55,9 +55,10 @@ internal sealed class LmStudioClient
                 model = _options.Model,
                 temperature = 0.2,
                 max_tokens = 1200,
+                response_format = new { type = "text" },
                 messages = new object[]
                 {
-                    new { role = "system", content = tutorialPrompt },
+                    new { role = "system", content = systemPrompt },
                     new { role = "user", content = userPrompt }
                 }
             };

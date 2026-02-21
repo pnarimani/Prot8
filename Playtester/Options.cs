@@ -100,7 +100,27 @@ internal static class PostmortemWriter
         builder.AppendLine();
         builder.AppendLine("## Agent Analysis");
         builder.AppendLine();
-        builder.AppendLine(postmortemResponse.Trim());
+        builder.AppendLine(Sanitize(postmortemResponse).Trim());
         return builder.ToString();
+    }
+
+    private static string Sanitize(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        var normalized = value.Replace("\r\n", "\n");
+        var buffer = new StringBuilder(normalized.Length);
+        foreach (var ch in normalized)
+        {
+            if (ch == '\n' || ch == '\t' || (ch >= ' ' && ch <= '~'))
+            {
+                buffer.Append(ch);
+            }
+        }
+
+        return buffer.ToString();
     }
 }

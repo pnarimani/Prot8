@@ -6,6 +6,16 @@ namespace Playtester;
 
 internal static class PromptBuilder
 {
+    public static string BuildPostmortemSystemPrompt()
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("You are evaluating the completed run of a siege survival simulation.");
+        builder.AppendLine("Write clear, concise markdown analysis only.");
+        builder.AppendLine("Do not output JSON.");
+        builder.AppendLine("Do not include code fences unless needed.");
+        return builder.ToString();
+    }
+
     public static string BuildTurnPrompt(GameState state, PendingDayPlan plan, string previousTurnFeedback, int attemptNumber)
     {
         var builder = new StringBuilder();
@@ -120,11 +130,11 @@ internal static class PromptBuilder
         builder.AppendLine();
         builder.AppendLine("Recent turn feedback for context:");
 
-        var startIndex = Math.Max(0, turnHistory.Count - 5);
+        var startIndex = Math.Max(0, turnHistory.Count - 3);
         for (var i = startIndex; i < turnHistory.Count; i++)
         {
             builder.AppendLine($"--- Turn Context {i + 1} ---");
-            builder.AppendLine(Truncate(turnHistory[i], 2500));
+            builder.AppendLine(Truncate(turnHistory[i], 1400));
         }
 
         builder.AppendLine();

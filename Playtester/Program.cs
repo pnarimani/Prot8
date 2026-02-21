@@ -73,8 +73,9 @@ while (!state.GameOver)
 
 telemetry.LogFinal(state);
 
+var postmortemSystemPrompt = PromptBuilder.BuildPostmortemSystemPrompt();
 var postmortemPrompt = PromptBuilder.BuildPostmortemPrompt(state, turnHistory);
-var postmortemResponse = await lmClient.RequestTextAsync(tutorialPrompt, postmortemPrompt);
+var postmortemResponse = await lmClient.RequestTextAsync(postmortemSystemPrompt, postmortemPrompt);
 
 var telemetryDirectory = Path.GetDirectoryName(telemetry.FilePath) ?? ".";
 var telemetryBaseName = Path.GetFileNameWithoutExtension(telemetry.FilePath);
