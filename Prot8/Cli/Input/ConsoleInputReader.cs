@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Prot8.Cli.Output;
 using Prot8.Constants;
 using Prot8.Jobs;
@@ -14,11 +15,15 @@ public sealed class ConsoleInputReader
 {
     public DayCommandPlan ReadDayPlan(GameState state, ConsoleRenderer renderer)
     {
-        var allocation = new JobAllocation();
-        allocation.SetIdleWorkers(state.AvailableHealthyWorkersForAllocation);
+        var allocation = BuildStartingAllocation(state, out var allocationAdjustmentMessage);
         var action = new TurnActionChoice();
 
         Console.WriteLine("Command mode: enter actions with parameters. Type 'help' for all commands. End with 'end_day'.");
+        if (!string.IsNullOrWhiteSpace(allocationAdjustmentMessage))
+        {
+            Console.WriteLine(allocationAdjustmentMessage);
+        }
+
         renderer.RenderPendingPlan(state, allocation, action);
 
         while (true)
@@ -217,7 +222,9 @@ public sealed class ConsoleInputReader
             return false;
         }
 
-        if (state.Day - state.LastLawDay < GameBalance.LawCooldownDays)
+        var lawCooldownActive = state.LastLawDay != int.MinValue
+            && state.Day - state.LastLawDay < GameBalance.LawCooldownDays;
+        if (lawCooldownActive)
         {
             message = $"Law cooldown active. Next law day: {state.LastLawDay + GameBalance.LawCooldownDays}.";
             return false;
@@ -432,5 +439,43 @@ public sealed class ConsoleInputReader
     {
         Console.WriteLine($"Invalid command: {message}");
         renderer.RenderActionReference(state);
+    }
+
+    private static JobAllocation BuildStartingAllocation(GameState state, out string? adjustmentMessage)
+    {
+        var allocation = new JobAllocation();
+        foreach (var job in Enum.GetValues<JobType>())
+        {
+            allocation.SetWorkers(job, state.Allocation.Workers[job]);
+        }
+
+        adjustmentMessage = null;
+        var available = state.AvailableHealthyWorkersForAllocation;
+        if (allocation.TotalAssigned() > available)
+        {
+            var overflow = allocation.TotalAssigned() - available;
+            foreach (var job in Enum.GetValues<JobType>().Reverse())
+            {
+                if (overflow <= 0)
+                {
+                    break;
+                }
+
+                var assigned = allocation.Workers[job];
+                if (assigned <= 0)
+                {
+                    continue;
+                }
+
+                var reduction = Math.Min(assigned, ((overflow + JobAllocation.Step - 1) / JobAllocation.Step) * JobAllocation.Step);
+                allocation.SetWorkers(job, assigned - reduction);
+                overflow -= reduction;
+            }
+
+            adjustmentMessage = "Previous assignments exceeded available workers today and were automatically reduced.";
+        }
+
+        allocation.SetIdleWorkers(available - allocation.TotalAssigned());
+        return allocation;
     }
 }
