@@ -10,23 +10,29 @@ namespace Playtester;
 
 internal static class AiTurnExecutor
 {
-    public static TurnExecutionResult Execute(GameState state, IReadOnlyList<AiPlannedAction> actions, string? parseWarning)
+    public static PendingDayPlan BuildInitialPlan(GameState state)
     {
-        var executed = new List<string>();
-        var skipped = new List<string>();
-
+        var notices = new List<string>();
         var allocation = BuildStartingAllocation(state, out var adjustmentMessage);
         if (!string.IsNullOrWhiteSpace(adjustmentMessage))
         {
-            skipped.Add(adjustmentMessage);
+            notices.Add(adjustmentMessage);
         }
+
+        return new PendingDayPlan(allocation, new TurnActionChoice(), notices);
+    }
+
+    public static TurnExecutionResult Execute(GameState state, PendingDayPlan plan, IReadOnlyList<AiPlannedAction> actions, string? parseWarning)
+    {
+        var executed = new List<string>();
+        var skipped = new List<string>();
+        var endDayRequested = false;
+        var queuedChoice = plan.ActionChoice;
 
         if (!string.IsNullOrWhiteSpace(parseWarning))
         {
             skipped.Add(parseWarning);
         }
-
-        var choice = new TurnActionChoice();
 
         for (var index = 0; index < actions.Count; index++)
         {
@@ -43,7 +49,7 @@ internal static class AiTurnExecutor
             switch (type)
             {
                 case "assign":
-                    if (TryApplyAssign(state, allocation, action, out var assignMessage))
+                    if (TryApplyAssign(state, plan.Allocation, action, out var assignMessage))
                     {
                         executed.Add($"{label} {assignMessage}");
                     }
@@ -56,7 +62,7 @@ internal static class AiTurnExecutor
 
                 case "enact":
                 case "enact_law":
-                    if (TryQueueLaw(state, ref choice, action, out var lawMessage))
+                    if (TryQueueLaw(state, ref queuedChoice, action, out var lawMessage))
                     {
                         executed.Add($"{label} {lawMessage}");
                     }
@@ -69,7 +75,7 @@ internal static class AiTurnExecutor
 
                 case "order":
                 case "issue_order":
-                    if (TryQueueOrder(state, ref choice, action, out var orderMessage))
+                    if (TryQueueOrder(state, ref queuedChoice, action, out var orderMessage))
                     {
                         executed.Add($"{label} {orderMessage}");
                     }
@@ -82,7 +88,7 @@ internal static class AiTurnExecutor
 
                 case "mission":
                 case "start_mission":
-                    if (TryQueueMission(state, ref choice, action, out var missionMessage))
+                    if (TryQueueMission(state, ref queuedChoice, action, out var missionMessage))
                     {
                         executed.Add($"{label} {missionMessage}");
                     }
@@ -93,14 +99,45 @@ internal static class AiTurnExecutor
 
                     break;
 
+                case "clear_assignments":
+                    ClearAssignments(state, plan.Allocation);
+                    executed.Add($"{label} assignments cleared.");
+                    break;
+
+                case "clear_action":
+                    queuedChoice = new TurnActionChoice();
+                    executed.Add($"{label} queued day action cleared.");
+                    break;
+
+                case "end_day":
+                    endDayRequested = true;
+                    executed.Add($"{label} end_day requested.");
+                    break;
+
                 default:
                     skipped.Add($"{label} skipped: unknown action type '{action.Type}'.");
                     break;
             }
         }
 
-        FinalizeAllocation(state, allocation);
-        return new TurnExecutionResult(allocation, choice, executed, skipped);
+        plan.ActionChoice = queuedChoice;
+        FinalizeAllocation(state, plan.Allocation);
+
+        var endDayAccepted = false;
+        if (endDayRequested)
+        {
+            if (skipped.Count == 0)
+            {
+                endDayAccepted = true;
+                executed.Add("end_day accepted.");
+            }
+            else
+            {
+                skipped.Add("end_day skipped: one or more actions were skipped this turn; send corrective actions, then send end_day again.");
+            }
+        }
+
+        return new TurnExecutionResult(executed, skipped, endDayRequested, endDayAccepted);
     }
 
     private static bool TryApplyAssign(GameState state, JobAllocation allocation, AiPlannedAction action, out string message)
@@ -444,5 +481,15 @@ internal static class AiTurnExecutor
         }
 
         allocation.SetIdleWorkers(available - assigned);
+    }
+
+    private static void ClearAssignments(GameState state, JobAllocation allocation)
+    {
+        foreach (var job in Enum.GetValues<JobType>())
+        {
+            allocation.SetWorkers(job, 0);
+        }
+
+        allocation.SetIdleWorkers(state.AvailableHealthyWorkersForAllocation);
     }
 }

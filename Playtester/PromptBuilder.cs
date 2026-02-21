@@ -1,5 +1,9 @@
 using System.Text;
 using Prot8.Cli;
+using Prot8.Jobs;
+using Prot8.Laws;
+using Prot8.Missions;
+using Prot8.Orders;
 using Prot8.Resources;
 using Prot8.Simulation;
 
@@ -7,18 +11,19 @@ namespace Playtester;
 
 internal static class PromptBuilder
 {
-    public static string BuildTurnPrompt(GameState state, string previousTurnFeedback)
+    public static string BuildTurnPrompt(GameState state, PendingDayPlan plan, string previousTurnFeedback, int attemptNumber)
     {
         var builder = new StringBuilder();
-        builder.AppendLine("You are controlling one day in the siege game.");
+        builder.AppendLine($"You are controlling Day {state.Day} in the siege game.");
+        builder.AppendLine($"This is attempt {attemptNumber} for the same day.");
         builder.AppendLine("Return JSON only with an 'actions' array.");
-        builder.AppendLine("Use only listed available options.");
+        builder.AppendLine("Day advances only when you send end_day and no actions are skipped.");
         builder.AppendLine();
         builder.AppendLine("Expected JSON shape:");
-        builder.AppendLine("{\"actions\":[{\"type\":\"assign\",\"target\":\"j1\",\"workers\":30},{\"type\":\"enact\",\"target\":\"l1\"}],\"reasoning\":\"...\"}");
+        builder.AppendLine("{\"actions\":[{\"type\":\"assign\",\"target\":\"j1\",\"workers\":30},{\"type\":\"enact\",\"target\":\"l1\"},{\"type\":\"end_day\"}],\"reasoning\":\"...\"}");
         builder.AppendLine();
 
-        builder.AppendLine("Previous Turn Feedback (executed/skipped and outcomes):");
+        builder.AppendLine("Previous Attempt Feedback (executed/skipped and outcomes):");
         builder.AppendLine(Truncate(previousTurnFeedback, 4000));
         builder.AppendLine();
 
@@ -31,12 +36,23 @@ internal static class PromptBuilder
         builder.AppendLine($"Workers available for assignment: {state.AvailableHealthyWorkersForAllocation}");
         builder.AppendLine();
 
-        builder.AppendLine("Current Assignments:");
+        builder.AppendLine("Current Pending Plan For This Day:");
         var jobs = ActionAvailability.GetJobTypes();
         for (var i = 0; i < jobs.Count; i++)
         {
             var job = jobs[i];
-            builder.AppendLine($"- j{i + 1} ({job}): {state.Allocation.Workers[job]} workers");
+            builder.AppendLine($"- j{i + 1} ({job}): {plan.Allocation.Workers[job]} workers");
+        }
+
+        builder.AppendLine($"- Idle workers: {plan.Allocation.IdleWorkers}");
+        builder.AppendLine($"- Queued optional action: {DescribeQueuedOptionalAction(plan.ActionChoice)}");
+        if (plan.Notices.Count > 0)
+        {
+            builder.AppendLine("- Notices:");
+            foreach (var notice in plan.Notices)
+            {
+                builder.AppendLine($"  - {notice}");
+            }
         }
 
         builder.AppendLine();
@@ -97,9 +113,46 @@ internal static class PromptBuilder
         builder.AppendLine();
         builder.AppendLine("Rules reminder:");
         builder.AppendLine("- You can send multiple assign actions.");
-        builder.AppendLine("- Only one optional action (law/order/mission) effectively applies each day; later queued action replaces earlier one.");
-        builder.AppendLine("- Invalid actions are skipped.");
+        builder.AppendLine("- Only one optional action (law/order/mission) is kept; later one replaces earlier one.");
+        builder.AppendLine("- clear_assignments clears all worker assignments.");
+        builder.AppendLine("- clear_action clears the queued law/order/mission.");
+        builder.AppendLine("- If any action is skipped, end_day is skipped for this attempt.");
         builder.AppendLine("- Use only available references listed above.");
+        builder.AppendLine("- End each successful attempt with {\"type\":\"end_day\"}.");
+
+        return builder.ToString();
+    }
+
+    public static string BuildAttemptFeedback(GameState state, PendingDayPlan plan, TurnExecutionResult execution, string aiRawResponse, int attemptNumber)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"Day {state.Day} attempt {attemptNumber} feedback:");
+        builder.AppendLine("Raw AI response:");
+        builder.AppendLine(Truncate(aiRawResponse, 2000));
+        builder.AppendLine();
+
+        AppendActionResults(builder, execution);
+
+        builder.AppendLine($"end_day requested: {(execution.EndDayRequested ? "yes" : "no")}");
+        builder.AppendLine($"end_day accepted: {(execution.EndDayAccepted ? "yes" : "no")}");
+
+        builder.AppendLine();
+        builder.AppendLine("Pending day plan after this attempt:");
+        var jobs = ActionAvailability.GetJobTypes();
+        for (var i = 0; i < jobs.Count; i++)
+        {
+            var job = jobs[i];
+            builder.AppendLine($"- j{i + 1} ({job}): {plan.Allocation.Workers[job]} workers");
+        }
+
+        builder.AppendLine($"- Idle workers: {plan.Allocation.IdleWorkers}");
+        builder.AppendLine($"- Queued optional action: {DescribeQueuedOptionalAction(plan.ActionChoice)}");
+
+        if (!execution.EndDayAccepted)
+        {
+            builder.AppendLine();
+            builder.AppendLine("Day not resolved yet. Send corrective actions and include end_day again.");
+        }
 
         return builder.ToString();
     }
@@ -112,31 +165,9 @@ internal static class PromptBuilder
         builder.AppendLine(Truncate(aiRawResponse, 2000));
         builder.AppendLine();
 
-        builder.AppendLine("Executed actions:");
-        if (execution.Executed.Count == 0)
-        {
-            builder.AppendLine("- none");
-        }
-        else
-        {
-            foreach (var line in execution.Executed)
-            {
-                builder.AppendLine($"- {line}");
-            }
-        }
-
-        builder.AppendLine("Skipped actions:");
-        if (execution.Skipped.Count == 0)
-        {
-            builder.AppendLine("- none");
-        }
-        else
-        {
-            foreach (var line in execution.Skipped)
-            {
-                builder.AppendLine($"- {line}");
-            }
-        }
+        AppendActionResults(builder, execution);
+        builder.AppendLine($"end_day requested: {(execution.EndDayRequested ? "yes" : "no")}");
+        builder.AppendLine($"end_day accepted: {(execution.EndDayAccepted ? "yes" : "no")}");
 
         builder.AppendLine();
         builder.AppendLine("Day result highlights:");
@@ -180,6 +211,64 @@ internal static class PromptBuilder
         builder.AppendLine("3. One concrete improvement for next run");
 
         return builder.ToString();
+    }
+
+    private static void AppendActionResults(StringBuilder builder, TurnExecutionResult execution)
+    {
+        builder.AppendLine("Executed actions:");
+        if (execution.Executed.Count == 0)
+        {
+            builder.AppendLine("- none");
+        }
+        else
+        {
+            foreach (var line in execution.Executed)
+            {
+                builder.AppendLine($"- {line}");
+            }
+        }
+
+        builder.AppendLine("Skipped actions:");
+        if (execution.Skipped.Count == 0)
+        {
+            builder.AppendLine("- none");
+        }
+        else
+        {
+            foreach (var line in execution.Skipped)
+            {
+                builder.AppendLine($"- {line}");
+            }
+        }
+    }
+
+    private static string DescribeQueuedOptionalAction(TurnActionChoice actionChoice)
+    {
+        if (!actionChoice.HasAction)
+        {
+            return "none";
+        }
+
+        if (!string.IsNullOrWhiteSpace(actionChoice.LawId))
+        {
+            var law = LawCatalog.Find(actionChoice.LawId);
+            return $"law: {law?.Name ?? actionChoice.LawId}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(actionChoice.EmergencyOrderId))
+        {
+            var order = EmergencyOrderCatalog.Find(actionChoice.EmergencyOrderId);
+            var zoneSuffix = actionChoice.SelectedZoneForOrder.HasValue ? $" ({actionChoice.SelectedZoneForOrder.Value})" : string.Empty;
+            return $"order: {(order?.Name ?? actionChoice.EmergencyOrderId)}{zoneSuffix}";
+        }
+
+        if (string.IsNullOrWhiteSpace(actionChoice.MissionId))
+        {
+            return "none";
+        }
+
+        var mission = MissionCatalog.Find(actionChoice.MissionId);
+        return $"mission: {mission?.Name ?? actionChoice.MissionId}";
     }
 
     private static string Truncate(string value, int maxLength)

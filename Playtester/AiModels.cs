@@ -137,19 +137,35 @@ internal sealed class AiPlannedAction
 
 internal sealed class TurnExecutionResult
 {
-    public TurnExecutionResult(Prot8.Jobs.JobAllocation allocation, Prot8.Simulation.TurnActionChoice actionChoice, List<string> executed, List<string> skipped)
+    public TurnExecutionResult(List<string> executed, List<string> skipped, bool endDayRequested, bool endDayAccepted)
     {
-        Allocation = allocation;
-        ActionChoice = actionChoice;
         Executed = executed;
         Skipped = skipped;
+        EndDayRequested = endDayRequested;
+        EndDayAccepted = endDayAccepted;
     }
-
-    public Prot8.Jobs.JobAllocation Allocation { get; }
-
-    public Prot8.Simulation.TurnActionChoice ActionChoice { get; }
 
     public List<string> Executed { get; }
 
     public List<string> Skipped { get; }
+
+    public bool EndDayRequested { get; }
+
+    public bool EndDayAccepted { get; }
+}
+
+internal sealed class PendingDayPlan
+{
+    public PendingDayPlan(Prot8.Jobs.JobAllocation allocation, Prot8.Simulation.TurnActionChoice actionChoice, List<string> notices)
+    {
+        Allocation = allocation;
+        ActionChoice = actionChoice;
+        Notices = notices;
+    }
+
+    public Prot8.Jobs.JobAllocation Allocation { get; }
+
+    public Prot8.Simulation.TurnActionChoice ActionChoice { get; set; }
+
+    public List<string> Notices { get; }
 }

@@ -31,26 +31,43 @@ var turnHistory = new List<string>();
 
 while (!state.GameOver)
 {
-    var turnPrompt = PromptBuilder.BuildTurnPrompt(state, previousTurnFeedback);
+    var pendingPlan = AiTurnExecutor.BuildInitialPlan(state);
+    var attemptFeedback = previousTurnFeedback;
+    var attempt = 1;
 
-    var aiRawResponse = await lmClient.RequestJsonActionsAsync(tutorialPrompt, turnPrompt);
-    var aiResponse = AiPlannerResponse.Parse(aiRawResponse, out var parseWarning);
-
-    var execution = AiTurnExecutor.Execute(state, aiResponse.Actions, parseWarning);
-    state.Allocation = execution.Allocation;
-
-    var report = engine.ResolveDay(state, execution.ActionChoice);
-    telemetry.LogDay(state, execution.ActionChoice, report);
-
-    var feedback = PromptBuilder.BuildTurnFeedback(state, report, execution, aiRawResponse);
-    turnHistory.Add(feedback);
-    previousTurnFeedback = feedback;
-
-    Console.WriteLine($"Day {state.Day} complete. Executed {execution.Executed.Count} action(s), skipped {execution.Skipped.Count} action(s).");
-
-    if (!state.GameOver)
+    while (true)
     {
-        state.Day += 1;
+        var turnPrompt = PromptBuilder.BuildTurnPrompt(state, pendingPlan, attemptFeedback, attempt);
+
+        var aiRawResponse = await lmClient.RequestJsonActionsAsync(tutorialPrompt, turnPrompt);
+        var aiResponse = AiPlannerResponse.Parse(aiRawResponse, out var parseWarning);
+
+        var execution = AiTurnExecutor.Execute(state, pendingPlan, aiResponse.Actions, parseWarning);
+        attemptFeedback = PromptBuilder.BuildAttemptFeedback(state, pendingPlan, execution, aiRawResponse, attempt);
+
+        Console.WriteLine($"Day {state.Day} attempt {attempt}. Executed {execution.Executed.Count} action(s), skipped {execution.Skipped.Count} action(s), end_day accepted: {execution.EndDayAccepted}.");
+
+        if (!execution.EndDayAccepted)
+        {
+            attempt += 1;
+            continue;
+        }
+
+        state.Allocation = pendingPlan.Allocation;
+        var report = engine.ResolveDay(state, pendingPlan.ActionChoice);
+        telemetry.LogDay(state, pendingPlan.ActionChoice, report);
+
+        var resolvedFeedback = PromptBuilder.BuildTurnFeedback(state, report, execution, aiRawResponse);
+        turnHistory.Add(resolvedFeedback);
+        previousTurnFeedback = resolvedFeedback;
+
+        Console.WriteLine($"Day {state.Day} complete.");
+        if (!state.GameOver)
+        {
+            state.Day += 1;
+        }
+
+        break;
     }
 }
 

@@ -13,7 +13,9 @@ Each day:
 2. You return a structured JSON action list.
 3. The engine executes your actions in order.
 4. Invalid actions are skipped; valid actions continue.
-5. The engine sends back executed vs skipped actions and day results.
+5. The day advances only if you include `end_day` and zero actions are skipped.
+6. If any action is skipped, `end_day` is also skipped.
+7. You then receive executed vs skipped actions, with reasons, and must send corrective actions for the same day.
 
 ## Important Constraints
 - Job assignments persist across days unless changed.
@@ -31,6 +33,9 @@ Each day:
 - `enact`: queue a law for the day.
 - `order`: queue an emergency order for the day.
 - `mission`: queue a mission for the day.
+- `clear_assignments`: reset all job assignments to 0.
+- `clear_action`: clear queued law/order/mission for the day.
+- `end_day`: request day resolution. This only succeeds if no action in that response is skipped.
 
 ## Voluntary Evacuation
 - Voluntary evacuation targets only the active perimeter zone.
@@ -44,14 +49,15 @@ Respond with **JSON only** using this shape:
   "actions": [
     { "type": "assign", "target": "j1", "workers": 30 },
     { "type": "assign", "target": "j2", "workers": 20 },
-    { "type": "enact", "target": "l1" }
+    { "type": "enact", "target": "l1" },
+    { "type": "end_day" }
   ],
   "reasoning": "Short tactical reason for choices."
 }
 ```
 
 ## Action Fields
-- `type`: `assign` | `enact` | `order` | `mission`
+- `type`: `assign` | `enact` | `order` | `mission` | `clear_assignments` | `clear_action` | `end_day`
 - `target`:
   - For assign: job ref like `j1` (or job id when provided)
   - For enact/order/mission: `l#` / `o#` / `m#` or listed id
@@ -63,4 +69,5 @@ Respond with **JSON only** using this shape:
 - Use clinic staffing to control sickness and enable recoveries.
 - Monitor unrest triggers and revolt risk.
 - Consider strategic perimeter contraction timing.
+- If feedback includes skipped actions, fix those issues and submit another action list for the same day.
 - Keep response compact and valid JSON.
