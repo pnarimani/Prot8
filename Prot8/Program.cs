@@ -1,3 +1,52 @@
-﻿// See https://aka.ms/new-console-template for more information
+using Prot8.Cli.Input;
+using Prot8.Cli.Output;
+using Prot8.Simulation;
+using Prot8.Telemetry;
 
-Console.WriteLine("Hello, World!");
+var seed = TryParseSeed(args);
+var state = new GameState(seed);
+var engine = new GameSimulationEngine();
+var renderer = new ConsoleRenderer();
+var input = new ConsoleInputReader();
+
+using var telemetry = new RunTelemetryWriter(seed);
+
+while (!state.GameOver)
+{
+    renderer.RenderDayStart(state);
+
+    state.Allocation = input.ReadJobAllocation(state, renderer);
+    var action = input.ReadTurnAction(state, renderer);
+
+    var report = engine.ResolveDay(state, action);
+    renderer.RenderDayReport(state, report);
+    telemetry.LogDay(state, action, report);
+
+    if (!state.GameOver)
+    {
+        state.Day += 1;
+    }
+}
+
+renderer.RenderFinal(state);
+telemetry.LogFinal(state);
+Console.WriteLine($"Telemetry written to: {telemetry.FilePath}");
+
+static int? TryParseSeed(string[] args)
+{
+    foreach (var arg in args)
+    {
+        if (!arg.StartsWith("--seed=", StringComparison.OrdinalIgnoreCase))
+        {
+            continue;
+        }
+
+        var value = arg.Substring("--seed=".Length);
+        if (int.TryParse(value, out var seed))
+        {
+            return seed;
+        }
+    }
+
+    return null;
+}
