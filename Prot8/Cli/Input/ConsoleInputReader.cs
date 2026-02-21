@@ -98,7 +98,6 @@ public sealed class ConsoleInputReader
 
         while (true)
         {
-            Console.Write("cmd> ");
             var raw = Console.ReadLine();
             if (raw is null)
             {
