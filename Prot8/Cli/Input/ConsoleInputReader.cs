@@ -13,6 +13,76 @@ namespace Prot8.Cli.Input;
 
 public sealed class ConsoleInputReader
 {
+    public static bool TryExecuteCommand(GameState state, JobAllocation allocation, ref TurnActionChoice action, string rawCommand, out string message, out bool endDayRequested)
+    {
+        message = string.Empty;
+        endDayRequested = false;
+
+        if (string.IsNullOrWhiteSpace(rawCommand))
+        {
+            message = "Command cannot be empty.";
+            return false;
+        }
+
+        var parts = rawCommand.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var command = parts[0].ToLowerInvariant();
+
+        switch (command)
+        {
+            case "assign":
+                return TryAssign(state, allocation, parts, out message);
+
+            case "clear_assignments":
+                if (parts.Length != 1)
+                {
+                    message = "clear_assignments takes no parameters.";
+                    return false;
+                }
+
+                ClearAssignments(state, allocation);
+                message = "All job assignments cleared.";
+                return true;
+
+            case "enact":
+            case "enact_law":
+                return TryQueueLaw(state, ref action, parts, out message);
+
+            case "order":
+            case "issue_order":
+                return TryQueueOrder(state, ref action, parts, out message);
+
+            case "mission":
+            case "start_mission":
+                return TryQueueMission(state, ref action, parts, out message);
+
+            case "clear_action":
+                if (parts.Length != 1)
+                {
+                    message = "clear_action takes no parameters.";
+                    return false;
+                }
+
+                action = new TurnActionChoice();
+                message = "Queued day action cleared.";
+                return true;
+
+            case "end_day":
+                if (parts.Length != 1)
+                {
+                    message = "end_day takes no parameters.";
+                    return false;
+                }
+
+                endDayRequested = true;
+                message = "Day resolution requested.";
+                return true;
+
+            default:
+                message = $"Unknown command '{parts[0]}'.";
+                return false;
+        }
+    }
+
     public DayCommandPlan ReadDayPlan(GameState state, ConsoleRenderer renderer)
     {
         var allocation = BuildStartingAllocation(state, out var allocationAdjustmentMessage);
@@ -47,79 +117,6 @@ public sealed class ConsoleInputReader
 
             switch (command)
             {
-                case "assign":
-                    if (TryAssign(state, allocation, parts, out var assignMessage))
-                    {
-                        Console.WriteLine(assignMessage);
-                    }
-                    else
-                    {
-                        PrintInvalidAndHelp(renderer, state, assignMessage);
-                    }
-
-                    break;
-
-                case "clear_assignments":
-                    if (parts.Length != 1)
-                    {
-                        PrintInvalidAndHelp(renderer, state, "clear_assignments takes no parameters.");
-                        break;
-                    }
-
-                    ClearAssignments(state, allocation);
-                    Console.WriteLine("All job assignments cleared.");
-                    break;
-
-                case "enact":
-                case "enact_law":
-                    if (TryQueueLaw(state, ref action, parts, out var lawMessage))
-                    {
-                        Console.WriteLine(lawMessage);
-                    }
-                    else
-                    {
-                        PrintInvalidAndHelp(renderer, state, lawMessage);
-                    }
-
-                    break;
-
-                case "order":
-                case "issue_order":
-                    if (TryQueueOrder(state, ref action, parts, out var orderMessage))
-                    {
-                        Console.WriteLine(orderMessage);
-                    }
-                    else
-                    {
-                        PrintInvalidAndHelp(renderer, state, orderMessage);
-                    }
-
-                    break;
-
-                case "mission":
-                case "start_mission":
-                    if (TryQueueMission(state, ref action, parts, out var missionMessage))
-                    {
-                        Console.WriteLine(missionMessage);
-                    }
-                    else
-                    {
-                        PrintInvalidAndHelp(renderer, state, missionMessage);
-                    }
-
-                    break;
-
-                case "clear_action":
-                    if (parts.Length != 1)
-                    {
-                        PrintInvalidAndHelp(renderer, state, "clear_action takes no parameters.");
-                        break;
-                    }
-
-                    action = new TurnActionChoice();
-                    Console.WriteLine("Queued day action cleared.");
-                    break;
-
                 case "show_plan":
                     if (parts.Length != 1)
                     {
@@ -141,14 +138,30 @@ public sealed class ConsoleInputReader
                     break;
 
                 case "end_day":
-                    if (parts.Length != 1)
+                case "assign":
+                case "clear_assignments":
+                case "enact":
+                case "enact_law":
+                case "order":
+                case "issue_order":
+                case "mission":
+                case "start_mission":
+                case "clear_action":
+                    if (TryExecuteCommand(state, allocation, ref action, trimmed, out var commandMessage, out var endDayRequested))
                     {
-                        PrintInvalidAndHelp(renderer, state, "end_day takes no parameters.");
-                        break;
+                        Console.WriteLine(commandMessage);
+                        if (endDayRequested)
+                        {
+                            FinalizeAllocation(state, allocation);
+                            return new DayCommandPlan(allocation, action);
+                        }
+                    }
+                    else
+                    {
+                        PrintInvalidAndHelp(renderer, state, commandMessage);
                     }
 
-                    FinalizeAllocation(state, allocation);
-                    return new DayCommandPlan(allocation, action);
+                    break;
 
                 default:
                     PrintInvalidAndHelp(renderer, state, $"Unknown command '{parts[0]}'.");
@@ -473,7 +486,7 @@ public sealed class ConsoleInputReader
         allocation.SetIdleWorkers(state.AvailableHealthyWorkersForAllocation);
     }
 
-    private static void FinalizeAllocation(GameState state, JobAllocation allocation)
+    public static void FinalizeAllocation(GameState state, JobAllocation allocation)
     {
         var available = state.AvailableHealthyWorkersForAllocation;
         var assigned = allocation.TotalAssigned();
@@ -491,7 +504,7 @@ public sealed class ConsoleInputReader
         renderer.RenderActionReference(state);
     }
 
-    private static JobAllocation BuildStartingAllocation(GameState state, out string? adjustmentMessage)
+    public static JobAllocation BuildStartingAllocation(GameState state, out string? adjustmentMessage)
     {
         var allocation = new JobAllocation();
         foreach (var job in Enum.GetValues<JobType>())
