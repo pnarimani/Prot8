@@ -166,6 +166,7 @@ BenchmarkDotNet.Artifacts/
 # .NET Core
 project.fragment.lock.json
 artifacts/
+.dotnet_cli
 
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
