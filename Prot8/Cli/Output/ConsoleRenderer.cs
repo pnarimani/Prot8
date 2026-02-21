@@ -26,6 +26,7 @@ public sealed class ConsoleRenderer
         RenderZones(state);
         RenderMissions(state);
         RenderLaws(state);
+        RenderDailyOpportunities(state);
     }
 
     public void RenderResources(GameState state)
@@ -167,7 +168,7 @@ public sealed class ConsoleRenderer
         Console.WriteLine("LawId Values");
         foreach (var law in LawCatalog.GetAll())
         {
-            Console.WriteLine($"  - {law.Id}: {law.Name}");
+            Console.WriteLine($"  - {law.Id}: {law.Name} | {law.Summary}");
         }
 
         Console.WriteLine();
@@ -175,14 +176,42 @@ public sealed class ConsoleRenderer
         foreach (var order in EmergencyOrderCatalog.GetAll())
         {
             var zoneHint = order.RequiresZoneSelection ? " (requires ZoneId)" : string.Empty;
-            Console.WriteLine($"  - {order.Id}: {order.Name}{zoneHint}");
+            Console.WriteLine($"  - {order.Id}: {order.Name}{zoneHint} | {order.Summary}");
         }
 
         Console.WriteLine();
         Console.WriteLine("MissionId Values");
         foreach (var mission in MissionCatalog.GetAll())
         {
-            Console.WriteLine($"  - {mission.Id}: {mission.Name}");
+            Console.WriteLine($"  - {mission.Id}: {mission.Name} | {mission.OutcomeHint}");
+        }
+
+        Console.WriteLine();
+    }
+
+    public void RenderDailyOpportunities(GameState state)
+    {
+        Console.WriteLine("Available Laws");
+        foreach (var law in LawCatalog.GetAll())
+        {
+            var status = BuildLawStatus(state, law);
+            Console.WriteLine($"  - {law.Id}: {law.Name} | {law.Summary} | {status}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("Available Emergency Orders");
+        foreach (var order in EmergencyOrderCatalog.GetAll())
+        {
+            var status = BuildOrderStatus(state, order);
+            Console.WriteLine($"  - {order.Id}: {order.Name} | {order.Summary} | {status}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("Available Missions");
+        foreach (var mission in MissionCatalog.GetAll())
+        {
+            var status = mission.CanStart(state, out var reason) ? "Available" : $"Locked: {reason}";
+            Console.WriteLine($"  - {mission.Id}: {mission.Name} | {mission.OutcomeHint} | {status}");
         }
 
         Console.WriteLine();
@@ -213,7 +242,8 @@ public sealed class ConsoleRenderer
     {
         Console.WriteLine("Laws");
 
-        var cooldownActive = state.Day - state.LastLawDay < GameBalance.LawCooldownDays;
+        var cooldownActive = state.LastLawDay != int.MinValue
+            && state.Day - state.LastLawDay < GameBalance.LawCooldownDays;
         if (cooldownActive)
         {
             Console.WriteLine($"  Law cooldown active. Next law day: {state.LastLawDay + GameBalance.LawCooldownDays}");
@@ -359,5 +389,40 @@ public sealed class ConsoleRenderer
         Console.WriteLine($"Final Morale: {state.Morale}, Unrest: {state.Unrest}, Sickness: {state.Sickness}");
         Console.WriteLine(new string('=', 76));
         Console.WriteLine();
+    }
+
+    private static string BuildLawStatus(GameState state, ILaw law)
+    {
+        if (state.ActiveLawIds.Contains(law.Id))
+        {
+            return "Already enacted";
+        }
+
+        var cooldownActive = state.LastLawDay != int.MinValue
+            && state.Day - state.LastLawDay < GameBalance.LawCooldownDays;
+        if (cooldownActive)
+        {
+            return $"Locked: law cooldown until Day {state.LastLawDay + GameBalance.LawCooldownDays}";
+        }
+
+        return law.CanEnact(state, out var reason) ? "Available" : $"Locked: {reason}";
+    }
+
+    private static string BuildOrderStatus(GameState state, IEmergencyOrder order)
+    {
+        if (!order.RequiresZoneSelection)
+        {
+            return order.CanIssue(state, null, out var reason) ? "Available" : $"Locked: {reason}";
+        }
+
+        foreach (var zone in state.Zones)
+        {
+            if (order.CanIssue(state, zone.Id, out _))
+            {
+                return "Available (requires ZoneId)";
+            }
+        }
+
+        return "Locked: no valid zone target";
     }
 }

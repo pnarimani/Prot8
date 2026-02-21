@@ -66,7 +66,9 @@ public sealed class GameSimulationEngine
                 return;
             }
 
-            if (state.Day - state.LastLawDay < GameBalance.LawCooldownDays)
+            var lawCooldownActive = state.LastLawDay != int.MinValue
+                && state.Day - state.LastLawDay < GameBalance.LawCooldownDays;
+            if (lawCooldownActive)
             {
                 var nextDay = state.LastLawDay + GameBalance.LawCooldownDays;
                 report.Add(ReasonTags.LawEnact, $"Law cooldown active. Next enactment day: {nextDay}.");
