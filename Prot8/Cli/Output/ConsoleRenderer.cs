@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Prot8.Constants;
 using Prot8.Jobs;
@@ -7,7 +6,6 @@ using Prot8.Laws;
 using Prot8.Missions;
 using Prot8.Orders;
 using Prot8.Simulation;
-using Prot8.Zones;
 
 namespace Prot8.Cli.Output;
 
@@ -26,85 +24,13 @@ public sealed class ConsoleRenderer
         RenderZones(state);
         RenderMissions(state);
         RenderLaws(state);
-        RenderDailyOpportunities(state);
-    }
-
-    public void RenderResources(GameState state)
-    {
-        Console.WriteLine("Resources");
-        Console.WriteLine($"  Food: {state.Resources[Resources.ResourceKind.Food],4}  Water: {state.Resources[Resources.ResourceKind.Water],4}  Fuel: {state.Resources[Resources.ResourceKind.Fuel],4}  Medicine: {state.Resources[Resources.ResourceKind.Medicine],4}  Materials: {state.Resources[Resources.ResourceKind.Materials],4}");
-        Console.WriteLine($"  Morale: {state.Morale,3}/100  Unrest: {state.Unrest,3}/100  Sickness: {state.Sickness,3}/100");
-        Console.WriteLine();
-    }
-
-    public void RenderPopulation(GameState state)
-    {
-        Console.WriteLine("Population");
-        Console.WriteLine($"  Healthy Workers: {state.Population.HealthyWorkers}");
-        Console.WriteLine($"  Guards:          {state.Population.Guards}");
-        Console.WriteLine($"  Sick Workers:    {state.Population.SickWorkers}");
-        Console.WriteLine($"  Elderly:         {state.Population.Elderly}");
-        Console.WriteLine($"  Total:           {state.Population.TotalPopulation}");
-        Console.WriteLine($"  Workers reserved on missions: {state.ReservedWorkersForMissions}");
-        Console.WriteLine($"  Available for assignment today: {state.AvailableHealthyWorkersForAllocation}");
-        Console.WriteLine();
-    }
-
-    public void RenderZones(GameState state)
-    {
-        Console.WriteLine("Zones");
-        foreach (var zone in state.Zones)
-        {
-            var status = zone.IsLost ? "LOST" : "ACTIVE";
-            var over = zone.Population - zone.Capacity;
-            var overText = over > 0 ? $" (Over by {over})" : string.Empty;
-            Console.WriteLine($"  {(int)zone.Id}. {zone.Name,-18} Integrity: {zone.Integrity,3}  Capacity: {zone.Capacity,3}  Housed: {zone.Population,3}  {status}{overText}");
-        }
-
-        Console.WriteLine();
-    }
-
-    public void RenderMissions(GameState state)
-    {
-        Console.WriteLine("Active Missions");
-        if (state.ActiveMissions.Count == 0)
-        {
-            Console.WriteLine("  None");
-        }
-        else
-        {
-            foreach (var mission in state.ActiveMissions)
-            {
-                Console.WriteLine($"  {mission.MissionName}: {mission.DaysRemaining} day(s) remaining, {mission.WorkerCost} workers committed");
-            }
-        }
-
-        Console.WriteLine();
-    }
-
-    public void RenderLaws(GameState state)
-    {
-        Console.WriteLine("Enacted Laws");
-        if (state.ActiveLawIds.Count == 0)
-        {
-            Console.WriteLine("  None");
-        }
-        else
-        {
-            foreach (var lawId in state.ActiveLawIds)
-            {
-                var law = LawCatalog.Find(lawId);
-                Console.WriteLine($"  {law?.Name ?? lawId}");
-            }
-        }
-
-        Console.WriteLine();
+        RenderActionReference(state);
     }
 
     public void RenderPendingPlan(GameState state, JobAllocation allocation, TurnActionChoice action)
     {
         Console.WriteLine("Pending Day Plan");
-        foreach (var job in Enum.GetValues<JobType>())
+        foreach (var job in ActionAvailability.GetJobTypes())
         {
             Console.WriteLine($"  {job}: {allocation.Workers[job]} workers");
         }
@@ -138,187 +64,22 @@ public sealed class ConsoleRenderer
 
     public void RenderActionReference(GameState state)
     {
-        Console.WriteLine();
-        Console.WriteLine("Available Commands");
-        Console.WriteLine("  assign <JobType> <Workers>          Set workers for one job (absolute). Workers must be in steps of 5.");
+        Console.WriteLine("Available Actions");
+        Console.WriteLine("  assign <JobRef|JobType> <Workers>  Set workers for one production slot (absolute value, steps of 5).");
+        Console.WriteLine("  enact <LawRef|LawId>               Queue one available law for today.");
+        Console.WriteLine("  order <OrderRef|OrderId> [ZoneId]  Queue one available emergency order for today.");
+        Console.WriteLine("  mission <MissionRef|MissionId>     Queue one available mission for today.");
         Console.WriteLine("  clear_assignments                   Reset all job assignments to 0.");
-        Console.WriteLine("  enact_law <LawId>                   Queue a law to enact today (replaces any queued optional action).");
-        Console.WriteLine("  issue_order <OrderId> [ZoneId]      Queue an emergency order for today (zone required for some orders).");
-        Console.WriteLine("  start_mission <MissionId>           Queue a mission to start today.");
-        Console.WriteLine("  clear_action                        Remove queued law/order/mission.");
-        Console.WriteLine("  show_plan                           Print current pending assignments and queued optional action.");
-        Console.WriteLine("  help                                Print this command list.");
-        Console.WriteLine("  end_day                             Finalize planning and resolve the day.");
+        Console.WriteLine("  clear_action                        Clear queued law/order/mission action.");
+        Console.WriteLine("  show_plan                           Print current pending assignments and queued action.");
+        Console.WriteLine("  help                                Print this available-actions list.");
+        Console.WriteLine("  end_day                             Resolve simulation using current plan.");
         Console.WriteLine();
 
-        Console.WriteLine("JobType Values");
-        foreach (var job in Enum.GetValues<JobType>())
-        {
-            Console.WriteLine($"  - {job}");
-        }
-
-        Console.WriteLine();
-        Console.WriteLine("ZoneId Values");
-        foreach (var zone in state.Zones)
-        {
-            Console.WriteLine($"  - {zone.Id} (or {(int)zone.Id})");
-        }
-
-        Console.WriteLine();
-        Console.WriteLine("LawId Values");
-        foreach (var law in LawCatalog.GetAll())
-        {
-            Console.WriteLine($"  - {law.Id}: {law.Name} | {law.Summary}");
-        }
-
-        Console.WriteLine();
-        Console.WriteLine("OrderId Values");
-        foreach (var order in EmergencyOrderCatalog.GetAll())
-        {
-            var zoneHint = order.RequiresZoneSelection ? " (requires ZoneId)" : string.Empty;
-            Console.WriteLine($"  - {order.Id}: {order.Name}{zoneHint} | {order.Summary}");
-        }
-
-        Console.WriteLine();
-        Console.WriteLine("MissionId Values");
-        foreach (var mission in MissionCatalog.GetAll())
-        {
-            Console.WriteLine($"  - {mission.Id}: {mission.Name} | {mission.OutcomeHint}");
-        }
-
-        Console.WriteLine();
-    }
-
-    public void RenderDailyOpportunities(GameState state)
-    {
-        Console.WriteLine("Available Laws");
-        foreach (var law in LawCatalog.GetAll())
-        {
-            var status = BuildLawStatus(state, law);
-            Console.WriteLine($"  - {law.Id}: {law.Name} | {law.Summary} | {status}");
-        }
-
-        Console.WriteLine();
-        Console.WriteLine("Available Emergency Orders");
-        foreach (var order in EmergencyOrderCatalog.GetAll())
-        {
-            var status = BuildOrderStatus(state, order);
-            Console.WriteLine($"  - {order.Id}: {order.Name} | {order.Summary} | {status}");
-        }
-
-        Console.WriteLine();
-        Console.WriteLine("Available Missions");
-        foreach (var mission in MissionCatalog.GetAll())
-        {
-            var status = mission.CanStart(state, out var reason) ? "Available" : $"Locked: {reason}";
-            Console.WriteLine($"  - {mission.Id}: {mission.Name} | {mission.OutcomeHint} | {status}");
-        }
-
-        Console.WriteLine();
-    }
-
-    public void RenderJobMenu(GameState state)
-    {
-        Console.WriteLine("Job Allocation (increments of 5 workers)");
-        Console.WriteLine("  1. Food Production      Output: +14 food/slot, input: -2 water/slot");
-        Console.WriteLine("  2. Water Drawing        Output: +16 water/slot, input: -1 fuel/slot");
-        Console.WriteLine("  3. Materials Crafting   Output: +10 materials/slot, input: -2 fuel/slot");
-        Console.WriteLine("  4. Repairs              Output: +3 integrity/slot, input: -4 materials, -2 fuel/slot (active perimeter)");
-        Console.WriteLine("  5. Clinic Staff         Output: care points + recovery throughput, input: -2 medicine/slot");
-        Console.WriteLine("  6. Fuel Scavenging      Output: +8 fuel/slot");
-        Console.WriteLine();
-    }
-
-    public void RenderActionMenu()
-    {
-        Console.WriteLine("Choose one optional action for today (max 1):");
-        Console.WriteLine("  0. No action");
-        Console.WriteLine("  1. Enact Law");
-        Console.WriteLine("  2. Issue Emergency Order");
-        Console.WriteLine("  3. Start Mission");
-    }
-
-    public void RenderLawOptions(GameState state)
-    {
-        Console.WriteLine("Laws");
-
-        var cooldownActive = state.LastLawDay != int.MinValue
-            && state.Day - state.LastLawDay < GameBalance.LawCooldownDays;
-        if (cooldownActive)
-        {
-            Console.WriteLine($"  Law cooldown active. Next law day: {state.LastLawDay + GameBalance.LawCooldownDays}");
-        }
-
-        var index = 1;
-        foreach (var law in LawCatalog.GetAll())
-        {
-            var enacted = state.ActiveLawIds.Contains(law.Id);
-            var status = "Available";
-            if (enacted)
-            {
-                status = "Already enacted";
-            }
-            else if (cooldownActive)
-            {
-                status = "Blocked by law cooldown";
-            }
-            else if (!law.CanEnact(state, out var reason))
-            {
-                status = $"Locked: {reason}";
-            }
-
-            Console.WriteLine($"  {index}. {law.Name} | {law.Summary} | {status}");
-            index += 1;
-        }
-
-        Console.WriteLine("  0. Cancel");
-        Console.WriteLine();
-    }
-
-    public void RenderOrderOptions(GameState state)
-    {
-        Console.WriteLine("Emergency Orders");
-        var index = 1;
-        foreach (var order in EmergencyOrderCatalog.GetAll())
-        {
-            var status = order.CanIssue(state, null, out var reason)
-                ? "Available"
-                : (order.RequiresZoneSelection ? "Zone selection required" : $"Locked: {reason}");
-            Console.WriteLine($"  {index}. {order.Name} | {order.Summary} | {status}");
-            index += 1;
-        }
-
-        Console.WriteLine("  0. Cancel");
-        Console.WriteLine();
-    }
-
-    public void RenderMissionOptions(GameState state)
-    {
-        Console.WriteLine("Missions");
-        var index = 1;
-        foreach (var mission in MissionCatalog.GetAll())
-        {
-            var status = mission.CanStart(state, out var reason)
-                ? "Available"
-                : $"Locked: {reason}";
-            Console.WriteLine($"  {index}. {mission.Name} | Duration: {mission.DurationDays} day(s), Crew: {mission.WorkerCost}, Outcome: {mission.OutcomeHint} | {status}");
-            index += 1;
-        }
-
-        Console.WriteLine("  0. Cancel");
-        Console.WriteLine();
-    }
-
-    public void RenderZoneSelectionPrompt(string title, IEnumerable<ZoneState> zones)
-    {
-        Console.WriteLine(title);
-        foreach (var zone in zones)
-        {
-            Console.WriteLine($"  {(int)zone.Id}. {zone.Name} (Integrity {zone.Integrity}, Lost: {zone.IsLost})");
-        }
-
-        Console.WriteLine("  0. Cancel");
-        Console.WriteLine();
+        RenderAvailableJobs();
+        RenderAvailableLaws(state);
+        RenderAvailableOrders(state);
+        RenderAvailableMissions(state);
     }
 
     public void RenderDayReport(GameState state, DayResolutionReport report)
@@ -391,38 +152,170 @@ public sealed class ConsoleRenderer
         Console.WriteLine();
     }
 
-    private static string BuildLawStatus(GameState state, ILaw law)
+    private static void RenderResources(GameState state)
     {
-        if (state.ActiveLawIds.Contains(law.Id))
-        {
-            return "Already enacted";
-        }
-
-        var cooldownActive = state.LastLawDay != int.MinValue
-            && state.Day - state.LastLawDay < GameBalance.LawCooldownDays;
-        if (cooldownActive)
-        {
-            return $"Locked: law cooldown until Day {state.LastLawDay + GameBalance.LawCooldownDays}";
-        }
-
-        return law.CanEnact(state, out var reason) ? "Available" : $"Locked: {reason}";
+        Console.WriteLine("Resources");
+        Console.WriteLine($"  Food: {state.Resources[Resources.ResourceKind.Food],4}  Water: {state.Resources[Resources.ResourceKind.Water],4}  Fuel: {state.Resources[Resources.ResourceKind.Fuel],4}  Medicine: {state.Resources[Resources.ResourceKind.Medicine],4}  Materials: {state.Resources[Resources.ResourceKind.Materials],4}");
+        Console.WriteLine($"  Morale: {state.Morale,3}/100  Unrest: {state.Unrest,3}/100  Sickness: {state.Sickness,3}/100");
+        Console.WriteLine();
     }
 
-    private static string BuildOrderStatus(GameState state, IEmergencyOrder order)
+    private static void RenderPopulation(GameState state)
     {
-        if (!order.RequiresZoneSelection)
-        {
-            return order.CanIssue(state, null, out var reason) ? "Available" : $"Locked: {reason}";
-        }
+        Console.WriteLine("Population");
+        Console.WriteLine($"  Healthy Workers: {state.Population.HealthyWorkers}");
+        Console.WriteLine($"  Guards:          {state.Population.Guards}");
+        Console.WriteLine($"  Sick Workers:    {state.Population.SickWorkers}");
+        Console.WriteLine($"  Elderly:         {state.Population.Elderly}");
+        Console.WriteLine($"  Total:           {state.Population.TotalPopulation}");
+        Console.WriteLine($"  Workers reserved on missions: {state.ReservedWorkersForMissions}");
+        Console.WriteLine($"  Available for assignment today: {state.AvailableHealthyWorkersForAllocation}");
+        Console.WriteLine();
+    }
 
+    private static void RenderZones(GameState state)
+    {
+        Console.WriteLine("Zones");
         foreach (var zone in state.Zones)
         {
-            if (order.CanIssue(state, zone.Id, out _))
+            var status = zone.IsLost ? "LOST" : "ACTIVE";
+            var over = zone.Population - zone.Capacity;
+            var overText = over > 0 ? $" (Over by {over})" : string.Empty;
+            Console.WriteLine($"  {(int)zone.Id}. {zone.Name,-18} Integrity: {zone.Integrity,3}  Capacity: {zone.Capacity,3}  Housed: {zone.Population,3}  {status}{overText}");
+        }
+
+        Console.WriteLine();
+    }
+
+    private static void RenderMissions(GameState state)
+    {
+        Console.WriteLine("Active Missions");
+        if (state.ActiveMissions.Count == 0)
+        {
+            Console.WriteLine("  None");
+        }
+        else
+        {
+            foreach (var mission in state.ActiveMissions)
             {
-                return "Available (requires ZoneId)";
+                Console.WriteLine($"  {mission.MissionName}: {mission.DaysRemaining} day(s) remaining, {mission.WorkerCost} workers committed");
             }
         }
 
-        return "Locked: no valid zone target";
+        Console.WriteLine();
+    }
+
+    private static void RenderLaws(GameState state)
+    {
+        Console.WriteLine("Enacted Laws");
+        if (state.ActiveLawIds.Count == 0)
+        {
+            Console.WriteLine("  None");
+        }
+        else
+        {
+            foreach (var lawId in state.ActiveLawIds)
+            {
+                var law = LawCatalog.Find(lawId);
+                Console.WriteLine($"  {law?.Name ?? lawId}");
+            }
+        }
+
+        Console.WriteLine();
+    }
+
+    private static void RenderAvailableJobs()
+    {
+        Console.WriteLine("Assignable Job Slots");
+        var jobs = ActionAvailability.GetJobTypes();
+        for (var index = 0; index < jobs.Count; index++)
+        {
+            var job = jobs[index];
+            Console.WriteLine($"  j{index + 1}: {job} | {JobDescription(job)}");
+        }
+
+        Console.WriteLine();
+    }
+
+    private static void RenderAvailableLaws(GameState state)
+    {
+        Console.WriteLine("Available Laws");
+        var available = ActionAvailability.GetAvailableLaws(state);
+        if (available.Count == 0)
+        {
+            Console.WriteLine("  None currently available.");
+            Console.WriteLine();
+            return;
+        }
+
+        for (var index = 0; index < available.Count; index++)
+        {
+            var law = available[index];
+            Console.WriteLine($"  l{index + 1}: {law.Name} ({law.Id}) | {law.Summary}");
+        }
+
+        Console.WriteLine();
+    }
+
+    private static void RenderAvailableOrders(GameState state)
+    {
+        Console.WriteLine("Available Emergency Orders");
+        var available = ActionAvailability.GetAvailableOrders(state);
+        if (available.Count == 0)
+        {
+            Console.WriteLine("  None currently available.");
+            Console.WriteLine();
+            return;
+        }
+
+        for (var index = 0; index < available.Count; index++)
+        {
+            var order = available[index];
+            if (!order.RequiresZoneSelection)
+            {
+                Console.WriteLine($"  o{index + 1}: {order.Name} ({order.Id}) | {order.Summary}");
+                continue;
+            }
+
+            var validZones = ActionAvailability.GetValidZonesForOrder(state, order);
+            var zoneList = validZones.Count == 0 ? "none" : string.Join(", ", validZones);
+            Console.WriteLine($"  o{index + 1}: {order.Name} ({order.Id}) | {order.Summary} | valid ZoneId: {zoneList}");
+        }
+
+        Console.WriteLine();
+    }
+
+    private static void RenderAvailableMissions(GameState state)
+    {
+        Console.WriteLine("Available Missions");
+        var available = ActionAvailability.GetAvailableMissions(state);
+        if (available.Count == 0)
+        {
+            Console.WriteLine("  None currently available.");
+            Console.WriteLine();
+            return;
+        }
+
+        for (var index = 0; index < available.Count; index++)
+        {
+            var mission = available[index];
+            Console.WriteLine($"  m{index + 1}: {mission.Name} ({mission.Id}) | {mission.OutcomeHint}");
+        }
+
+        Console.WriteLine();
+    }
+
+    private static string JobDescription(JobType job)
+    {
+        return job switch
+        {
+            JobType.FoodProduction => "Produce food (+14/slot), consumes water (-2/slot).",
+            JobType.WaterDrawing => "Draw water (+16/slot), consumes fuel (-1/slot).",
+            JobType.MaterialsCrafting => "Craft materials (+10/slot), consumes fuel (-2/slot).",
+            JobType.Repairs => "Repair active perimeter integrity (+3/slot), consumes materials and fuel.",
+            JobType.ClinicStaff => "Provide care, reduce sickness pressure, and enable recoveries.",
+            JobType.FuelScavenging => "Scavenge fuel (+8/slot).",
+            _ => "No description available."
+        };
     }
 }

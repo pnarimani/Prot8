@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
+using Prot8.Cli;
 using Prot8.Cli.Output;
-using Prot8.Constants;
 using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
@@ -70,6 +70,7 @@ public sealed class ConsoleInputReader
                     Console.WriteLine("All job assignments cleared.");
                     break;
 
+                case "enact":
                 case "enact_law":
                     if (TryQueueLaw(state, ref action, parts, out var lawMessage))
                     {
@@ -82,6 +83,7 @@ public sealed class ConsoleInputReader
 
                     break;
 
+                case "order":
                 case "issue_order":
                     if (TryQueueOrder(state, ref action, parts, out var orderMessage))
                     {
@@ -94,6 +96,7 @@ public sealed class ConsoleInputReader
 
                     break;
 
+                case "mission":
                 case "start_mission":
                     if (TryQueueMission(state, ref action, parts, out var missionMessage))
                     {
@@ -158,13 +161,13 @@ public sealed class ConsoleInputReader
     {
         if (parts.Length != 3)
         {
-            message = "Usage: assign <JobType> <Workers>.";
+            message = "Usage: assign <JobRef|JobType> <Workers>.";
             return false;
         }
 
-        if (!Enum.TryParse<JobType>(parts[1], true, out var job))
+        if (!TryResolveJob(parts[1], out var job, out var jobReason))
         {
-            message = $"Unknown JobType '{parts[1]}'.";
+            message = jobReason;
             return false;
         }
 
@@ -205,38 +208,17 @@ public sealed class ConsoleInputReader
     {
         if (parts.Length != 2)
         {
-            message = "Usage: enact_law <LawId>.";
+            message = "Usage: enact <LawRef|LawId>.";
             return false;
         }
 
-        var law = ResolveLaw(parts[1]);
-        if (law is null)
+        if (!TryResolveLaw(state, parts[1], out var law, out var reason))
         {
-            message = $"Unknown law '{parts[1]}'.";
+            message = reason;
             return false;
         }
 
-        if (state.ActiveLawIds.Contains(law.Id))
-        {
-            message = $"Law already enacted: {law.Name}.";
-            return false;
-        }
-
-        var lawCooldownActive = state.LastLawDay != int.MinValue
-            && state.Day - state.LastLawDay < GameBalance.LawCooldownDays;
-        if (lawCooldownActive)
-        {
-            message = $"Law cooldown active. Next law day: {state.LastLawDay + GameBalance.LawCooldownDays}.";
-            return false;
-        }
-
-        if (!law.CanEnact(state, out var reason))
-        {
-            message = $"Cannot enact {law.Name}: {reason}";
-            return false;
-        }
-
-        action = new TurnActionChoice { LawId = law.Id };
+        action = new TurnActionChoice { LawId = law!.Id };
         message = $"Queued law for today: {law.Name}.";
         return true;
     }
@@ -245,14 +227,13 @@ public sealed class ConsoleInputReader
     {
         if (parts.Length < 2 || parts.Length > 3)
         {
-            message = "Usage: issue_order <OrderId> [ZoneId].";
+            message = "Usage: order <OrderRef|OrderId> [ZoneId].";
             return false;
         }
 
-        var order = ResolveOrder(parts[1]);
-        if (order is null)
+        if (!TryResolveOrder(state, parts[1], out var order, out var reason))
         {
-            message = $"Unknown order '{parts[1]}'.";
+            message = reason;
             return false;
         }
 
@@ -268,7 +249,7 @@ public sealed class ConsoleInputReader
             zone = parsedZone;
         }
 
-        if (order.RequiresZoneSelection && !zone.HasValue)
+        if (order!.RequiresZoneSelection && !zone.HasValue)
         {
             message = $"{order.Name} requires a ZoneId parameter.";
             return false;
@@ -280,7 +261,7 @@ public sealed class ConsoleInputReader
             return false;
         }
 
-        if (!order.CanIssue(state, zone, out var reason))
+        if (!order.CanIssue(state, zone, out reason))
         {
             message = $"Cannot issue {order.Name}: {reason}";
             return false;
@@ -302,83 +283,152 @@ public sealed class ConsoleInputReader
     {
         if (parts.Length != 2)
         {
-            message = "Usage: start_mission <MissionId>.";
+            message = "Usage: mission <MissionRef|MissionId>.";
             return false;
         }
 
-        var mission = ResolveMission(parts[1]);
-        if (mission is null)
+        if (!TryResolveMission(state, parts[1], out var mission, out var reason))
         {
-            message = $"Unknown mission '{parts[1]}'.";
+            message = reason;
             return false;
         }
 
-        if (!mission.CanStart(state, out var reason))
-        {
-            message = $"Cannot start mission {mission.Name}: {reason}";
-            return false;
-        }
-
-        action = new TurnActionChoice { MissionId = mission.Id };
+        action = new TurnActionChoice { MissionId = mission!.Id };
         message = $"Queued mission for today: {mission.Name}.";
         return true;
     }
 
-    private static ILaw? ResolveLaw(string token)
+    private static bool TryResolveLaw(GameState state, string token, out ILaw? law, out string reason)
     {
-        var normalized = Normalize(token);
-        foreach (var law in LawCatalog.GetAll())
+        law = null;
+        var available = ActionAvailability.GetAvailableLaws(state);
+
+        if (TryParseShortcut(token, 'l', out var shortcutIndex))
         {
-            if (string.Equals(law.Id, token, StringComparison.OrdinalIgnoreCase))
+            if (shortcutIndex < 1 || shortcutIndex > available.Count)
             {
-                return law;
+                reason = $"Law shortcut '{token}' is out of range for currently available laws.";
+                return false;
             }
 
-            if (Normalize(law.Name) == normalized)
+            law = available[shortcutIndex - 1];
+            reason = string.Empty;
+            return true;
+        }
+
+        foreach (var item in available)
+        {
+            if (string.Equals(item.Id, token, StringComparison.OrdinalIgnoreCase) || string.Equals(Normalize(item.Name), Normalize(token), StringComparison.Ordinal))
             {
-                return law;
+                law = item;
+                reason = string.Empty;
+                return true;
             }
         }
 
-        return null;
+        reason = $"Law '{token}' is not currently available.";
+        return false;
     }
 
-    private static IEmergencyOrder? ResolveOrder(string token)
+    private static bool TryResolveOrder(GameState state, string token, out IEmergencyOrder? order, out string reason)
     {
-        var normalized = Normalize(token);
-        foreach (var order in EmergencyOrderCatalog.GetAll())
+        order = null;
+        var available = ActionAvailability.GetAvailableOrders(state);
+
+        if (TryParseShortcut(token, 'o', out var shortcutIndex))
         {
-            if (string.Equals(order.Id, token, StringComparison.OrdinalIgnoreCase))
+            if (shortcutIndex < 1 || shortcutIndex > available.Count)
             {
-                return order;
+                reason = $"Order shortcut '{token}' is out of range for currently available orders.";
+                return false;
             }
 
-            if (Normalize(order.Name) == normalized)
+            order = available[shortcutIndex - 1];
+            reason = string.Empty;
+            return true;
+        }
+
+        foreach (var item in available)
+        {
+            if (string.Equals(item.Id, token, StringComparison.OrdinalIgnoreCase) || string.Equals(Normalize(item.Name), Normalize(token), StringComparison.Ordinal))
             {
-                return order;
+                order = item;
+                reason = string.Empty;
+                return true;
             }
         }
 
-        return null;
+        reason = $"Order '{token}' is not currently available.";
+        return false;
     }
 
-    private static IMissionDefinition? ResolveMission(string token)
+    private static bool TryResolveMission(GameState state, string token, out IMissionDefinition? mission, out string reason)
     {
-        var normalized = Normalize(token);
-        foreach (var mission in MissionCatalog.GetAll())
+        mission = null;
+        var available = ActionAvailability.GetAvailableMissions(state);
+
+        if (TryParseShortcut(token, 'm', out var shortcutIndex))
         {
-            if (string.Equals(mission.Id, token, StringComparison.OrdinalIgnoreCase))
+            if (shortcutIndex < 1 || shortcutIndex > available.Count)
             {
-                return mission;
+                reason = $"Mission shortcut '{token}' is out of range for currently available missions.";
+                return false;
             }
 
-            if (Normalize(mission.Name) == normalized)
+            mission = available[shortcutIndex - 1];
+            reason = string.Empty;
+            return true;
+        }
+
+        foreach (var item in available)
+        {
+            if (string.Equals(item.Id, token, StringComparison.OrdinalIgnoreCase) || string.Equals(Normalize(item.Name), Normalize(token), StringComparison.Ordinal))
             {
-                return mission;
+                mission = item;
+                reason = string.Empty;
+                return true;
             }
         }
 
-        return null;
+        reason = $"Mission '{token}' is not currently available.";
+        return false;
+    }
+
+    private static bool TryResolveJob(string token, out JobType job, out string reason)
+    {
+        if (Enum.TryParse<JobType>(token, true, out job))
+        {
+            reason = string.Empty;
+            return true;
+        }
+
+        if (TryParseShortcut(token, 'j', out var shortcutIndex))
+        {
+            var jobs = ActionAvailability.GetJobTypes();
+            if (shortcutIndex >= 1 && shortcutIndex <= jobs.Count)
+            {
+                job = jobs[shortcutIndex - 1];
+                reason = string.Empty;
+                return true;
+            }
+
+            reason = $"Job shortcut '{token}' is out of range.";
+            return false;
+        }
+
+        reason = $"Unknown JobRef '{token}'. Use JobType names or j1..j{ActionAvailability.GetJobTypes().Count}.";
+        return false;
+    }
+
+    private static bool TryParseShortcut(string token, char prefix, out int index)
+    {
+        index = 0;
+        if (token.Length < 2 || char.ToLowerInvariant(token[0]) != char.ToLowerInvariant(prefix))
+        {
+            return false;
+        }
+
+        return int.TryParse(token.Substring(1), out index);
     }
 
     private static bool TryParseZone(string token, out ZoneId zone)
