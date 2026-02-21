@@ -53,17 +53,20 @@ Respond with **JSON only** using this shape:
 ```json
 {
   "actions": [
-    { "type": "assign", "target": "j1", "workers": 30 },
-    { "type": "assign", "target": "j2", "workers": 20 },
-    { "type": "enact", "target": "l1" },
-    { "type": "end_day" }
+    "assign j1 30",
+    "assign j2 20",
+    "enact l1",
+    "end_day"
   ],
-  "reasoning": "Short tactical reason for choices."
+  "reasoning": "Tactical reason for choices."
 }
 ```
 
-## Action Fields
-- `type`: `assign` | `enact` | `order` | `mission` | `clear_assignments` | `clear_action` | `end_day`
+## Actions
+
+Actions have the following format: `<action> <target> <workers/zone?>`
+
+- `action`: `assign` | `enact` | `order` | `mission` | `clear_assignments` | `clear_action` | `end_day`
 - `target`:
     - For assign: job ref like `j1` (or job id when provided)
     - For enact/order/mission: `l#` / `o#` / `m#` or listed id
