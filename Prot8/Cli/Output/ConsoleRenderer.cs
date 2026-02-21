@@ -100,6 +100,94 @@ public sealed class ConsoleRenderer
         Console.WriteLine();
     }
 
+    public void RenderPendingPlan(GameState state, JobAllocation allocation, TurnActionChoice action)
+    {
+        Console.WriteLine("Pending Day Plan");
+        foreach (var job in Enum.GetValues<JobType>())
+        {
+            Console.WriteLine($"  {job}: {allocation.Workers[job]} workers");
+        }
+
+        Console.WriteLine($"  Total assigned: {allocation.TotalAssigned()} / {state.AvailableHealthyWorkersForAllocation}");
+        Console.WriteLine($"  Idle workers: {allocation.IdleWorkers}");
+
+        if (!action.HasAction)
+        {
+            Console.WriteLine("  Queued optional action: none");
+        }
+        else if (!string.IsNullOrWhiteSpace(action.LawId))
+        {
+            var law = LawCatalog.Find(action.LawId);
+            Console.WriteLine($"  Queued optional action: Law -> {law?.Name ?? action.LawId}");
+        }
+        else if (!string.IsNullOrWhiteSpace(action.EmergencyOrderId))
+        {
+            var order = EmergencyOrderCatalog.Find(action.EmergencyOrderId);
+            var zoneSuffix = action.SelectedZoneForOrder.HasValue ? $" ({action.SelectedZoneForOrder.Value})" : string.Empty;
+            Console.WriteLine($"  Queued optional action: Emergency Order -> {order?.Name ?? action.EmergencyOrderId}{zoneSuffix}");
+        }
+        else if (!string.IsNullOrWhiteSpace(action.MissionId))
+        {
+            var mission = MissionCatalog.Find(action.MissionId);
+            Console.WriteLine($"  Queued optional action: Mission -> {mission?.Name ?? action.MissionId}");
+        }
+
+        Console.WriteLine();
+    }
+
+    public void RenderActionReference(GameState state)
+    {
+        Console.WriteLine();
+        Console.WriteLine("Available Commands");
+        Console.WriteLine("  assign <JobType> <Workers>          Set workers for one job (absolute). Workers must be in steps of 5.");
+        Console.WriteLine("  clear_assignments                   Reset all job assignments to 0.");
+        Console.WriteLine("  enact_law <LawId>                   Queue a law to enact today (replaces any queued optional action).");
+        Console.WriteLine("  issue_order <OrderId> [ZoneId]      Queue an emergency order for today (zone required for some orders).");
+        Console.WriteLine("  start_mission <MissionId>           Queue a mission to start today.");
+        Console.WriteLine("  clear_action                        Remove queued law/order/mission.");
+        Console.WriteLine("  show_plan                           Print current pending assignments and queued optional action.");
+        Console.WriteLine("  help                                Print this command list.");
+        Console.WriteLine("  end_day                             Finalize planning and resolve the day.");
+        Console.WriteLine();
+
+        Console.WriteLine("JobType Values");
+        foreach (var job in Enum.GetValues<JobType>())
+        {
+            Console.WriteLine($"  - {job}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("ZoneId Values");
+        foreach (var zone in state.Zones)
+        {
+            Console.WriteLine($"  - {zone.Id} (or {(int)zone.Id})");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("LawId Values");
+        foreach (var law in LawCatalog.GetAll())
+        {
+            Console.WriteLine($"  - {law.Id}: {law.Name}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("OrderId Values");
+        foreach (var order in EmergencyOrderCatalog.GetAll())
+        {
+            var zoneHint = order.RequiresZoneSelection ? " (requires ZoneId)" : string.Empty;
+            Console.WriteLine($"  - {order.Id}: {order.Name}{zoneHint}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("MissionId Values");
+        foreach (var mission in MissionCatalog.GetAll())
+        {
+            Console.WriteLine($"  - {mission.Id}: {mission.Name}");
+        }
+
+        Console.WriteLine();
+    }
+
     public void RenderJobMenu(GameState state)
     {
         Console.WriteLine("Job Allocation (increments of 5 workers)");

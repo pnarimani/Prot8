@@ -14,9 +14,9 @@ using var telemetry = new RunTelemetryWriter(seed);
 while (!state.GameOver)
 {
     renderer.RenderDayStart(state);
-
-    state.Allocation = input.ReadJobAllocation(state, renderer);
-    var action = input.ReadTurnAction(state, renderer);
+    var dayPlan = input.ReadDayPlan(state, renderer);
+    state.Allocation = dayPlan.Allocation;
+    var action = dayPlan.Action;
 
     var report = engine.ResolveDay(state, action);
     renderer.RenderDayReport(state, report);
