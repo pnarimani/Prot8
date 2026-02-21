@@ -13,7 +13,7 @@ internal sealed class PlaytesterOptions
 
     public int? Seed { get; private set; }
 
-    public string TutorialPath { get; private set; } = "Playtester/tutorial.md";
+    public string TutorialPath { get; private set; } = "tutorial.md";
 
     public string ChatCompletionsUrl
     {

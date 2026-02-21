@@ -40,7 +40,7 @@ internal sealed class LmStudioClient
                 model = _options.Model,
                 temperature = 0.2,
                 max_tokens = 1200,
-                response_format = new { type = "json_object" },
+                response_format = BuildJsonSchemaResponseFormat(),
                 messages = new object[]
                 {
                     new { role = "system", content = tutorialPrompt },
@@ -86,6 +86,45 @@ internal sealed class LmStudioClient
         }
 
         return responseContent.Trim();
+    }
+
+    private static object BuildJsonSchemaResponseFormat()
+    {
+        return new
+        {
+            type = "json_schema",
+            json_schema = new
+            {
+                name = "playtester_actions",
+                schema = new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        actions = new
+                        {
+                            type = "array",
+                            items = new
+                            {
+                                type = "object",
+                                properties = new
+                                {
+                                    type = new { type = "string" },
+                                    target = new { type = "string" },
+                                    workers = new { type = "integer" },
+                                    zone = new { type = "string" }
+                                },
+                                required = new[] { "type" },
+                                additionalProperties = true
+                            }
+                        },
+                        reasoning = new { type = "string" }
+                    },
+                    required = new[] { "actions" },
+                    additionalProperties = true
+                }
+            }
+        };
     }
 
     private static string ExtractMessageContent(string responseBody)
