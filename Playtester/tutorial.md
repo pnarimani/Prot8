@@ -26,12 +26,12 @@ Each day:
 ## Important Constraints
 - Job assignments persist across days unless changed.
 - Assignments use increments of 5 workers.
-- Only one optional non-assignment action effectively applies per day (law/order/mission).
+- Only one optional Law, Mission or Emergency order can be executed each day.
 - Shortcuts are dynamic and must be read from the current available lists:
-  - Laws: `l1`, `l2`, ...
-  - Orders: `o1`, `o2`, ...
-  - Missions: `m1`, `m2`, ...
-  - Jobs: `j1`, `j2`, ...
+    - Laws: `l1`, `l2`, ...
+    - Orders: `o1`, `o2`, ...
+    - Missions: `m1`, `m2`, ...
+    - Jobs: `j1`, `j2`, ...
 - Available lists are already filtered. If something is not listed, do not choose it.
 
 ## Action Semantics
@@ -65,11 +65,11 @@ Respond with **JSON only** using this shape:
 ## Action Fields
 - `type`: `assign` | `enact` | `order` | `mission` | `clear_assignments` | `clear_action` | `end_day`
 - `target`:
-  - For assign: job ref like `j1` (or job id when provided)
-  - For enact/order/mission: `l#` / `o#` / `m#` or listed id
+    - For assign: job ref like `j1` (or job id when provided)
+    - For enact/order/mission: `l#` / `o#` / `m#` or listed id
 - `workers`: required for assign only
 - `zone`: optional; only for zone-targeting orders that require ZoneId
 
 ## Response Requirements
-- If feedback includes skipped actions, fix those issues and submit another action list for the same day.
+- If feedback includes skipped actions, you can send another action list for the same day to fix those issues.
 - Keep response compact and valid JSON.
