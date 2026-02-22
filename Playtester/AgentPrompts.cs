@@ -23,31 +23,31 @@ public static class AgentPrompts
 
     public static string CommanderUser(string daySnapshot, string notebook, string previousRunLearnings, string? validationErrors = null)
     {
+        if (!string.IsNullOrEmpty(previousRunLearnings))
+        {
+            previousRunLearnings = "<prevoius_learnings>\n" + previousRunLearnings + "</prevoius_learnings>";
+        }
+        
         var errorSection = validationErrors is null ? "" : $"""
-
             VALIDATION ERRORS FROM YOUR PREVIOUS ATTEMPT
             The following commands were rejected. You must fix all of them before the day can proceed.
-            <<<
+            ```
             {validationErrors}
-            >>>
+            ```
 
             """;
 
         return $"""
-            DAY SNAPSHOT
-            <<<
+            {errorSection}
+            <day_snapshot>
             {daySnapshot}
-            >>>
+            </day_snapshot>
 
-            PLAYTESTER NOTEBOOK
-            <<<
+            <notebook>
             {notebook}
-            >>>
+            </notebook>
 
-            LEARNINGS FROM PREVIOUS RUN
-            <<<
             {previousRunLearnings}
-            >>>{errorSection}
 
             Win and Loss Conditions
             - Win: reach Day 40.
@@ -116,31 +116,29 @@ public static class AgentPrompts
 
     public static string ScribeUser(string previousNotebook, string daySnapshot, string commandsExecuted, string resolutionLog, string previousRunLearnings)
     {
+        if (!string.IsNullOrEmpty(previousRunLearnings))
+        {
+            previousRunLearnings = "<previous_learnings>\n" + previousRunLearnings + "\n</previous_learnings>";
+        }
+        
         return $"""
-            OLD NOTEBOOK
-            <<<
+            <old_notebook>
             {previousNotebook}
-            >>>
+            </old_notebook>
 
-            START OF DAY SNAPSHOT
-            <<<
+            <current_day>
             {daySnapshot}
-            >>>
+            </current_day>
 
-            COMMANDS EXECUTED
-            <<<
+            <commands>
             {commandsExecuted}
-            >>>
+            </commands>
 
-            RESOLUTION LOG
-            <<<
+            <resolution>
             {resolutionLog}
-            >>>
+            </resolution>
 
-            LEARNINGS FROM PREVIOUS RUN
-            <<<
             {previousRunLearnings}
-            >>>
 
             Update the notebook. Return JSON with fields:
             hypotheses, observations, open_questions, plan.

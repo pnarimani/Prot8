@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Prot8.Constants;
+using Prot8.Events;
 using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
@@ -35,6 +36,7 @@ public sealed class ConsoleRenderer
         RenderZones(state);
         RenderMissions(state);
         RenderLaws(state);
+        RenderEvents();
         RenderActionReference(state);
     }
 
@@ -81,7 +83,7 @@ public sealed class ConsoleRenderer
         RenderAvailableMissions(state);
         
         _out.WriteLine();
-        _out.WriteLine("Available Commands");
+        _out.WriteLine("Available Commands (sections with < > are mandatory)");
         _out.WriteLine("  assign <JobRef|JobType> <Workers>   Set workers for one production slot (absolute value, steps of 5).");
         _out.WriteLine("  enact <LawRef|LawId>                Queue one available law for today.");
         _out.WriteLine("  order <OrderRef|OrderId> [ZoneId]   Queue one available emergency order for today.");
@@ -292,6 +294,17 @@ public sealed class ConsoleRenderer
                 var law = LawCatalog.Find(lawId);
                 _out.WriteLine($"  {law?.Name ?? lawId}");
             }
+        }
+
+        _out.WriteLine();
+    }
+
+    private void RenderEvents()
+    {
+        _out.WriteLine("Possible Events");
+        foreach (var evt in EventCatalog.GetAll())
+        {
+            _out.WriteLine($"  {evt.Name}: {evt.Description}");
         }
 
         _out.WriteLine();

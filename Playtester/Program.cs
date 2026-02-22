@@ -17,7 +17,7 @@ Console.WriteLine();
 
 using var llm = new LmStudioClient(config.Endpoint, config.Model);
 
-var previousRunLearnings = "(no previous run — this is the first run)";
+var previousRunLearnings = "";
 
 for (var runIndex = 0; runIndex < 100; runIndex++)
 {
