@@ -1,6 +1,6 @@
 using Prot8.Simulation;
 
-namespace Prot8.Cli.Input.Commands;
+namespace Prot8.Cli.Commands;
 
 public sealed class ClearActionCommand : ICommand
 {

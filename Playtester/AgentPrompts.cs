@@ -39,9 +39,9 @@ public static class AgentPrompts
 
         return $"""
             {errorSection}
-            <day_snapshot>
+            ```json
             {daySnapshot}
-            </day_snapshot>
+            ```
 
             <notebook>
             {notebook}
@@ -129,9 +129,9 @@ public static class AgentPrompts
             {previousNotebook}
             </old_notebook>
 
-            <current_day>
+            ```json
             {daySnapshot}
-            </current_day>
+            ```
 
             <commands>
             {commandsExecuted}

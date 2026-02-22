@@ -1,4 +1,4 @@
-namespace Prot8.Cli.Input.Commands;
+namespace Prot8.Cli.Commands;
 
 public interface ICommand
 {

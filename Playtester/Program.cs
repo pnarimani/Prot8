@@ -1,10 +1,11 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using Playtester;
 using Prot8.Cli.Input;
 using Prot8.Cli.Output;
 using Prot8.Cli.ViewModels;
-using Prot8.Jobs;
 using Prot8.Simulation;
 using Prot8.Telemetry;
 
@@ -22,6 +23,12 @@ var previousRunLearnings = "";
 
 var notebook = "(empty - first day)";
 
+var jsonSerializationOptions = new JsonSerializerOptions
+{
+    WriteIndented = true,
+    Converters = { new JsonStringEnumConverter() },
+};
+
 for (var runIndex = 0; runIndex < 100; runIndex++)
 {
     Console.WriteLine($"\n{new string('=', 40)} RUN {runIndex + 1} / 100 {new string('=', 40)}\n");
@@ -37,7 +44,7 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
     {
         // Capture day snapshot
         var dayStartVm = GameStateToViewModels.ToDayStartViewModel(state);
-        var daySnapshot = RenderToString(w => new ConsoleRenderer(w).RenderDayStart(dayStartVm));
+        var daySnapshot = JsonSerializer.Serialize(dayStartVm, jsonSerializationOptions);
         Console.Write(daySnapshot);
 
         // Call Commander (with retry on invalid commands)
@@ -69,8 +76,15 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
 
             foreach (var (line, reason) in commandLines)
             {
-                if (string.IsNullOrEmpty(line)) continue;
-                if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase)) break;
+                if (string.IsNullOrEmpty(line))
+                {
+                    continue;
+                }
+
+                if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
 
                 var ok = reader.TryExecuteCommand(state, ref action, line, out var msg, out var endDay);
                 Console.WriteLine($"  > {line}  [{reason}]  => {msg}");
@@ -85,7 +99,10 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
                     executedCommands.AppendLine(line);
                 }
 
-                if (endDay) break;
+                if (endDay)
+                {
+                    break;
+                }
             }
 
             if (!hasInvalid)
@@ -99,7 +116,9 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
                 $"[AI] Commander issued invalid command(s); requesting corrections:\n{commanderValidationErrors}");
 
             if (attempt == maxCommanderRetries)
+            {
                 Console.WriteLine("[AI] Max retries reached. Proceeding with valid commands only.");
+            }
         }
 
         var report = engine.ResolveDay(state, action);
@@ -175,7 +194,11 @@ static List<(string Command, string Reason)> ParseCommanderJson(string json)
     {
         var node = JsonNode.Parse(json);
         var array = node?["commands"]?.AsArray();
-        if (array is null) return [];
+        if (array is null)
+        {
+            return [];
+        }
+
         return
         [
             .. array
@@ -197,7 +220,10 @@ static string FormatNotebook(string json)
     try
     {
         var node = JsonNode.Parse(json);
-        if (node is null) return json;
+        if (node is null)
+        {
+            return json;
+        }
 
         var sb = new StringBuilder();
         AppendSection(sb, node, "hypotheses", "HYPOTHESES");
@@ -217,10 +243,17 @@ static void AppendSection(StringBuilder sb, JsonNode node, string key, string he
     sb.AppendLine(header);
     var arr = node[key]?.AsArray();
     if (arr is null || arr.Count == 0)
+    {
         sb.AppendLine("- (none)");
+    }
     else
+    {
         foreach (var item in arr)
+        {
             sb.AppendLine($"- {item?.GetValue<string>()}");
+        }
+    }
+
     sb.AppendLine();
 }
 
@@ -229,7 +262,10 @@ static string FormatPostmortem(string json)
     try
     {
         var node = JsonNode.Parse(json);
-        if (node is null) return json;
+        if (node is null)
+        {
+            return json;
+        }
 
         var sb = new StringBuilder();
         sb.AppendLine("## 1) Outcome");
@@ -241,8 +277,13 @@ static string FormatPostmortem(string json)
         sb.AppendLine("## 3) Three most impactful decisions");
         var decisions = node["impactful_decisions"]?.AsArray();
         if (decisions is not null)
+        {
             foreach (var d in decisions)
+            {
                 sb.AppendLine($"- {d?.GetValue<string>()}");
+            }
+        }
+
         sb.AppendLine();
         sb.AppendLine("## 4) Strategy I converged on");
         sb.AppendLine(node["strategy"]?.GetValue<string>());
@@ -262,8 +303,13 @@ static string FormatPostmortem(string json)
         sb.AppendLine("## 9) 10 Learnings for the next run");
         var learnings = node["learnings"]?.AsArray();
         if (learnings is not null)
+        {
             for (var i = 0; i < learnings.Count; i++)
+            {
                 sb.AppendLine($"{i + 1}. {learnings[i]?.GetValue<string>()}");
+            }
+        }
+
         sb.AppendLine();
         sb.AppendLine("## 10) Did the commander do better than the previous run?");
         sb.AppendLine(node["better_than_previous"]?.GetValue<string>());
@@ -281,10 +327,17 @@ static string ExtractLearnings(string json)
     {
         var node = JsonNode.Parse(json);
         var arr = node?["learnings"]?.AsArray();
-        if (arr is null || arr.Count == 0) return "(no learnings available from previous run)";
+        if (arr is null || arr.Count == 0)
+        {
+            return "(no learnings available from previous run)";
+        }
+
         var sb = new StringBuilder();
         for (var i = 0; i < arr.Count; i++)
+        {
             sb.AppendLine($"{i + 1}. {arr[i]?.GetValue<string>()}");
+        }
+
         return sb.ToString().TrimEnd();
     }
     catch
@@ -296,11 +349,31 @@ static string ExtractLearnings(string json)
 static string BuildSignals(GameState state, DayResolutionReport report)
 {
     var parts = new List<string>();
-    if (report.FoodDeficitToday) parts.Add("FOOD_DEFICIT");
-    if (report.WaterDeficitToday) parts.Add("WATER_DEFICIT");
-    if (report.TriggeredEvents.Count > 0) parts.Add(string.Join(", ", report.TriggeredEvents));
-    if (state.GameOver) parts.Add($"GAME_OVER:{state.GameOverCause}");
-    if (parts.Count == 0) parts.Add("OK");
+    if (report.FoodDeficitToday)
+    {
+        parts.Add("FOOD_DEFICIT");
+    }
+
+    if (report.WaterDeficitToday)
+    {
+        parts.Add("WATER_DEFICIT");
+    }
+
+    if (report.TriggeredEvents.Count > 0)
+    {
+        parts.Add(string.Join(", ", report.TriggeredEvents));
+    }
+
+    if (state.GameOver)
+    {
+        parts.Add($"GAME_OVER:{state.GameOverCause}");
+    }
+
+    if (parts.Count == 0)
+    {
+        parts.Add("OK");
+    }
+
     return string.Join("; ", parts);
 }
 
@@ -312,7 +385,9 @@ static PlaytesterConfig ParseArgs(string[] args)
         if (arg.StartsWith("--seed=", StringComparison.OrdinalIgnoreCase))
         {
             if (int.TryParse(arg["--seed=".Length..], out var s))
+            {
                 config.Seed = s;
+            }
         }
         else if (arg.StartsWith("--model=", StringComparison.OrdinalIgnoreCase))
         {

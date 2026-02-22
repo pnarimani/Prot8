@@ -1,16 +1,13 @@
 using Prot8.Jobs;
 
-namespace Prot8.Cli.Input.Commands;
+namespace Prot8.Cli.Commands;
 
-public sealed class AssignCommand(string jobToken, string workersToken) : ICommand
+public sealed class AssignCommand(string jobId, int workers) : ICommand
 {
     public CommandResult Execute(CommandContext context)
     {
-        if (!TryResolveJob(jobToken, out var job, out var jobReason))
+        if (!TryResolveJob(jobId, out var job, out var jobReason))
             return new CommandResult(false, jobReason);
-
-        if (!int.TryParse(workersToken, out var workers))
-            return new CommandResult(false, "Workers must be a whole number.");
 
         if (workers < 0)
             return new CommandResult(false, "Workers cannot be negative.");

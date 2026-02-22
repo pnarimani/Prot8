@@ -1,7 +1,7 @@
 using Prot8.Simulation;
 using Prot8.Zones;
 
-namespace Prot8.Cli.Input.Commands;
+namespace Prot8.Cli.Commands;
 
 public sealed class IssueOrderCommand(string orderToken) : ICommand
 {

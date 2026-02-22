@@ -1,4 +1,4 @@
-using Prot8.Cli.Input.Commands;
+using Prot8.Cli.Commands;
 using Prot8.Cli.Output;
 using Prot8.Cli.ViewModels;
 using Prot8.Jobs;

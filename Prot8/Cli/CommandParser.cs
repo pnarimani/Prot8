@@ -1,4 +1,4 @@
-using Prot8.Cli.Input.Commands;
+using Prot8.Cli.Commands;
 
 namespace Prot8.Cli.Input;
 
@@ -26,7 +26,7 @@ public class CommandParser
                     error = "Usage: assign <JobType> <Workers>.";
                     return false;
                 }
-                command = new AssignCommand(parts[1], parts[2]);
+                command = new AssignCommand(parts[1], int.Parse(parts[2]));
                 return true;
 
             case "clear_assignments":

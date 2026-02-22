@@ -1,6 +1,6 @@
 using Prot8.Jobs;
 
-namespace Prot8.Cli.Input.Commands;
+namespace Prot8.Cli.Commands;
 
 public sealed class ClearAssignmentsCommand : ICommand
 {
