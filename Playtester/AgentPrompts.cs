@@ -21,8 +21,18 @@ public static class AgentPrompts
           (one sentence explaining why). The last entry must have command="end_day".
         """;
 
-    public static string CommanderUser(string daySnapshot, string notebook, string previousRunLearnings)
+    public static string CommanderUser(string daySnapshot, string notebook, string previousRunLearnings, string? validationErrors = null)
     {
+        var errorSection = validationErrors is null ? "" : $"""
+
+            VALIDATION ERRORS FROM YOUR PREVIOUS ATTEMPT
+            The following commands were rejected. You must fix all of them before the day can proceed.
+            <<<
+            {validationErrors}
+            >>>
+
+            """;
+
         return $"""
             DAY SNAPSHOT
             <<<
@@ -37,7 +47,7 @@ public static class AgentPrompts
             LEARNINGS FROM PREVIOUS RUN
             <<<
             {previousRunLearnings}
-            >>>
+            >>>{errorSection}
 
             Win and Loss Conditions
             - Win: reach Day 40.

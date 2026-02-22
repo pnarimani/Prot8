@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Playtester;
 using Prot8.Cli.Input;
 using Prot8.Cli.Output;
+using Prot8.Jobs;
 using Prot8.Simulation;
 using Prot8.Telemetry;
 
@@ -35,32 +36,67 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
         var daySnapshot = RenderToString(w => new ConsoleRenderer(w).RenderDayStart(state));
         Console.Write(daySnapshot);
 
-        // Build starting allocation
-        var allocation = ConsoleInputReader.BuildStartingAllocation(state, out var adjustMsg);
-        if (adjustMsg != null) Console.WriteLine(adjustMsg);
-        var action = new TurnActionChoice();
-
-        // Call Commander
-        Console.WriteLine($"[AI] Calling Commander for Day {state.Day}...");
-        var commanderPrompt = AgentPrompts.CommanderUser(daySnapshot, notebook, previousRunLearnings);
-        var commanderJson = await llm.ChatAsync(
-            AgentPrompts.CommanderSystem, commanderPrompt, AgentPrompts.CommanderResponseFormat, 0.4);
-
-        // Parse commands from JSON
-        var commandLines = ParseCommanderJson(commanderJson);
-        Console.WriteLine($"[AI] Commander issued {commandLines.Count} command(s).");
-
+        // Call Commander (with retry on invalid commands)
+        JobAllocation allocation = null!;
+        TurnActionChoice action = new();
+        const int maxCommanderRetries = 3;
         var executedCommands = new StringBuilder();
-        foreach (var (line, reason) in commandLines)
+        string? commanderValidationErrors = null;
+
+        for (var attempt = 1; attempt <= maxCommanderRetries; attempt++)
         {
-            if (string.IsNullOrEmpty(line)) continue;
-            if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase)) break;
+            // Reset allocation and action for this attempt
+            allocation = ConsoleInputReader.BuildStartingAllocation(state, out var retryAdjustMsg);
+            if (attempt == 1 && retryAdjustMsg != null) Console.WriteLine(retryAdjustMsg);
+            action = new TurnActionChoice();
+            executedCommands.Clear();
 
-            ConsoleInputReader.TryExecuteCommand(state, allocation, ref action, line, out var msg, out var endDay);
-            Console.WriteLine($"  > {line}  [{reason}]  => {msg}");
-            executedCommands.AppendLine(line);
+            Console.WriteLine(attempt == 1
+                ? $"[AI] Calling Commander for Day {state.Day}..."
+                : $"[AI] Retrying Commander for Day {state.Day} (attempt {attempt}/{maxCommanderRetries})...");
 
-            if (endDay) break;
+            var commanderPrompt = AgentPrompts.CommanderUser(daySnapshot, notebook, previousRunLearnings, commanderValidationErrors);
+            var commanderJson = await llm.ChatAsync(
+                AgentPrompts.CommanderSystem, commanderPrompt, AgentPrompts.CommanderResponseFormat, 0.4);
+
+            var commandLines = ParseCommanderJson(commanderJson);
+            Console.WriteLine($"[AI] Commander issued {commandLines.Count} command(s).");
+
+            var invalidCommands = new StringBuilder();
+            var hasInvalid = false;
+
+            foreach (var (line, reason) in commandLines)
+            {
+                if (string.IsNullOrEmpty(line)) continue;
+                if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase)) break;
+
+                var ok = ConsoleInputReader.TryExecuteCommand(state, allocation, ref action, line, out var msg, out var endDay);
+                Console.WriteLine($"  > {line}  [{reason}]  => {msg}");
+
+                if (!ok)
+                {
+                    invalidCommands.AppendLine($"  Command \"{line}\" was rejected: {msg}");
+                    hasInvalid = true;
+                }
+                else
+                {
+                    executedCommands.AppendLine(line);
+                }
+
+                if (endDay) break;
+            }
+
+            if (!hasInvalid)
+            {
+                commanderValidationErrors = null;
+                break; // all commands valid — proceed
+            }
+
+            commanderValidationErrors = invalidCommands.ToString().TrimEnd();
+            Console.WriteLine($"[AI] Commander issued invalid command(s); requesting corrections:\n{commanderValidationErrors}");
+
+            if (attempt == maxCommanderRetries)
+                Console.WriteLine("[AI] Max retries reached. Proceeding with valid commands only.");
         }
 
         // Finalize allocation and resolve
