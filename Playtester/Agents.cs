@@ -29,7 +29,8 @@ public static class Agents
             Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects. 
             Each command object has a "type" discriminator field and the command's own fields:
             ```
-                { "type": "assign",            "job_id": "<JobType>", "delta_workers": <delta> }
+                { "type": "add_workers",       "job_id": "<JobType>", "delta_workers": <positive delta> }
+                { "type": "remove_workers",    "job_id": "<JobType>", "delta_workers": <positive delta> }
                 { "type": "enact_law",         "law_id": "<LawId>" }
                 { "type": "issue_order",       "order_id": "<OrderId>" }
                 { "type": "start_mission",     "mission_id": "<MissionId>" }
@@ -201,13 +202,23 @@ public static class Agents
                               {
                                 "type": "object",
                                 "properties": {
-                                  "type": { "const": "assign" },
+                                  "type": { "const": "add_workers" },
                                   "job_id": { "type": "string" },
                                   "delta_workers": { "type": "integer" }
                                 },
                                 "required": ["type", "job_id", "delta_workers"],
                                 "additionalProperties": false
                               },
+                              {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": { "const": "remove_workers" },
+                                    "job_id": { "type": "string" },
+                                    "delta_workers": { "type": "integer" }
+                                  },
+                                  "required": ["type", "job_id", "delta_workers"],
+                                  "additionalProperties": false
+                                },
                               {
                                 "type": "object",
                                 "properties": {

@@ -9,8 +9,8 @@ public sealed class PublicExecutionsLaw : ILaw
     private const int Deaths = 5;
     private const int UnrestThreshold = 60;
 
-    public string Id { get; }
-    public string Name { get; }
+    public string Id => "public_executions";
+    public string Name => "Public Executions";
     public string GetTooltip(GameState state) => $"-{UnrestReduction} unrest instantly, -{MoraleHit} morale, {Deaths} deaths. Requires unrest > {UnrestThreshold}.";
 
     public bool CanEnact(GameState state, out string reason)

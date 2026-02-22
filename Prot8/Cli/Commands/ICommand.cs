@@ -4,6 +4,8 @@ namespace Prot8.Cli.Commands;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(AssignCommand), "assign")]
+[JsonDerivedType(typeof(AddWorkers), "add_workers")]
+[JsonDerivedType(typeof(RemoveWorkers), "remove_workers")]
 [JsonDerivedType(typeof(ClearAssignmentsCommand), "clear_assignments")]
 [JsonDerivedType(typeof(EnactLawCommand), "enact_law")]
 [JsonDerivedType(typeof(IssueOrderCommand), "issue_order")]

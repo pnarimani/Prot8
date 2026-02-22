@@ -137,8 +137,14 @@ public sealed class GameSimulationEngine
                 report.Add(ReasonTags.Mission, $"Cannot start mission {mission.Name}: {reason}");
                 return;
             }
+            
+            if(state.IdleWorkers < mission.WorkerCost)
+            {
+                report.Add(ReasonTags.Mission, $"Cannot start mission {mission.Name}: not enough idle workers (need {mission.WorkerCost}, have {state.IdleWorkers}).");
+                return;
+            }
 
-            state.ActiveMissions.Add(new ActiveMission(mission.Id, mission.Name, mission.DurationDays, mission.WorkerCost));
+            state.ActiveMissions.Add(new ActiveMission(mission.Id, mission.Name, mission.DurationDays + 1, mission.WorkerCost));
             report.Add(ReasonTags.Mission, $"Mission started: {mission.Name} ({mission.DurationDays} day(s), {mission.WorkerCost} workers committed).");
         }
     }
