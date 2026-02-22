@@ -110,6 +110,30 @@ public static class Agents
         {
             return string.Format(User, gameOverReason, timeline, currentGuide);
         }
+        
+        
+        public const string ResponseFormat =
+            """
+            {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "scribe_notebook",
+                    "strict": true,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "survival_guide": {
+                                "type": "string",
+                                "description": "The entire survival guide",
+                                "items": { "type": "string" }
+                            }
+                        },
+                        "required": ["survival_guide"],
+                        "additionalProperties": false
+                    }
+                }
+            }
+            """;
     }
 
 

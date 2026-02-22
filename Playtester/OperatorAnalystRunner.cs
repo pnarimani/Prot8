@@ -121,9 +121,11 @@ public class OperatorAnalystRunner
             var postmortem = await llm.ChatAsync(
                 Agents.Analyst.System,
                 analystUser,
-                null,
+                Agents.Analyst.ResponseFormat,
                 0.5
             );
+
+            survivalGuide = ParseSurvivalGuide(postmortem);
             
             var postmortemPath = Path.ChangeExtension(telemetry.FilePath, ".postmortem.md");
             await File.WriteAllTextAsync(postmortemPath, postmortem);
@@ -134,5 +136,11 @@ public class OperatorAnalystRunner
             Console.WriteLine(postmortem);
             Console.WriteLine("=====");
         }
+    }
+
+    static string ParseSurvivalGuide(string postmortem)
+    {
+        var json = JsonNode.Parse(postmortem);
+        return json["survival_guide"].ToString();
     }
 }

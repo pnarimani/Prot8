@@ -56,11 +56,11 @@ public static class GameBalance
 
     public static readonly IReadOnlyList<ZoneTemplate> ZoneTemplates = new List<ZoneTemplate>
     {
-        new(ZoneId.OuterFarms, "Outer Farms", 100, 35, 30, 1.0),
-        new(ZoneId.OuterResidential, "Outer Residential", 95, 30, 30, 0.9),
-        new(ZoneId.ArtisanQuarter, "Artisan Quarter", 90, 25, 25, 0.8),
-        new(ZoneId.InnerDistrict, "Inner District", 85, 20, 20, 0.7),
-        new(ZoneId.Keep, "Keep", 80, 20, 15, 0.6),
+        new(ZoneId.OuterFarms, "Outer Farms", 100, 35, 10, 1.0),
+        new(ZoneId.OuterResidential, "Outer Residential", 95, 30, 5, 0.9),
+        new(ZoneId.ArtisanQuarter, "Artisan Quarter", 90, 25, 5, 0.8),
+        new(ZoneId.InnerDistrict, "Inner District", 85, 20, 5, 0.7),
+        new(ZoneId.Keep, "Keep", 80, 20, 10, 0.6),
     };
 
     public static readonly IReadOnlyDictionary<JobType, ZoneId> JobZoneMap = new Dictionary<JobType, ZoneId>
@@ -73,7 +73,7 @@ public static class GameBalance
         [JobType.FuelScavenging] = ZoneId.OuterResidential,
     };
 
-    public static Dictionary<JobType, List<ResourceQuantity>> JobInputs = new()
+    public static readonly Dictionary<JobType, List<ResourceQuantity>> JobInputs = new()
     {
         [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Fuel, 2)],
         [JobType.WaterDrawing] = [],
@@ -85,12 +85,12 @@ public static class GameBalance
 
     public static readonly Dictionary<JobType, List<ResourceQuantity>> JobOutputs = new()
     {
-        [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Food, 14)],
-        [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Water, 16)],
-        [JobType.MaterialsCrafting] = [new ResourceQuantity(ResourceKind.Materials, 10)],
-        [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Integrity, 3)],
-        [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Care, 4)],
-        [JobType.FuelScavenging] = [new ResourceQuantity(ResourceKind.Fuel, 8)],
+        [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Food, 2)],
+        [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Water, 3)],
+        [JobType.MaterialsCrafting] = [new ResourceQuantity(ResourceKind.Materials, 2)],
+        [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Integrity, 1d )],
+        [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Care, 1)],
+        [JobType.FuelScavenging] = [new ResourceQuantity(ResourceKind.Fuel, 1)],
     };
 
     public static readonly Dictionary<JobType, double> LostZoneJobMultipliers = new()
