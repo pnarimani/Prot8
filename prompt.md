@@ -11,7 +11,7 @@ Most runs should fail before **Day 25**. Survival to Day 40 should be rare and f
 ### Development notes
 * Make variables easy to tune
 * We are making the game in the CLI. Receive inputs with CLI, print the game state to the CLI.
-* Create the proper separation between input reading, game simulation and outputing the game state to the CLI.
+* Create the proper separation between input reading, game simulation and outputting the game state to the CLI.
 * Architecture the code in such a way that it's easy to explain to the player WHY something is happening.
 * Make sure the player knows all the important game state, all the available actions and the cost and consequences of those actions.
 * Write simple code. Avoid heavy abstractions. 
