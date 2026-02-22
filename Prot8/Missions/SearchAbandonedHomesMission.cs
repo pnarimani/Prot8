@@ -4,12 +4,10 @@ using Prot8.Simulation;
 
 namespace Prot8.Missions;
 
-public sealed class SearchAbandonedHomesMission : MissionBase
+public sealed class SearchAbandonedHomesMission() : MissionBase("search_abandoned_homes", "Search Abandoned Homes",
+    "+60 Materials (50%) | +40 Medicine (30%) | +15 Sickness (20%)", 2,
+    GameBalance.MissionSearchHomesWorkers)
 {
-    public SearchAbandonedHomesMission() : base("search_abandoned_homes", "Search Abandoned Homes", "Can recover materials or medicine, or cause sickness from plague exposure.", 2, GameBalance.MissionSearchHomesWorkers)
-    {
-    }
-
     public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
         var roll = RollPercent(state);

@@ -3,14 +3,11 @@ using Prot8.Simulation;
 
 namespace Prot8.Missions;
 
-public sealed class NightRaidMission : MissionBase
+public sealed class NightRaidMission() : MissionBase("night_raid", "Night Raid on Siege Camp",
+    "Siege Delay +3 days (40%) | Siege Delay +2 (20%) | 8 Deaths, +15 Unrest (20%)", 1, GameBalance.MissionNightRaidWorkers)
 {
     private const int GreatChance = 40;
     private const int OkChance = 40;
-
-    public NightRaidMission() : base("night_raid", "Night Raid on Siege Camp", "May delay siege escalation, or fail causing deaths and unrest.", 1, GameBalance.MissionNightRaidWorkers)
-    {
-    }
 
     public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {

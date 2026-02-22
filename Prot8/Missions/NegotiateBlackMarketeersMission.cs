@@ -4,12 +4,10 @@ using Prot8.Simulation;
 
 namespace Prot8.Missions;
 
-public sealed class NegotiateBlackMarketeersMission : MissionBase
+public sealed class NegotiateBlackMarketeersMission() : MissionBase("negotiate_black_marketeers",
+    "Negotiate with Black Marketeers", "+100 water (50%) | +80 food (30%) | +20 unrest (%20)", 4,
+    GameBalance.MissionBlackMarketeersWorkers)
 {
-    public NegotiateBlackMarketeersMission() : base("negotiate_black_marketeers", "Negotiate with Black Marketeers", "May secure water or food, or provoke political scandal (unrest).", 4, GameBalance.MissionBlackMarketeersWorkers)
-    {
-    }
-
     public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
         var roll = RollPercent(state);

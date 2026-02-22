@@ -5,7 +5,7 @@ using Prot8.Simulation;
 namespace Prot8.Missions;
 
 public sealed class ForageBeyondWallsMission() : MissionBase("forage_beyond_walls", "Forage Beyond Walls",
-    "Usually returns food, or can result in deaths from ambush.", 5, GameBalance.MissionForageWorkers)
+    "+120 Food (%60) | +80 Food (25%) | 5 Deaths (15%)", 5, GameBalance.MissionForageWorkers)
 {
     public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
