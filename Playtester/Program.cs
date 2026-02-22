@@ -28,6 +28,7 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
 
     var state = new GameState(config.Seed);
     var engine = new GameSimulationEngine();
+    var reader = new ConsoleInputReader(new CommandParser());
     using var telemetry = new RunTelemetryWriter(config.Seed);
 
     var timeline = new StringBuilder();
@@ -35,12 +36,11 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
     while (!state.GameOver)
     {
         // Capture day snapshot
-        var dayStartVm = GameStateToViewModels.ToDayStartViewModel(state, true);
-        var daySnapshot = RenderToString(w => new ConsoleRenderer(w, true).RenderDayStart(dayStartVm));
+        var dayStartVm = GameStateToViewModels.ToDayStartViewModel(state);
+        var daySnapshot = RenderToString(w => new ConsoleRenderer(w).RenderDayStart(dayStartVm));
         Console.Write(daySnapshot);
 
         // Call Commander (with retry on invalid commands)
-        JobAllocation allocation = null!;
         TurnActionChoice action = new();
         const int maxCommanderRetries = 3;
         var executedCommands = new StringBuilder();
@@ -49,8 +49,6 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
         for (var attempt = 1; attempt <= maxCommanderRetries; attempt++)
         {
             // Reset allocation and action for this attempt
-            allocation = ConsoleInputReader.BuildStartingAllocation(state, out var retryAdjustMsg);
-            if (attempt == 1 && retryAdjustMsg != null) Console.WriteLine(retryAdjustMsg);
             action = new TurnActionChoice();
             executedCommands.Clear();
 
@@ -58,7 +56,8 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
                 ? $"[AI] Calling Commander for Day {state.Day}..."
                 : $"[AI] Retrying Commander for Day {state.Day} (attempt {attempt}/{maxCommanderRetries})...");
 
-            var commanderPrompt = AgentPrompts.CommanderUser(daySnapshot, notebook, previousRunLearnings, commanderValidationErrors);
+            var commanderPrompt =
+                AgentPrompts.CommanderUser(daySnapshot, notebook, previousRunLearnings, commanderValidationErrors);
             var commanderJson = await llm.ChatAsync(
                 AgentPrompts.CommanderSystem, commanderPrompt, AgentPrompts.CommanderResponseFormat, 0.4);
 
@@ -73,7 +72,7 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
                 if (string.IsNullOrEmpty(line)) continue;
                 if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase)) break;
 
-                var ok = ConsoleInputReader.TryExecuteCommand(state, allocation, ref action, line, out var msg, out var endDay);
+                var ok = reader.TryExecuteCommand(state, ref action, line, out var msg, out var endDay);
                 Console.WriteLine($"  > {line}  [{reason}]  => {msg}");
 
                 if (!ok)
@@ -96,21 +95,18 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
             }
 
             commanderValidationErrors = invalidCommands.ToString().TrimEnd();
-            Console.WriteLine($"[AI] Commander issued invalid command(s); requesting corrections:\n{commanderValidationErrors}");
+            Console.WriteLine(
+                $"[AI] Commander issued invalid command(s); requesting corrections:\n{commanderValidationErrors}");
 
             if (attempt == maxCommanderRetries)
                 Console.WriteLine("[AI] Max retries reached. Proceeding with valid commands only.");
         }
 
-        // Finalize allocation and resolve
-        ConsoleInputReader.FinalizeAllocation(state, allocation);
-        state.Allocation = allocation;
-
         var report = engine.ResolveDay(state, action);
 
         // Capture resolution log
         var dayReportVm = GameStateToViewModels.ToDayReportViewModel(state, report);
-        var resolutionLog = RenderToString(w => new ConsoleRenderer(w, true).RenderDayReport(dayReportVm));
+        var resolutionLog = RenderToString(w => new ConsoleRenderer(w).RenderDayReport(dayReportVm));
         Console.Write(resolutionLog);
 
         telemetry.LogDay(state, action, report);
@@ -142,7 +138,7 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
 
 // Render final
     var gameOverVm = GameStateToViewModels.ToGameOverViewModel(state);
-    var finalSummary = RenderToString(w => new ConsoleRenderer(w, true).RenderFinal(gameOverVm));
+    var finalSummary = RenderToString(w => new ConsoleRenderer(w).RenderFinal(gameOverVm));
     Console.Write(finalSummary);
     telemetry.LogFinal(state);
 
@@ -163,7 +159,7 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
     Console.WriteLine($"Postmortem: {postmortemPath}");
 
     // previousRunLearnings = ExtractLearnings(criticJson);
-} 
+}
 
 
 static string RenderToString(Action<TextWriter> render)

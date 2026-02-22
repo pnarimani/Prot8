@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Prot8.Constants;
 using Prot8.Jobs;
 using Prot8.Missions;
@@ -12,10 +11,12 @@ public sealed class GameState
 {
     public GameState(int? seed = null)
     {
-        Random = seed.HasValue ? new System.Random(seed.Value) : new System.Random();
+        Random = seed.HasValue ? new Random(seed.Value) : new Random();
         RandomSeed = seed;
-        Resources = new ResourceState(GameBalance.StartingFood, GameBalance.StartingWater, GameBalance.StartingFuel, GameBalance.StartingMedicine, GameBalance.StartingMaterials);
-        Population = new PopulationState(GameBalance.StartingHealthyWorkers, GameBalance.StartingGuards, GameBalance.StartingSickWorkers, GameBalance.StartingElderly);
+        Resources = new ResourceState(GameBalance.StartingFood, GameBalance.StartingWater, GameBalance.StartingFuel,
+            GameBalance.StartingMedicine, GameBalance.StartingMaterials);
+        Population = new PopulationState(GameBalance.StartingHealthyWorkers, GameBalance.StartingGuards,
+            GameBalance.StartingSickWorkers, GameBalance.StartingElderly);
         Morale = GameBalance.StartingMorale;
         Unrest = GameBalance.StartingUnrest;
         Sickness = GameBalance.StartingSickness;
@@ -87,8 +88,6 @@ public sealed class GameState
 
     public string? ActiveOrderId { get; set; }
 
-    public ZoneId? ActiveOrderZoneSelection { get; set; }
-
     public List<ActiveMission> ActiveMissions { get; } = new();
 
     public Dictionary<string, int> EventCooldowns { get; } = new();
@@ -105,7 +104,7 @@ public sealed class GameState
 
     public bool FuelDeficitToday { get; set; }
 
-    public System.Random Random { get; }
+    public Random Random { get; }
 
     public int? RandomSeed { get; }
 
@@ -120,9 +119,7 @@ public sealed class GameState
             foreach (var zone in Zones)
             {
                 if (!zone.IsLost)
-                {
                     return zone;
-                }
             }
 
             return GetZone(ZoneId.Keep);
@@ -135,9 +132,7 @@ public sealed class GameState
         {
             var reserved = 0;
             foreach (var mission in ActiveMissions)
-            {
                 reserved += mission.WorkerCost;
-            }
 
             return reserved;
         }
@@ -157,9 +152,7 @@ public sealed class GameState
         foreach (var zone in Zones)
         {
             if (zone.Id == zoneId)
-            {
                 return zone;
-            }
         }
 
         throw new KeyNotFoundException($"Zone not found: {zoneId}");
@@ -173,9 +166,7 @@ public sealed class GameState
         foreach (var zone in Zones)
         {
             if (zone.IsLost)
-            {
                 count++;
-            }
         }
 
         return count;
@@ -201,19 +192,18 @@ public sealed class GameState
         }
 
         if (remaining > 0 && lastSurviving is not null)
-        {
             lastSurviving.Population += remaining;
-        }
     }
 
-    private static IReadOnlyList<ZoneState> CreateZones()
+    static IReadOnlyList<ZoneState> CreateZones()
     {
         var list = new List<ZoneState>();
         foreach (var template in GameBalance.ZoneTemplates)
-        {
-            list.Add(new ZoneState(template.ZoneId, template.Name, template.StartingIntegrity, template.StartingCapacity, template.StartingPopulation));
-        }
+            list.Add(new ZoneState(template.ZoneId, template.Name, template.StartingIntegrity,
+                template.StartingCapacity, template.StartingPopulation));
 
         return list;
     }
+
+    public int RollPercent() => Random.Next(0, 101);
 }

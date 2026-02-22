@@ -8,9 +8,7 @@ public interface ILaw
 
     string Name { get; }
 
-    string Summary { get; }
-
-    string GetDynamicTooltip(GameState state);
+    string GetTooltip(GameState state);
 
     bool CanEnact(GameState state, out string reason);
 

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Prot8.Constants;
 using Prot8.Jobs;
 using Prot8.Laws;
@@ -8,16 +5,15 @@ using Prot8.Missions;
 using Prot8.Orders;
 using Prot8.Resources;
 using Prot8.Simulation;
-using Prot8.Zones;
 
 namespace Prot8.Cli.ViewModels;
 
 public static class GameStateToViewModels
 {
-    public static DayStartViewModel ToDayStartViewModel(GameState state, bool noShortcuts)
+    public static DayStartViewModel ToDayStartViewModel(GameState state)
     {
         var jobs = ActionAvailability.GetJobTypes();
-        
+
         return new DayStartViewModel
         {
             Day = state.Day,
@@ -33,19 +29,19 @@ public static class GameStateToViewModels
                 Water = state.Resources[ResourceKind.Water],
                 Fuel = state.Resources[ResourceKind.Fuel],
                 Medicine = state.Resources[ResourceKind.Medicine],
-                Materials = state.Resources[ResourceKind.Materials]
+                Materials = state.Resources[ResourceKind.Materials],
             },
             Population = new PopulationViewModel
             {
                 HealthyWorkers = state.Population.HealthyWorkers,
                 Guards = state.Population.Guards,
                 SickWorkers = state.Population.SickWorkers,
-                Elderly = state.Population.Elderly
+                Elderly = state.Population.Elderly,
             },
             JobAssignments = jobs.Select(job => new JobAssignmentViewModel
             {
                 Job = job,
-                Workers = state.Allocation.Workers[job]
+                Workers = state.Allocation.Workers[job],
             }).ToList(),
             Zones = state.Zones.Select(zone => new ZoneViewModel
             {
@@ -54,33 +50,33 @@ public static class GameStateToViewModels
                 Integrity = zone.Integrity,
                 Capacity = zone.Capacity,
                 Population = zone.Population,
-                IsLost = zone.IsLost
+                IsLost = zone.IsLost,
             }).ToList(),
             ActiveMissions = state.ActiveMissions.Select(m => new ActiveMissionViewModel
             {
                 MissionName = m.MissionName,
                 DaysRemaining = m.DaysRemaining,
-                WorkerCost = m.WorkerCost
+                WorkerCost = m.WorkerCost,
             }).ToList(),
-            AvailableLaws = ToLawViewModels(state, noShortcuts),
-            AvailableOrders = ToOrderViewModels(state, noShortcuts),
-            AvailableMissions = ToMissionViewModels(state, noShortcuts),
-            Jobs = ToJobReferenceViewModels(noShortcuts)
+            AvailableLaws = ToLawViewModels(state),
+            AvailableOrders = ToOrderViewModels(state),
+            AvailableMissions = ToMissionViewModels(state),
+            Jobs = ToJobReferenceViewModels(),
         };
     }
 
-    public static PendingPlanViewModel ToPendingPlanViewModel(GameState state, JobAllocation allocation, TurnActionChoice action, bool noShortcuts)
+    public static PendingPlanViewModel ToPendingPlanViewModel(GameState state, JobAllocation allocation,
+        TurnActionChoice action)
     {
         var jobs = ActionAvailability.GetJobTypes();
         var jobAssignments = jobs.Select(job => new JobAssignmentViewModel
         {
             Job = job,
-            Workers = allocation.Workers[job]
+            Workers = allocation.Workers[job],
         }).ToList();
 
         string? actionType = null;
         string? actionName = null;
-        string? actionZone = null;
 
         if (action.HasAction)
         {
@@ -95,10 +91,6 @@ public static class GameStateToViewModels
                 actionType = "Emergency Order";
                 var order = EmergencyOrderCatalog.Find(action.EmergencyOrderId);
                 actionName = order?.Name ?? action.EmergencyOrderId;
-                if (action.SelectedZoneForOrder.HasValue)
-                {
-                    actionZone = action.SelectedZoneForOrder.Value.ToString();
-                }
             }
             else if (!string.IsNullOrWhiteSpace(action.MissionId))
             {
@@ -116,7 +108,6 @@ public static class GameStateToViewModels
             IdleWorkers = allocation.IdleWorkers,
             QueuedActionType = actionType,
             QueuedActionName = actionName,
-            QueuedActionZone = actionZone
         };
     }
 
@@ -128,7 +119,7 @@ public static class GameStateToViewModels
             Entries = report.Entries.Select(e => new DeltaLogEntryViewModel
             {
                 Tag = e.Tag,
-                Message = e.Message
+                Message = e.Message,
             }).ToList(),
             TriggeredEvents = report.TriggeredEvents,
             ResolvedMissions = report.ResolvedMissions,
@@ -140,13 +131,12 @@ public static class GameStateToViewModels
             RecoveredWorkersToday = report.RecoveredWorkersToday,
             RecoveryMedicineSpentToday = report.RecoveryMedicineSpentToday,
             RecoveryEnabledToday = report.RecoveryEnabledToday,
-            RecoveryBlockedReason = report.RecoveryBlockedReason
+            RecoveryBlockedReason = report.RecoveryBlockedReason,
         };
     }
 
-    public static GameOverViewModel ToGameOverViewModel(GameState state)
-    {
-        return new GameOverViewModel
+    public static GameOverViewModel ToGameOverViewModel(GameState state) =>
+        new()
         {
             Survived = state.Survived,
             Cause = state.GameOverCause,
@@ -161,19 +151,18 @@ public static class GameStateToViewModels
                 Water = state.Resources[ResourceKind.Water],
                 Fuel = state.Resources[ResourceKind.Fuel],
                 Medicine = state.Resources[ResourceKind.Medicine],
-                Materials = state.Resources[ResourceKind.Materials]
+                Materials = state.Resources[ResourceKind.Materials],
             },
             FinalPopulation = new PopulationViewModel
             {
                 HealthyWorkers = state.Population.HealthyWorkers,
                 Guards = state.Population.Guards,
                 SickWorkers = state.Population.SickWorkers,
-                Elderly = state.Population.Elderly
-            }
+                Elderly = state.Population.Elderly,
+            },
         };
-    }
 
-    private static IReadOnlyList<LawViewModel> ToLawViewModels(GameState state, bool noShortcuts)
+    static IReadOnlyList<LawViewModel> ToLawViewModels(GameState state)
     {
         var available = ActionAvailability.GetAvailableLaws(state);
         var result = new List<LawViewModel>();
@@ -186,82 +175,70 @@ public static class GameStateToViewModels
             {
                 Id = law.Id,
                 Name = law.Name,
-                Tooltip = law.GetDynamicTooltip(state),
-                IsActive = state.ActiveLawIds.Contains(law.Id)
+                Tooltip = law.GetTooltip(state),
+                IsActive = state.ActiveLawIds.Contains(law.Id),
             });
         }
 
         return result;
     }
 
-    private static IReadOnlyList<OrderViewModel> ToOrderViewModels(GameState state, bool noShortcuts)
+    static IReadOnlyList<OrderViewModel> ToOrderViewModels(GameState state)
     {
         var available = ActionAvailability.GetAvailableOrders(state);
         var result = new List<OrderViewModel>();
 
-        for (var index = 0; index < available.Count; index++)
+        foreach (var order in available)
         {
-            var order = available[index];
-
-            var validZones = ActionAvailability.GetValidZonesForOrder(state, order);
-
             result.Add(new OrderViewModel
             {
                 Id = order.Id,
                 Name = order.Name,
-                Tooltip = order.GetDynamicTooltip(state),
-                RequiresZoneSelection = order.RequiresZoneSelection,
-                ValidZones = validZones
+                Tooltip = order.GetTooltip(state),
             });
         }
 
         return result;
     }
 
-    private static IReadOnlyList<MissionViewModel> ToMissionViewModels(GameState state, bool noShortcuts)
+    static IReadOnlyList<MissionViewModel> ToMissionViewModels(GameState state)
     {
         var available = ActionAvailability.GetAvailableMissions(state);
         var result = new List<MissionViewModel>();
 
-        for (var index = 0; index < available.Count; index++)
+        foreach (var mission in available)
         {
-            var mission = available[index];
-
             result.Add(new MissionViewModel
             {
                 Id = mission.Id,
                 Name = mission.Name,
-                Tooltip = mission.GetDynamicTooltip(state),
+                Tooltip = mission.GetTooltip(state),
                 DurationDays = mission.DurationDays,
-                WorkerCost = mission.WorkerCost
+                WorkerCost = mission.WorkerCost,
             });
         }
 
         return result;
     }
 
-    private static IReadOnlyList<JobReferenceViewModel> ToJobReferenceViewModels(bool noShortcuts)
+    static IReadOnlyList<JobReferenceViewModel> ToJobReferenceViewModels()
     {
         var jobs = ActionAvailability.GetJobTypes();
         var result = new List<JobReferenceViewModel>();
 
-        for (var index = 0; index < jobs.Count; index++)
+        foreach (var job in jobs)
         {
-            var job = jobs[index];
-            var shortcut = noShortcuts ? "" : $"j{index + 1}: ";
-
             result.Add(new JobReferenceViewModel
             {
                 Job = job,
-                Shortcut = shortcut,
-                Description = ComputeJobDescription(job)
+                Description = ComputeJobDescription(job),
             });
         }
 
         return result;
     }
 
-    private static string ComputeJobDescription(JobType job)
+    static string ComputeJobDescription(JobType job)
     {
         var baseOutput = GameBalance.BaseJobOutputPerSlot[job];
         var outputResource = GameBalance.JobOutputResource[job];

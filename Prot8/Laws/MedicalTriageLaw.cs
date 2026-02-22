@@ -1,22 +1,23 @@
+using Prot8.Resources;
 using Prot8.Simulation;
 
 namespace Prot8.Laws;
 
-public sealed class MedicalTriageLaw : LawBase
+public sealed class MedicalTriageLaw : ILaw
 {
-    private const double MedicineUsageMultiplier = 0.5;
-    private const int DailySickDeaths = 5;
-    private const int MedicineThreshold = 20;
+    const double MedicineUsageMultiplier = 0.5;
+    const int DailySickDeaths = 5;
+    const int MedicineThreshold = 20;
 
-    public MedicalTriageLaw() : base("medical_triage", "Medical Triage", $"-{MedicineUsageMultiplier * 100}% medicine usage, +{DailySickDeaths} sick deaths/day. Requires medicine < {MedicineThreshold}.")
+    public string Id => "medical_triage";
+    public string Name => "Medical Triage";
+
+    public string GetTooltip(GameState state) =>
+        $"-{MedicineUsageMultiplier * 100}% medicine usage, +{DailySickDeaths} sick deaths/day. Requires medicine < {MedicineThreshold}.";
+
+    public bool CanEnact(GameState state, out string reason)
     {
-    }
-
-    public override string GetDynamicTooltip(GameState state) => $"-{MedicineUsageMultiplier * 100}% medicine usage, +{DailySickDeaths} sick deaths/day. Requires medicine < {MedicineThreshold}.";
-
-    public override bool CanEnact(GameState state, out string reason)
-    {
-        if (state.Resources[Resources.ResourceKind.Medicine] < 20)
+        if (state.Resources[ResourceKind.Medicine] < 20)
         {
             reason = string.Empty;
             return true;
@@ -26,7 +27,11 @@ public sealed class MedicalTriageLaw : LawBase
         return false;
     }
 
-    public override void ApplyDaily(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, DayResolutionReport report)
+    {
+    }
+
+    public void ApplyDaily(GameState state, DayResolutionReport report)
     {
         state.DailyEffects.MedicineUsageMultiplier *= MedicineUsageMultiplier;
         var deaths = state.Population.RemoveSickWorkers(DailySickDeaths);

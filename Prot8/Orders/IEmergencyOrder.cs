@@ -8,13 +8,9 @@ public interface IEmergencyOrder
 
     string Name { get; }
 
-    string Summary { get; }
+    string GetTooltip(GameState state);
 
-    string GetDynamicTooltip(GameState state);
+    bool CanIssue(GameState state, out string reason);
 
-    bool RequiresZoneSelection { get; }
-
-    bool CanIssue(GameState state, Zones.ZoneId? selectedZone, out string reason);
-
-    void Apply(GameState state, Zones.ZoneId? selectedZone, DayResolutionReport report);
+    void Apply(GameState state, DayResolutionReport report);
 }

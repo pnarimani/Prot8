@@ -43,7 +43,6 @@ public sealed class GameSimulationEngine
     {
         state.DailyEffects = new TemporaryDailyEffects();
         state.ActiveOrderId = null;
-        state.ActiveOrderZoneSelection = null;
         state.FoodDeficitToday = false;
         state.WaterDeficitToday = false;
         state.FuelDeficitToday = false;
@@ -103,14 +102,13 @@ public sealed class GameSimulationEngine
                 return;
             }
 
-            if (!order.CanIssue(state, action.SelectedZoneForOrder, out var reason))
+            if (!order.CanIssue(state, out var reason))
             {
                 report.Add(ReasonTags.OrderEffect, $"Cannot issue {order.Name}: {reason}");
                 return;
             }
 
             state.ActiveOrderId = order.Id;
-            state.ActiveOrderZoneSelection = action.SelectedZoneForOrder;
             report.Add(ReasonTags.OrderEffect, $"Emergency order prepared: {order.Name}.");
             return;
         }
@@ -157,7 +155,7 @@ public sealed class GameSimulationEngine
             return;
         }
 
-        order.Apply(state, state.ActiveOrderZoneSelection, report);
+        order.Apply(state, report);
     }
 
     private static DailyProductionResult CalculateProduction(GameState state, DayResolutionReport report)
@@ -272,37 +270,23 @@ public sealed class GameSimulationEngine
                 continue;
             }
 
-            switch (job)
+            var outputResource = GameBalance.JobOutputResource[job];
+            if (outputResource.HasValue)
             {
-                case JobType.FoodProduction:
-                    state.Resources.Add(ResourceKind.Food, produced);
-                    result.FoodProduced += produced;
-                    report.Add(ReasonTags.Production, $"Food production: +{produced} food.");
-                    break;
-                case JobType.WaterDrawing:
-                    state.Resources.Add(ResourceKind.Water, produced);
-                    result.WaterProduced += produced;
-                    report.Add(ReasonTags.Production, $"Water drawing: +{produced} water.");
-                    break;
-                case JobType.MaterialsCrafting:
-                    state.Resources.Add(ResourceKind.Materials, produced);
-                    result.MaterialsProduced += produced;
-                    report.Add(ReasonTags.Production, $"Materials crafting: +{produced} materials.");
-                    break;
-                case JobType.FuelScavenging:
-                    state.Resources.Add(ResourceKind.Fuel, produced);
-                    result.FuelProduced += produced;
-                    report.Add(ReasonTags.Production, $"Fuel scavenging: +{produced} fuel.");
-                    break;
-                case JobType.Repairs:
-                    result.RepairPoints += produced;
-                    report.Add(ReasonTags.Production, $"Repair teams prepared {produced} integrity points.");
-                    break;
-                case JobType.ClinicStaff:
-                    result.ClinicCarePoints += produced;
-                    result.ClinicSlotsUsed += (int)Math.Max(1, Math.Floor(effectiveCycles));
-                    report.Add(ReasonTags.Production, $"Clinic care capacity: {produced} care points.");
-                    break;
+                state.Resources.Add(outputResource.Value, produced);
+                result.AddResourceProduction(outputResource.Value, produced);
+                report.Add(ReasonTags.Production, $"{job}: +{produced} {outputResource.Value}.");
+            }
+            else if (job == JobType.Repairs)
+            {
+                result.RepairPoints += produced;
+                report.Add(ReasonTags.Production, $"Repair teams prepared {produced} integrity points.");
+            }
+            else if (job == JobType.ClinicStaff)
+            {
+                result.ClinicCarePoints += produced;
+                result.ClinicSlotsUsed += (int)Math.Max(1, Math.Floor(effectiveCycles));
+                report.Add(ReasonTags.Production, $"Clinic care capacity: {produced} care points.");
             }
         }
 
@@ -470,7 +454,7 @@ public sealed class GameSimulationEngine
             StateChangeApplier.ConvertHealthyToSick(state, newCases, report, "Disease spread");
         }
 
-        var diseaseDeaths = state.Sickness > 70 ? Math.Max(1, (state.Sickness - 60) / 15) : 0;
+        var diseaseDeaths = state.Sickness > 70 ? Math.Max(1, (state.Sickness - 70) / 15) : 0;
         if (diseaseDeaths > 0)
         {
             StateChangeApplier.ApplyDeaths(state, diseaseDeaths, report, ReasonTags.Sickness, "Critical sickness mortality");
@@ -743,7 +727,6 @@ public sealed class GameSimulationEngine
             state.GameOverDetails = "Day 40 reached.";
         }
 
-        report.RecoveryEnabledToday = report.RecoveryEnabledToday;
         state.RebalanceHousing();
     }
 

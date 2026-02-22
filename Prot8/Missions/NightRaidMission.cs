@@ -1,19 +1,29 @@
-using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Missions;
 
-public sealed class NightRaidMission() : MissionBase("night_raid", "Night Raid on Siege Camp",
-    "Siege Delay +3 days (40%) | Siege Delay +2 (20%) | 8 Deaths, +15 Unrest (20%)", 1, GameBalance.MissionNightRaidWorkers)
+public sealed class NightRaidMission : IMissionDefinition
 {
-    private const int GreatChance = 40;
-    private const int OkChance = 40;
+    const int GreatChance = 40;
+    const int OkChance = 40;
 
-    public override string GetDynamicTooltip(GameState state) => $"Siege Delay +3 days ({GreatChance}%) | Siege Delay +2 ({OkChance}%) | 8 Deaths, +15 Unrest ({100 - GreatChance - OkChance}%)";
+    public string Id => "night_raid";
+    public string Name => "Night Raid Mission";
+    public int DurationDays => 2;
+    public int WorkerCost => 8;
 
-    public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    public string GetTooltip(GameState state) =>
+        $"Siege Delay +3 days ({GreatChance}%) | Siege Delay +2 ({OkChance}%) | {WorkerCost} Deaths, +15 Unrest ({100 - GreatChance - OkChance}%)";
+
+    public bool CanStart(GameState state, out string reason)
     {
-        var roll = RollPercent(state);
+        reason = "";
+        return true;
+    }
+
+    public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    {
+        var roll = state.RollPercent();
         if (roll <= GreatChance)
         {
             state.SiegeEscalationDelayDays += 3;

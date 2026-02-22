@@ -33,7 +33,6 @@ public sealed class RunTelemetryWriter : IDisposable
                 law_id = action.LawId,
                 emergency_order_id = action.EmergencyOrderId,
                 mission_id = action.MissionId,
-                selected_zone = action.SelectedZoneForOrder?.ToString()
             },
             state = SnapshotState(state),
             report = new

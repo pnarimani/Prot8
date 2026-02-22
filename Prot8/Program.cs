@@ -8,14 +8,14 @@ var seed = TryParseSeed(args);
 var noShortcuts = TryParseNoShortcuts(args);
 var state = new GameState(seed);
 var engine = new GameSimulationEngine();
-var renderer = new ConsoleRenderer(Console.Out, noShortcuts);
-var input = new ConsoleInputReader(noShortcuts);
+var renderer = new ConsoleRenderer(Console.Out);
+var input = new ConsoleInputReader(new CommandParser());
 
 using var telemetry = new RunTelemetryWriter(seed);
 
 while (!state.GameOver)
 {
-    var dayStartVm = GameStateToViewModels.ToDayStartViewModel(state, noShortcuts);
+    var dayStartVm = GameStateToViewModels.ToDayStartViewModel(state);
     renderer.RenderDayStart(dayStartVm);
     var dayPlan = input.ReadDayPlan(state, renderer);
     state.Allocation = dayPlan.Allocation;

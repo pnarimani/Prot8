@@ -1,20 +1,18 @@
 using Prot8.Simulation;
-using Prot8.Zones;
 
 namespace Prot8.Orders;
 
-public sealed class VoluntaryEvacuationOrder : EmergencyOrderBase
+public sealed class VoluntaryEvacuationOrder : IEmergencyOrder
 {
-    public VoluntaryEvacuationOrder() : base("voluntary_evacuation", "Voluntary Evacuation", "Evacuate the active perimeter zone if eligible (irreversible). Consumes today's action.")
-    {
-    }
+    public string Id => "voluntary_evacuation";
+    public string Name => "Voluntary Evacuation";
 
-    public override bool CanIssue(GameState state, ZoneId? selectedZone, out string reason)
-    {
-        return ZoneRules.CanEvacuate(state, state.ActivePerimeterZone.Id, out reason);
-    }
+    public string GetTooltip(GameState state) => "Evacuate the active perimeter zone if eligible (irreversible).";
 
-    public override void Apply(GameState state, ZoneId? selectedZone, DayResolutionReport report)
+    public bool CanIssue(GameState state, out string reason) =>
+        ZoneRules.CanEvacuate(state, state.ActivePerimeterZone.Id, out reason);
+
+    public void Apply(GameState state, DayResolutionReport report)
     {
         StateChangeApplier.LoseZone(state, state.ActivePerimeterZone.Id, true, report);
     }

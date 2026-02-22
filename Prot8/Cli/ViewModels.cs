@@ -85,8 +85,6 @@ public sealed class OrderViewModel
     public string Id { get; init; } = "";
     public string Name { get; init; } = "";
     public string Tooltip { get; init; } = "";
-    public bool RequiresZoneSelection { get; init; }
-    public IReadOnlyList<ZoneId> ValidZones { get; init; } = [];
 }
 
 public sealed class MissionViewModel
@@ -101,7 +99,6 @@ public sealed class MissionViewModel
 public sealed class JobReferenceViewModel
 {
     public JobType Job { get; init; }
-    public string Shortcut { get; init; } = "";
     public string Description { get; init; } = "";
 }
 
@@ -113,7 +110,6 @@ public sealed class PendingPlanViewModel
     public int IdleWorkers { get; init; }
     public string? QueuedActionType { get; init; }
     public string? QueuedActionName { get; init; }
-    public string? QueuedActionZone { get; init; }
 }
 
 public sealed class DayReportViewModel

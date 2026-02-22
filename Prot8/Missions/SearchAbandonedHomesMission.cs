@@ -1,18 +1,29 @@
-using Prot8.Constants;
 using Prot8.Resources;
 using Prot8.Simulation;
 
 namespace Prot8.Missions;
 
-public sealed class SearchAbandonedHomesMission() : MissionBase("search_abandoned_homes", "Search Abandoned Homes",
-    "+60 Materials (50%) | +40 Medicine (30%) | +15 Sickness (20%)", 2,
-    GameBalance.MissionSearchHomesWorkers)
+public sealed class SearchAbandonedHomesMission : IMissionDefinition
 {
-    public override string GetDynamicTooltip(GameState state) => "+60 Materials (50%) | +40 Medicine (30%) | +15 Sickness (20%)";
+    public string Id => "search_abandoned_homes";
+    public string Name => "Search Abandoned Homes";
+    public int DurationDays => 1;
+    public int WorkerCost => 5;
 
-    public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    public string GetTooltip(GameState state)
     {
-        var roll = RollPercent(state);
+        return "+60 Materials (50%) | +40 Medicine (30%) | +15 Sickness (20%)";
+    }
+
+    public bool CanStart(GameState state, out string reason)
+    {
+        reason = "";
+        return true;
+    }
+
+    public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    {
+        var roll = state.RollPercent();
         if (roll <= 50)
         {
             StateChangeApplier.AddResource(state, ResourceKind.Materials, 60, report, ReasonTags.Mission, Name);

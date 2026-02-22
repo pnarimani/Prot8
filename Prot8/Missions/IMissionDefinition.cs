@@ -8,13 +8,11 @@ public interface IMissionDefinition
 
     string Name { get; }
 
-    string OutcomeHint { get; }
-
-    string GetDynamicTooltip(GameState state);
-
     int DurationDays { get; }
 
     int WorkerCost { get; }
+    
+    string GetTooltip(GameState state);
 
     bool CanStart(GameState state, out string reason);
 

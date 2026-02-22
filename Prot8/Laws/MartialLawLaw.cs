@@ -2,19 +2,18 @@ using Prot8.Simulation;
 
 namespace Prot8.Laws;
 
-public sealed class MartialLawLaw : LawBase
+public sealed class MartialLawLaw : ILaw
 {
     private const int UnrestCap = 60;
     private const int MoraleCap = 40;
     private const int UnrestThreshold = 75;
 
-    public MartialLawLaw() : base("martial_law", "Martial Law", $"Unrest cannot exceed {UnrestCap}, morale capped at {MoraleCap}. Requires unrest > {UnrestThreshold}.")
-    {
-    }
+    public string Id => "martial_law";
+    public string Name => "Martial Law";
+    
+    public string GetTooltip(GameState state) => $"Unrest cannot exceed {UnrestCap}, morale capped at {MoraleCap}. Requires unrest > {UnrestThreshold}.";
 
-    public override string GetDynamicTooltip(GameState state) => $"Unrest cannot exceed {UnrestCap}, morale capped at {MoraleCap}. Requires unrest > {UnrestThreshold}.";
-
-    public override bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state, out string reason)
     {
         if (state.Unrest > 75)
         {
@@ -26,7 +25,12 @@ public sealed class MartialLawLaw : LawBase
         return false;
     }
 
-    public override void ApplyDaily(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, DayResolutionReport report)
+    {
+        
+    }
+
+    public void ApplyDaily(GameState state, DayResolutionReport report)
     {
         if (state.Unrest > UnrestCap)
         {

@@ -10,7 +10,6 @@ public static class EmergencyOrderCatalog
         new SoupKitchensOrder(),
         new EmergencyWaterRationOrder(),
         new CrackdownPatrolsOrder(),
-        new QuarantineDistrictOrder(),
         new InspireThePeopleOrder(),
         new VoluntaryEvacuationOrder()
     };

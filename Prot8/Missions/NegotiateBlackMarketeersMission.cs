@@ -1,18 +1,25 @@
-using Prot8.Constants;
 using Prot8.Resources;
 using Prot8.Simulation;
 
 namespace Prot8.Missions;
 
-public sealed class NegotiateBlackMarketeersMission() : MissionBase("negotiate_black_marketeers",
-    "Negotiate with Black Marketeers", "+100 water (50%) | +80 food (30%) | +20 unrest (20%)", 4,
-    GameBalance.MissionBlackMarketeersWorkers)
+public sealed class NegotiateBlackMarketeersMission : IMissionDefinition
 {
-    public override string GetDynamicTooltip(GameState state) => "+100 water (50%) | +80 food (30%) | +20 unrest (20%)";
+    public string Id => "negotiate";
+    public string Name => "Negotiate Black Marketeers";
+    public int DurationDays => 3;
+    public int WorkerCost => 2;
+    public string GetTooltip(GameState state) => "+100 water (50%) | +80 food (30%) | +20 unrest (20%)";
 
-    public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    public bool CanStart(GameState state, out string reason)
     {
-        var roll = RollPercent(state);
+        reason = "";
+        return true;
+    }
+
+    public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    {
+        var roll = state.RollPercent();
         if (roll <= 50)
         {
             StateChangeApplier.AddResource(state, ResourceKind.Water, 100, report, ReasonTags.Mission, Name);

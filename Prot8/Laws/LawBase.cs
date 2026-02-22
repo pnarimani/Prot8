@@ -17,7 +17,7 @@ public abstract class LawBase : ILaw
 
     public string Summary { get; }
 
-    public virtual string GetDynamicTooltip(GameState state) => Summary;
+    public virtual string GetTooltip(GameState state) => Summary;
 
     public abstract bool CanEnact(GameState state, out string reason);
 
