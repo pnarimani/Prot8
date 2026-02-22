@@ -83,6 +83,7 @@ public static class StateChangeApplier
         if (applied > 0)
         {
             state.TotalDeaths += applied;
+            state.Allocation.RemoveWorkersProportionally(applied);
             report.Add(tag, $"{reason}: {applied} deaths.");
         }
 
@@ -100,6 +101,7 @@ public static class StateChangeApplier
         if (applied > 0)
         {
             state.TotalDesertions += applied;
+            state.Allocation.RemoveWorkersProportionally(applied);
             report.Add(tag, $"{reason}: {applied} workers deserted.");
         }
 
@@ -119,6 +121,7 @@ public static class StateChangeApplier
             return;
         }
 
+        state.Allocation.RemoveWorkersProportionally(converted);
         var recoveryDays = GameBalance.ComputeRecoveryDays(state.Sickness);
         state.Population.AddSickWorkers(converted, recoveryDays);
         report.Add(ReasonTags.Sickness, $"{reason}: {converted} workers became sick (recovery base {recoveryDays} days).");

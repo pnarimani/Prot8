@@ -10,9 +10,11 @@ public sealed class RunTelemetryWriter : IDisposable
 {
     private readonly StreamWriter _writer;
     private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = false };
+    GameState _state;
 
-    public RunTelemetryWriter(int? seed)
+    public RunTelemetryWriter(GameState state, int? seed)
     {
+        _state = state;
         Directory.CreateDirectory("runs");
         var seedPart = seed.HasValue ? $"seed{seed.Value}" : "seedrnd";
         var fileName = $"run_{DateTime.UtcNow:yyyyMMdd_HHmmss}_{seedPart}.jsonl";
@@ -22,19 +24,19 @@ public sealed class RunTelemetryWriter : IDisposable
 
     public string FilePath { get; }
 
-    public void LogDay(GameState state, TurnActionChoice action, DayResolutionReport report)
+    public void LogDay(TurnActionChoice action, DayResolutionReport report)
     {
         var record = new
         {
             type = "day",
-            day = state.Day,
+            day = _state.Day,
             action = new
             {
                 law_id = action.LawId,
                 emergency_order_id = action.EmergencyOrderId,
                 mission_id = action.MissionId,
             },
-            state = SnapshotState(state),
+            state = SnapshotState(_state),
             report = new
             {
                 entries = report.Entries,

@@ -1,3 +1,4 @@
+using Prot8.Cli.ViewModels;
 using Prot8.Constants;
 using Prot8.Jobs;
 using Prot8.Laws;
@@ -6,11 +7,11 @@ using Prot8.Orders;
 using Prot8.Resources;
 using Prot8.Simulation;
 
-namespace Prot8.Cli.ViewModels;
+namespace Prot8.Cli;
 
-public static class GameStateToViewModels
+public class GameViewModelFactory(GameState state)
 {
-    public static DayStartViewModel ToDayStartViewModel(GameState state)
+    public DayStartViewModel Create()
     {
         return new DayStartViewModel
         {

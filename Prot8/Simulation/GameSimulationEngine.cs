@@ -9,9 +9,9 @@ using Prot8.Zones;
 
 namespace Prot8.Simulation;
 
-public sealed class GameSimulationEngine
+public sealed class GameSimulationEngine(GameState state)
 {
-    public DayResolutionReport ResolveDay(GameState state, TurnActionChoice action)
+    public DayResolutionReport ResolveDay(TurnActionChoice action)
     {
         var report = new DayResolutionReport(state.Day);
 

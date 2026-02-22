@@ -32,7 +32,7 @@ public sealed class ConsoleInputReader(CommandParser parser)
         var allocation = state.Allocation;
         var action = new TurnActionChoice();
 
-        var pendingPlanVm = GameStateToViewModels.ToPendingPlanViewModel(action);
+        var pendingPlanVm = GameViewModelFactory.ToPendingPlanViewModel(action);
         renderer.RenderPendingDayAction(pendingPlanVm);
 
         while (true)
@@ -57,7 +57,7 @@ public sealed class ConsoleInputReader(CommandParser parser)
                         break;
                     }
 
-                    var helpVm = GameStateToViewModels.ToDayStartViewModel(state);
+                    var helpVm = new GameViewModelFactory(state).Create();
                     renderer.RenderActionReference(helpVm);
                     break;
 
@@ -93,7 +93,7 @@ public sealed class ConsoleInputReader(CommandParser parser)
     void PrintInvalidAndHelp(ConsoleRenderer renderer, GameState state, string message)
     {
         Console.WriteLine($"Invalid command: {message}");
-        var helpVm = GameStateToViewModels.ToDayStartViewModel(state);
+        var helpVm = new GameViewModelFactory(state).Create();
         renderer.RenderActionReference(helpVm);
     }
 }

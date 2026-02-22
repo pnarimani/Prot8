@@ -23,4 +23,52 @@ public sealed class JobAllocation
         foreach (var kvp in _workers)
             _workers[kvp.Key] = 0;
     }
+
+    public int RemoveWorkersProportionally(int count)
+    {
+        if (count <= 0)
+        {
+            return 0;
+        }
+
+        var total = TotalAssigned();
+        if (total == 0)
+        {
+            return 0;
+        }
+
+        var removed = 0;
+        foreach (var job in _workers.Keys.ToList())
+        {
+            var jobWorkers = _workers[job];
+            if (jobWorkers <= 0)
+            {
+                continue;
+            }
+
+            var proportionalShare = (int)Math.Round((double)jobWorkers / total * count);
+            var toRemove = Math.Min(proportionalShare, jobWorkers);
+            _workers[job] -= toRemove;
+            removed += toRemove;
+        }
+
+        if (removed < count && total > 0)
+        {
+            var remaining = count - removed;
+            foreach (var job in _workers.Keys.ToList())
+            {
+                if (remaining <= 0)
+                {
+                    break;
+                }
+
+                var toRemove = Math.Min(remaining, _workers[job]);
+                _workers[job] -= toRemove;
+                removed += toRemove;
+                remaining -= toRemove;
+            }
+        }
+
+        return removed;
+    }
 }

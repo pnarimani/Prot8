@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Prot8.Cli;
 using Prot8.Cli.Commands;
 using Prot8.Cli.ViewModels;
 using Prot8.Simulation;
@@ -40,14 +41,15 @@ public class OperatorAnalystRunner
             var lastDayResolution = "";
             var recentHistory = new RecentHistory();
             var state = new GameState(config.Seed);
-            var engine = new GameSimulationEngine();
-            using var telemetry = new RunTelemetryWriter(config.Seed);
+            var engine = new GameSimulationEngine(state);
+            using var telemetry = new RunTelemetryWriter(state, config.Seed);
             var analystTimeline = new AnalystTimeline();
+            var viewModelFactory = new GameViewModelFactory(state);
 
             while (!state.GameOver)
             {
                 Console.WriteLine($"== Day {state.Day} ==");
-                var dayStartVm = GameStateToViewModels.ToDayStartViewModel(state);
+                var dayStartVm = viewModelFactory.Create();
                 var daySnapshot = JsonSerializer.Serialize(dayStartVm, jsonOptions);
 
                 TurnActionChoice action = new();
@@ -82,12 +84,12 @@ public class OperatorAnalystRunner
                     }
                 }
 
-                var report = engine.ResolveDay(state, action);
+                var report = engine.ResolveDay(action);
 
-                var dayReportVm = GameStateToViewModels.ToDayReportViewModel(state, report);
+                var dayReportVm = GameViewModelFactory.ToDayReportViewModel(state, report);
                 lastDayResolution = JsonSerializer.Serialize(dayReportVm, jsonOptions);
 
-                telemetry.LogDay(state, action, report);
+                telemetry.LogDay(action, report);
 
                 var dayReportJsonNode = JsonSerializer.SerializeToNode(dayReportVm, jsonOptions);
 
@@ -107,7 +109,7 @@ public class OperatorAnalystRunner
                 analystTimeline.Timeline.Add(history.DeepClone());
             }
 
-            var gameOverVm = GameStateToViewModels.ToGameOverViewModel(state);
+            var gameOverVm = GameViewModelFactory.ToGameOverViewModel(state);
             var summary = JsonSerializer.Serialize(gameOverVm, jsonOptions);
             Console.WriteLine(summary);
             telemetry.LogFinal(state);

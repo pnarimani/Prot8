@@ -2,6 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Prot8.Cli;
 using Prot8.Cli.Commands;
 using Prot8.Cli.Output;
 using Prot8.Cli.ViewModels;
@@ -32,15 +33,15 @@ public class CommanderScribeRunner
             Console.WriteLine($"\n{new string('=', 40)} RUN {runIndex + 1} / 100 {new string('=', 40)}\n");
 
             var state = new GameState(config.Seed);
-            var engine = new GameSimulationEngine();
-            using var telemetry = new RunTelemetryWriter(config.Seed);
+            var engine = new GameSimulationEngine(state);
+            using var telemetry = new RunTelemetryWriter(state, config.Seed);
 
             var timeline = new StringBuilder();
 
             while (!state.GameOver)
             {
                 // Capture day snapshot
-                var dayStartVm = GameStateToViewModels.ToDayStartViewModel(state);
+                var dayStartVm = new GameViewModelFactory(state).Create();
                 var daySnapshot = JsonSerializer.Serialize(dayStartVm, jsonSerializationOptions);
                 Console.Write(daySnapshot);
 
@@ -111,14 +112,14 @@ public class CommanderScribeRunner
                     }
                 }
 
-                var report = engine.ResolveDay(state, action);
+                var report = engine.ResolveDay(action);
 
                 // Capture resolution log
-                var dayReportVm = GameStateToViewModels.ToDayReportViewModel(state, report);
+                var dayReportVm = GameViewModelFactory.ToDayReportViewModel(state, report);
                 var resolutionLog = JsonSerializer.Serialize(dayReportVm, jsonSerializationOptions);
                 Console.Write(resolutionLog);
 
-                telemetry.LogDay(state, action, report);
+                telemetry.LogDay(action, report);
 
                 // Build timeline entry with full day state
                 var cmds = executedCommands.ToString().Trim();
@@ -144,7 +145,7 @@ public class CommanderScribeRunner
             }
 
 // Render final
-            var gameOverVm = GameStateToViewModels.ToGameOverViewModel(state);
+            var gameOverVm = GameViewModelFactory.ToGameOverViewModel(state);
             var finalSummary = RenderToString(w => new ConsoleRenderer(w).RenderFinal(gameOverVm));
             Console.Write(finalSummary);
             telemetry.LogFinal(state);
