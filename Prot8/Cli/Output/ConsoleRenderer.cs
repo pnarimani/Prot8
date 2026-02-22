@@ -31,6 +31,7 @@ public sealed class ConsoleRenderer
 
         RenderResources(state);
         RenderPopulation(state);
+        RenderJobAssignments(state);
         RenderZones(state);
         RenderMissions(state);
         RenderLaws(state);
@@ -165,10 +166,25 @@ public sealed class ConsoleRenderer
 
     private void RenderResources(GameState state)
     {
+        var pop = state.Population.TotalPopulation;
+        var foodNeed = (int)Math.Ceiling(pop * GameBalance.FoodPerPersonPerDay);
+        var waterNeed = (int)Math.Ceiling(pop * GameBalance.WaterPerPersonPerDay);
+        var fuelNeed = (int)Math.Ceiling(pop * GameBalance.FuelPerPersonPerDay);
+
         _out.WriteLine("Resources");
         _out.WriteLine($"  Food: {state.Resources[Resources.ResourceKind.Food],4}  Water: {state.Resources[Resources.ResourceKind.Water],4}  Fuel: {state.Resources[Resources.ResourceKind.Fuel],4}  Medicine: {state.Resources[Resources.ResourceKind.Medicine],4}  Materials: {state.Resources[Resources.ResourceKind.Materials],4}");
-        _out.WriteLine($"  Morale: {state.Morale,3}/100  Unrest: {state.Unrest,3}/100  Sickness: {state.Sickness,3}/100");
+        _out.WriteLine($"  Daily need ({pop} pop):  Food ~{foodNeed}  Water ~{waterNeed}  Fuel ~{fuelNeed}  [shortfall each day → +Unrest  −Morale  +Sickness]");
+        _out.WriteLine($"  Morale: {state.Morale,3}/100  Unrest: {state.Unrest,3}/100  Sickness: {state.Sickness,3}/100  {SicknessStatusNote(state.Sickness)}");
         _out.WriteLine();
+    }
+
+    private static string SicknessStatusNote(int sickness)
+    {
+        if (sickness > 70)
+            return "[recovery LOCKED | deaths each day]";
+        if (sickness >= 40)
+            return $"[recovery LOCKED at ≥40]";
+        return "[recovery enabled]";
     }
 
     private void RenderPopulation(GameState state)
@@ -182,6 +198,56 @@ public sealed class ConsoleRenderer
         _out.WriteLine($"  Workers reserved on missions: {state.ReservedWorkersForMissions}");
         _out.WriteLine($"  Available for assignment today: {state.AvailableHealthyWorkersForAllocation}");
         _out.WriteLine();
+    }
+
+    private void RenderJobAssignments(GameState state)
+    {
+        var multiplier = StatModifiers.ComputeGlobalProductionMultiplier(state);
+        _out.WriteLine($"Job Assignments  (production ×{multiplier:F2} from morale/unrest/sickness)");
+
+        var jobs = ActionAvailability.GetJobTypes();
+        for (var i = 0; i < jobs.Count; i++)
+        {
+            var job = jobs[i];
+            var workers = state.Allocation.Workers[job];
+            var slots = state.Allocation.SlotsFor(job);
+
+            string outputDesc;
+            if (slots == 0)
+            {
+                outputDesc = "—";
+            }
+            else
+            {
+                var baseOutput = GameBalance.BaseJobOutputPerSlot[job];
+                var estimated = (int)Math.Floor(slots * multiplier * baseOutput);
+                var outputResource = GameBalance.JobOutputResource[job];
+                outputDesc = outputResource.HasValue
+                    ? $"~{estimated} {outputResource.Value}"
+                    : job == JobType.Repairs
+                        ? $"~{estimated} integrity"
+                        : $"~{estimated} care pts";
+            }
+
+            _out.WriteLine($"  j{i + 1}: {job,-18} {workers,3} workers  {slots} slot(s)  →  {outputDesc,-22} {JobInputShortDesc(job)}");
+        }
+
+        var idle = state.AvailableHealthyWorkersForAllocation - state.Allocation.TotalAssigned();
+        _out.WriteLine($"  Idle: {(idle < 0 ? 0 : idle)} workers");
+        _out.WriteLine();
+    }
+
+    private static string JobInputShortDesc(JobType job)
+    {
+        return job switch
+        {
+            JobType.FoodProduction => "consumes 2 water/slot",
+            JobType.WaterDrawing => "consumes 1 fuel/slot",
+            JobType.MaterialsCrafting => "consumes 2 fuel/slot",
+            JobType.Repairs => "consumes 4 materials + 2 fuel/slot",
+            JobType.ClinicStaff => "consumes 2 medicine/slot",
+            _ => ""
+        };
     }
 
     private void RenderZones(GameState state)
