@@ -14,12 +14,12 @@ namespace Prot8.Cli.Output;
 public sealed class ConsoleRenderer
 {
     private readonly TextWriter _out;
+    private readonly bool _noShortcuts;
 
-    public ConsoleRenderer() : this(Console.Out) { }
-
-    public ConsoleRenderer(TextWriter output)
+    public ConsoleRenderer(TextWriter output, bool noShortcuts)
     {
         _out = output;
+        _noShortcuts = noShortcuts;
     }
 
     public void RenderDayStart(GameState state)
@@ -84,10 +84,14 @@ public sealed class ConsoleRenderer
         
         _out.WriteLine();
         _out.WriteLine("Available Commands (sections with < > are mandatory)");
-        _out.WriteLine("  assign <JobRef|JobType> <Workers>   Set workers for one production slot (absolute value, steps of 5).");
-        _out.WriteLine("  enact <LawRef|LawId>                Queue one available law for today.");
-        _out.WriteLine("  order <OrderRef|OrderId> [ZoneId]   Queue one available emergency order for today.");
-        _out.WriteLine("  mission <MissionRef|MissionId>      Queue one available mission for today.");
+        var jobRef = _noShortcuts ? "JobType" : "JobRef|JobType";
+        var lawRef = _noShortcuts ? "LawId" : "LawRef|LawId";
+        var orderRef = _noShortcuts ? "OrderId" : "OrderRef|OrderId";
+        var missionRef = _noShortcuts ? "MissionId" : "MissionRef|MissionId";
+        _out.WriteLine($"  assign <{jobRef}> <Workers>   Set workers for one production slot (absolute value, steps of 5).");
+        _out.WriteLine($"  enact <{lawRef}>                Queue one available law for today.");
+        _out.WriteLine($"  order <{orderRef}> [ZoneId]   Queue one available emergency order for today.");
+        _out.WriteLine($"  mission <{missionRef}>      Queue one available mission for today.");
         _out.WriteLine("  clear_assignments                   Reset all job assignments to 0.");
         _out.WriteLine("  clear_action                        Clear queued law/order/mission action.");
         _out.WriteLine("  show_plan                           Print current pending assignments and queued action.");
@@ -231,7 +235,8 @@ public sealed class ConsoleRenderer
                         : $"~{estimated} care pts";
             }
 
-            _out.WriteLine($"  j{i + 1}: {job,-18} {workers,3} workers  {slots} slot(s)  →  {outputDesc,-22} {JobInputShortDesc(job)}");
+            var shortcut = _noShortcuts ? "" : $"j{i + 1}: ";
+            _out.WriteLine($"  {shortcut}{job,-18} {workers,3} workers  {slots} slot(s)  →  {outputDesc,-22} {JobInputShortDesc(job)}");
         }
 
         var idle = state.AvailableHealthyWorkersForAllocation - state.Allocation.TotalAssigned();
@@ -317,7 +322,8 @@ public sealed class ConsoleRenderer
         for (var index = 0; index < jobs.Count; index++)
         {
             var job = jobs[index];
-            _out.WriteLine($"  j{index + 1}: {job} | {JobDescription(job)}");
+            var shortcut = _noShortcuts ? "" : $"j{index + 1}: ";
+            _out.WriteLine($"  {shortcut}{job} | {JobDescription(job)}");
         }
 
         _out.WriteLine();
@@ -337,7 +343,8 @@ public sealed class ConsoleRenderer
         for (var index = 0; index < available.Count; index++)
         {
             var law = available[index];
-            _out.WriteLine($"  l{index + 1}: {law.Name} ({law.Id}) | {law.Summary}");
+            var shortcut = _noShortcuts ? "" : $"l{index + 1}: ";
+            _out.WriteLine($"  {shortcut}{law.Name} ({law.Id}) | {law.Summary}");
         }
 
         _out.WriteLine();
@@ -357,15 +364,16 @@ public sealed class ConsoleRenderer
         for (var index = 0; index < available.Count; index++)
         {
             var order = available[index];
+            var shortcut = _noShortcuts ? "" : $"o{index + 1}: ";
             if (!order.RequiresZoneSelection)
             {
-                _out.WriteLine($"  o{index + 1}: {order.Name} ({order.Id}) | {order.Summary}");
+                _out.WriteLine($"  {shortcut}{order.Name} ({order.Id}) | {order.Summary}");
                 continue;
             }
 
             var validZones = ActionAvailability.GetValidZonesForOrder(state, order);
             var zoneList = validZones.Count == 0 ? "none" : string.Join(", ", validZones);
-            _out.WriteLine($"  o{index + 1}: {order.Name} ({order.Id}) | {order.Summary} | valid ZoneId: {zoneList}");
+            _out.WriteLine($"  {shortcut}{order.Name} ({order.Id}) | {order.Summary} | valid ZoneId: {zoneList}");
         }
 
         _out.WriteLine();
@@ -385,7 +393,8 @@ public sealed class ConsoleRenderer
         for (var index = 0; index < available.Count; index++)
         {
             var mission = available[index];
-            _out.WriteLine($"  m{index + 1}: {mission.Name} ({mission.Id}) | {mission.OutcomeHint}");
+            var shortcut = _noShortcuts ? "" : $"m{index + 1}: ";
+            _out.WriteLine($"  {shortcut}{mission.Name} ({mission.Id}) | {mission.OutcomeHint}");
         }
 
         _out.WriteLine();

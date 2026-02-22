@@ -19,6 +19,8 @@ using var llm = new LmStudioClient(config.Endpoint, config.Model);
 
 var previousRunLearnings = "";
 
+var notebook = "(empty - first day)";
+
 for (var runIndex = 0; runIndex < 100; runIndex++)
 {
     Console.WriteLine($"\n{new string('=', 40)} RUN {runIndex + 1} / 100 {new string('=', 40)}\n");
@@ -27,13 +29,12 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
     var engine = new GameSimulationEngine();
     using var telemetry = new RunTelemetryWriter(config.Seed);
 
-    var notebook = "(empty - first day)";
     var timeline = new StringBuilder();
 
     while (!state.GameOver)
     {
         // Capture day snapshot
-        var daySnapshot = RenderToString(w => new ConsoleRenderer(w).RenderDayStart(state));
+        var daySnapshot = RenderToString(w => new ConsoleRenderer(w, true).RenderDayStart(state));
         Console.Write(daySnapshot);
 
         // Call Commander (with retry on invalid commands)
@@ -106,7 +107,7 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
         var report = engine.ResolveDay(state, action);
 
         // Capture resolution log
-        var resolutionLog = RenderToString(w => new ConsoleRenderer(w).RenderDayReport(state, report));
+        var resolutionLog = RenderToString(w => new ConsoleRenderer(w, true).RenderDayReport(state, report));
         Console.Write(resolutionLog);
 
         telemetry.LogDay(state, action, report);
@@ -137,7 +138,7 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
     }
 
 // Render final
-    var finalSummary = RenderToString(w => new ConsoleRenderer(w).RenderFinal(state));
+    var finalSummary = RenderToString(w => new ConsoleRenderer(w, true).RenderFinal(state));
     Console.Write(finalSummary);
     telemetry.LogFinal(state);
 
@@ -157,7 +158,7 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
     Console.WriteLine($"\nTelemetry:  {telemetry.FilePath}");
     Console.WriteLine($"Postmortem: {postmortemPath}");
 
-    previousRunLearnings = ExtractLearnings(criticJson);
+    // previousRunLearnings = ExtractLearnings(criticJson);
 } 
 
 
@@ -202,7 +203,6 @@ static string FormatNotebook(string json)
         AppendSection(sb, node, "hypotheses", "HYPOTHESES");
         AppendSection(sb, node, "observations", "OBSERVATIONS");
         AppendSection(sb, node, "open_questions", "OPEN QUESTIONS");
-        AppendSection(sb, node, "plan", "PLAN");
         return sb.ToString().TrimEnd();
     }
     catch

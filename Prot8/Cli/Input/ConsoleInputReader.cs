@@ -10,6 +10,13 @@ namespace Prot8.Cli.Input;
 
 public sealed class ConsoleInputReader
 {
+    private static bool _noShortcuts;
+
+    public ConsoleInputReader(bool noShortcuts)
+    {
+        _noShortcuts = noShortcuts;
+    }
+
     public static bool TryExecuteCommand(GameState state, JobAllocation allocation, ref TurnActionChoice action,
         string rawCommand, out string message, out bool endDayRequested)
     {
@@ -169,7 +176,8 @@ public sealed class ConsoleInputReader
     {
         if (parts.Length != 3)
         {
-            message = "Usage: assign <JobRef|JobType> <Workers>.";
+            var jobRef = _noShortcuts ? "JobType" : "JobRef|JobType";
+            message = $"Usage: assign <{jobRef}> <Workers>.";
             return false;
         }
 
@@ -217,7 +225,8 @@ public sealed class ConsoleInputReader
     {
         if (parts.Length != 2)
         {
-            message = "Usage: enact <LawRef|LawId>.";
+            var lawRef = _noShortcuts ? "LawId" : "LawRef|LawId";
+            message = $"Usage: enact <{lawRef}>.";
             return false;
         }
 
@@ -236,7 +245,8 @@ public sealed class ConsoleInputReader
     {
         if (parts.Length < 2 || parts.Length > 3)
         {
-            message = "Usage: order <OrderRef|OrderId> [ZoneId].";
+            var orderRef = _noShortcuts ? "OrderId" : "OrderRef|OrderId";
+            message = $"Usage: order <{orderRef}> [ZoneId].";
             return false;
         }
 
@@ -292,7 +302,8 @@ public sealed class ConsoleInputReader
     {
         if (parts.Length != 2)
         {
-            message = "Usage: mission <MissionRef|MissionId>.";
+            var missionRef = _noShortcuts ? "MissionId" : "MissionRef|MissionId";
+            message = $"Usage: mission <{missionRef}>.";
             return false;
         }
 
@@ -428,13 +439,18 @@ public sealed class ConsoleInputReader
             return false;
         }
 
-        reason = $"Unknown JobRef '{token}'. Use JobType names or j1..j{ActionAvailability.GetJobTypes().Count}.";
+        reason = _noShortcuts
+            ? $"Unknown JobType '{token}'."
+            : $"Unknown JobRef '{token}'. Use JobType names or j1..j{ActionAvailability.GetJobTypes().Count}.";
         return false;
     }
 
     static bool TryParseShortcut(string token, char prefix, out int index)
     {
         index = 0;
+        if (_noShortcuts)
+            return false;
+
         if (token.Length < 2 || char.ToLowerInvariant(token[0]) != char.ToLowerInvariant(prefix))
             return false;
 

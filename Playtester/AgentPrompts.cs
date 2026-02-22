@@ -104,14 +104,18 @@ public static class AgentPrompts
         - The start-of-day snapshot
         - The commands executed
         - The resolution log
-
+        
+        Try to validate your hypotheses against the resolution log. 
+        If a hypothesis is contradicted by the resolution log, discard it. 
+        If it is supported by the resolution log, move it to observations.
+        
         Rules:
         - Do not invent mechanics or hidden systems.
         - Do not assume knowledge not shown in logs.
         - Record trends and patterns only if supported by evidence.
         - Respond with a JSON object with four fields: hypotheses, observations,
           open_questions, plan. Each is an array of short strings.
-        - Keep total content concise (aim for under 1200 characters across all fields).
+        - Keep total content concise (aim for under 2200 characters across all fields).
         """;
 
     public static string ScribeUser(string previousNotebook, string daySnapshot, string commandsExecuted, string resolutionLog, string previousRunLearnings)
@@ -139,9 +143,16 @@ public static class AgentPrompts
             </resolution>
 
             {previousRunLearnings}
-
+            
+            
+            Try to validate your hypotheses against the resolution log. 
+            If a hypothesis is contradicted by the resolution log, discard it. 
+            If it is supported by the resolution log, move it to observations.
+            
+            Try to answer your open questions using the resolution log.
+            
             Update the notebook. Return JSON with fields:
-            hypotheses, observations, open_questions, plan.
+            hypotheses, observations and open_questions.
             Each field is an array of concise strings.
             """;
     }
@@ -161,7 +172,6 @@ public static class AgentPrompts
                     ["hypotheses"] = StringArray("Current beliefs about how the game works."),
                     ["observations"] = StringArray("Concrete things noticed this day."),
                     ["open_questions"] = StringArray("Things still unknown or uncertain."),
-                    ["plan"] = StringArray("Intended strategy for upcoming days.")
                 },
                 ["required"] = new JsonArray("hypotheses", "observations", "open_questions", "plan"),
                 ["additionalProperties"] = false

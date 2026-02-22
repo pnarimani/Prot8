@@ -4,10 +4,11 @@ using Prot8.Simulation;
 using Prot8.Telemetry;
 
 var seed = TryParseSeed(args);
+var noShortcuts = TryParseNoShortcuts(args);
 var state = new GameState(seed);
 var engine = new GameSimulationEngine();
-var renderer = new ConsoleRenderer();
-var input = new ConsoleInputReader();
+var renderer = new ConsoleRenderer(Console.Out, noShortcuts);
+var input = new ConsoleInputReader(noShortcuts);
 
 using var telemetry = new RunTelemetryWriter(seed);
 
@@ -49,4 +50,17 @@ static int? TryParseSeed(string[] args)
     }
 
     return null;
+}
+
+static bool TryParseNoShortcuts(string[] args)
+{
+    foreach (var arg in args)
+    {
+        if (arg.Equals("--no-shortcuts", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
