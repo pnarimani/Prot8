@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace Playtester;
@@ -16,12 +17,17 @@ public sealed class LmStudioClient : IDisposable
         _model = model ?? "";
     }
 
-    public async Task<string> ChatAsync(string systemPrompt, string userPrompt, double temperature = 0.7)
+    public async Task<string> ChatAsync(
+        string systemPrompt,
+        string userPrompt,
+        double temperature = 0.7,
+        JsonNode? responseFormat = null)
     {
         var request = new ChatRequest
         {
             Model = _model,
             Temperature = temperature,
+            ResponseFormat = responseFormat,
             Messages =
             [
                 new ChatMessage { Role = "system", Content = systemPrompt },
@@ -43,6 +49,9 @@ public sealed class LmStudioClient : IDisposable
         [JsonPropertyName("model")] public string Model { get; set; } = "";
         [JsonPropertyName("messages")] public List<ChatMessage> Messages { get; set; } = [];
         [JsonPropertyName("temperature")] public double Temperature { get; set; }
+        [JsonPropertyName("response_format")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public JsonNode? ResponseFormat { get; set; }
     }
 
     private sealed class ChatMessage

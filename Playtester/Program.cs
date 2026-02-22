@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text;
+using System.Text.Json.Nodes;
 using Playtester;
 using Prot8.Cli.Input;
 using Prot8.Cli.Output;
@@ -20,7 +21,6 @@ using var llm = new LmStudioClient(config.Endpoint, config.Model);
 var state = new GameState(config.Seed);
 var engine = new GameSimulationEngine();
 using var telemetry = new RunTelemetryWriter(config.Seed);
-await using var agentResponseLog = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "agents.txt"));
 
 var notebook = "(empty - first day)";
 var timeline = new StringBuilder();
@@ -39,21 +39,21 @@ while (!state.GameOver)
     // Call Commander
     Console.WriteLine($"[AI] Calling Commander for Day {state.Day}...");
     var commanderPrompt = AgentPrompts.CommanderUser(daySnapshot, notebook);
-    var commanderResponse = await llm.ChatAsync(AgentPrompts.CommanderSystem, commanderPrompt, temperature: 0.4);
-    agentResponseLog.WriteLine($"[AI] Commander response:\n{commanderResponse}\n");
+    var commanderJson = await llm.ChatAsync(
+        AgentPrompts.CommanderSystem, commanderPrompt,
+        temperature: 0.4, responseFormat: AgentPrompts.CommanderResponseFormat);
 
-    // Parse and execute commands
-    var commandLines = ParseCommandLines(commanderResponse);
+    // Parse commands from JSON
+    var commandLines = ParseCommanderJson(commanderJson);
+    Console.WriteLine($"[AI] Commander issued {commandLines.Count} command(s).");
+
     var executedCommands = new StringBuilder();
-
     foreach (var line in commandLines)
     {
-        if (string.IsNullOrEmpty(line)) 
-            continue;
-        if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase))
-            break;
+        if (string.IsNullOrEmpty(line)) continue;
+        if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase)) break;
 
-        var success = ConsoleInputReader.TryExecuteCommand(state, allocation, ref action, line, out var msg, out var endDay);
+        ConsoleInputReader.TryExecuteCommand(state, allocation, ref action, line, out var msg, out var endDay);
         Console.WriteLine($"  > {line} => {msg}");
         executedCommands.AppendLine(line);
 
@@ -80,17 +80,16 @@ while (!state.GameOver)
     if (!state.GameOver)
     {
         // Call Scribe
-        Console.WriteLine($"\n[AI] Calling Scribe for Day {state.Day}...");
+        Console.WriteLine($"[AI] Calling Scribe for Day {state.Day}...");
         var scribePrompt = AgentPrompts.ScribeUser(notebook, daySnapshot, cmds, resolutionLog);
-        notebook = await llm.ChatAsync(AgentPrompts.ScribeSystem, scribePrompt, temperature: 0.3);
-        // Trim notebook to ~1200 chars
-        if (notebook.Length > 1500)
-            notebook = notebook[..1500];
-        agentResponseLog.WriteLine($"[AI] Scribe response:\n{notebook}\n");
+        var scribeJson = await llm.ChatAsync(
+            AgentPrompts.ScribeSystem, scribePrompt,
+            temperature: 0.3, responseFormat: AgentPrompts.ScribeResponseFormat);
+
+        notebook = FormatNotebook(scribeJson);
         Console.WriteLine($"[AI] Notebook updated ({notebook.Length} chars).\n");
 
         state.Day += 1;
-        await agentResponseLog.FlushAsync();
     }
 }
 
@@ -100,9 +99,13 @@ Console.Write(finalSummary);
 telemetry.LogFinal(state);
 
 // Call Critic for postmortem
-Console.WriteLine("\n[AI] Calling Critic for postmortem...");
+Console.WriteLine("[AI] Calling Critic for postmortem...");
 var criticPrompt = AgentPrompts.CriticUser(finalSummary, timeline.ToString(), notebook);
-var postmortem = await llm.ChatAsync(AgentPrompts.CriticSystem, criticPrompt, temperature: 0.5);
+var criticJson = await llm.ChatAsync(
+    AgentPrompts.CriticSystem, criticPrompt,
+    temperature: 0.5, responseFormat: AgentPrompts.CriticResponseFormat);
+
+var postmortem = FormatPostmortem(criticJson);
 
 // Save postmortem next to telemetry
 var postmortemPath = Path.ChangeExtension(telemetry.FilePath, ".postmortem.md");
@@ -121,18 +124,98 @@ static string RenderToString(Action<TextWriter> render)
     return sw.ToString();
 }
 
-static List<string> ParseCommandLines(string response)
+static List<string> ParseCommanderJson(string json)
 {
-    var lines = new List<string>();
-    foreach (var raw in response.Split('\n'))
+    try
     {
-        var line = raw.Trim();
-        if (line.Length == 0) continue;
-        if (line.StartsWith('#')) continue;     // comment
-        if (line.StartsWith("```")) continue;   // markdown fence
-        lines.Add(line);
+        var node = JsonNode.Parse(json);
+        var array = node?["commands"]?.AsArray();
+        if (array is null) return [];
+        return [.. array.Select(x => x?.GetValue<string>() ?? "").Where(s => s.Length > 0)];
     }
-    return lines;
+    catch
+    {
+        Console.WriteLine($"[AI] Warning: failed to parse Commander JSON, treating as empty.");
+        return [];
+    }
+}
+
+static string FormatNotebook(string json)
+{
+    try
+    {
+        var node = JsonNode.Parse(json);
+        if (node is null) return json;
+
+        var sb = new StringBuilder();
+        AppendSection(sb, node, "hypotheses", "HYPOTHESES");
+        AppendSection(sb, node, "observations", "OBSERVATIONS");
+        AppendSection(sb, node, "open_questions", "OPEN QUESTIONS");
+        AppendSection(sb, node, "plan", "PLAN");
+        return sb.ToString().TrimEnd();
+    }
+    catch
+    {
+        return json;
+    }
+}
+
+static void AppendSection(StringBuilder sb, JsonNode node, string key, string header)
+{
+    sb.AppendLine(header);
+    var arr = node[key]?.AsArray();
+    if (arr is null || arr.Count == 0)
+    {
+        sb.AppendLine("- (none)");
+    }
+    else
+    {
+        foreach (var item in arr)
+            sb.AppendLine($"- {item?.GetValue<string>()}");
+    }
+    sb.AppendLine();
+}
+
+static string FormatPostmortem(string json)
+{
+    try
+    {
+        var node = JsonNode.Parse(json);
+        if (node is null) return json;
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"## 1) Outcome");
+        sb.AppendLine(node["outcome"]?.GetValue<string>());
+        sb.AppendLine();
+        sb.AppendLine("## 2) What I believe caused the result");
+        sb.AppendLine(node["cause"]?.GetValue<string>());
+        sb.AppendLine();
+        sb.AppendLine("## 3) Three most impactful decisions");
+        var decisions = node["impactful_decisions"]?.AsArray();
+        if (decisions is not null)
+            foreach (var d in decisions)
+                sb.AppendLine($"- {d?.GetValue<string>()}");
+        sb.AppendLine();
+        sb.AppendLine("## 4) Strategy I converged on");
+        sb.AppendLine(node["strategy"]?.GetValue<string>());
+        sb.AppendLine();
+        sb.AppendLine("## 5) What felt unclear or confusing");
+        sb.AppendLine(node["unclear"]?.GetValue<string>());
+        sb.AppendLine();
+        sb.AppendLine("## 6) What felt fair vs unfair");
+        sb.AppendLine(node["fair_vs_unfair"]?.GetValue<string>());
+        sb.AppendLine();
+        sb.AppendLine("## 7) Changes I would suggest");
+        sb.AppendLine(node["suggestions"]?.GetValue<string>());
+        sb.AppendLine();
+        sb.AppendLine("## 8) What I would try next run");
+        sb.AppendLine(node["next_run"]?.GetValue<string>());
+        return sb.ToString();
+    }
+    catch
+    {
+        return json;
+    }
 }
 
 static string BuildSignals(GameState state, DayResolutionReport report)
