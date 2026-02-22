@@ -30,12 +30,18 @@ while (!state.GameOver)
     // Capture day snapshot
     var daySnapshot = RenderToString(w => new ConsoleRenderer(w).RenderDayStart(state));
     Console.Write(daySnapshot);
+    
 
     // Build starting allocation
     var allocation = ConsoleInputReader.BuildStartingAllocation(state, out var adjustMsg);
     if (adjustMsg != null) Console.WriteLine(adjustMsg);
     var action = new TurnActionChoice();
 
+    var currentPlan = RenderToString(w => new ConsoleRenderer(w).RenderPendingPlan(state, allocation, action));
+    Console.Write(currentPlan);
+
+    daySnapshot += currentPlan;
+    
     // Call Commander
     Console.WriteLine($"[AI] Calling Commander for Day {state.Day}...");
     var commanderPrompt = AgentPrompts.CommanderUser(daySnapshot, notebook);
