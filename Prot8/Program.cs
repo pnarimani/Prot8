@@ -5,7 +5,6 @@ using Prot8.Simulation;
 using Prot8.Telemetry;
 
 var seed = TryParseSeed(args);
-var noShortcuts = TryParseNoShortcuts(args);
 var state = new GameState(seed);
 var engine = new GameSimulationEngine();
 var renderer = new ConsoleRenderer(Console.Out);
@@ -25,11 +24,6 @@ while (!state.GameOver)
     var dayReportVm = GameStateToViewModels.ToDayReportViewModel(state, report);
     renderer.RenderDayReport(dayReportVm);
     telemetry.LogDay(state, action, report);
-
-    if (!state.GameOver)
-    {
-        state.Day += 1;
-    }
 }
 
 var gameOverVm = GameStateToViewModels.ToGameOverViewModel(state);

@@ -2,8 +2,112 @@ using System.Text.Json.Nodes;
 
 namespace Playtester;
 
-public static class AgentPrompts
+public static class Agents
 {
+    public static class Operator
+    {
+        public const string System =
+            """
+            You are playing a brutal, turn-based survival siege game. Your goal is to survive for 40 days.
+            You cannot stabilize; you must make difficult sacrifices every day to delay failure.
+
+            Mechanics:
+                Orders: Take effect immediately.
+                Laws: Take effect permanently.
+                Missions: Take several days to resolve and have multiple outcomes.
+            
+            You may only choose one of Orders, Laws and Missions to activate on one day.
+            For example: You CANNOT activate an order and a law on the same day.
+
+            You have access to a "Survival Guide" written by your past iterations. You must treat the rules in this guide as absolute truth. If the guide tells you not to do something, do not do it.
+
+            Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects. 
+            Each command object has a "type" discriminator field and the command's own fields:
+            ```
+                { "type": "assign",            "job_id": "<JobType>", "workers": <int> }
+                { "type": "clear_assignments" }
+                { "type": "enact_law",         "law_id": "<LawId>" }
+                { "type": "issue_order",       "order_id": "<OrderId>" }
+                { "type": "start_mission",     "mission_id": "<MissionId>" }
+                { "type": "clear_action" }
+                { "type": "end_day" }  — must be the last command.
+            ```
+            """;
+
+        const string User =
+            """
+            Current Survival Guide:
+            ```
+            {0}
+            ```
+            
+            Recent History:
+            ```
+            {3}
+            ```
+            
+            Last Day Resolution:
+            ```json
+            {1}
+            ```
+
+            Current Game State:
+            ```json
+            {2}
+            ```
+
+            Based on the guide and the state, choose your action for today.
+            """;
+
+        public static string GetUserPrompt(string survivalGuide, string lastDayResolution, string gameState, string recentHistory)
+        {
+            return string.Format(User, survivalGuide, lastDayResolution, gameState, recentHistory);
+        }
+    }
+
+    public static class Analyst
+    {
+        public const string System =
+            """
+            You are an expert forensic game analyst. Your job is to analyze the log of a failed run in a brutal survival siege game and update the "Survival Guide".
+            The game features hidden, cascading consequences. A death on Day 15 due to "Starvation" is rarely caused by the action taken on Day 14. It is usually caused by a strategic error made days earlier (e.g., passing a law that drains food, or failing to send a mission).
+
+            Your tasks:
+            * Analyze the Game Log and the Cause of Death.
+            * Trace back the cascading failure. Identify the exact day and action that doomed the run.
+            * Analyze the current Survival Guide. Determine if a rule in the guide is incorrect and led to this death, or if a new rule needs to be added.
+            * Rewrite the Survival Guide. The guide must be concise, heavily prioritized, and written as strict directives for the next player (e.g., "NEVER pass [Law X] before Day 5, it causes a food crash on Day 10").
+
+            Output ONLY the updated contents of the Survival Guide in Markdown format.
+            """;
+
+        const string User =
+            """
+            Game Over Reason:
+            ```
+            {0}
+            ```
+
+            Timeline:
+            ```
+            {1}
+            ```
+
+            Current Survival Guide:
+            ```
+            {2}
+            ```
+
+            Provide the completely updated Survival Guide.
+            """;
+
+        public static string GetUserPrompt(string gameOverReason, string timeline, string currentGuide)
+        {
+            return string.Format(User, gameOverReason, timeline, currentGuide);
+        }
+    }
+
+
     // ── Commander ────────────────────────────────────────────────────────────
 
     public const string CommanderSystem =

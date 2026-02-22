@@ -266,7 +266,7 @@ public sealed class GameSimulationEngine
                 continue;
             }
 
-            if (outputResource.Resource is not ResourceKind.Integrity and ResourceKind.Care)
+            if (outputResource.Resource is not ResourceKind.Integrity and not ResourceKind.Care)
             {
                 state.Resources.Add(outputResource.Resource, produced);
                 result.AddResourceProduction(outputResource.Resource, produced);
@@ -702,6 +702,7 @@ public sealed class GameSimulationEngine
 
     private static void FinalizeDay(GameState state, DayResolutionReport report)
     {
+        state.Day += 1;
         state.FoodDeficitYesterday = state.FoodDeficitToday;
         state.WaterDeficitYesterday = state.WaterDeficitToday;
 

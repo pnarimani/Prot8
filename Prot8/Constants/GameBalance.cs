@@ -15,7 +15,7 @@ public static class GameBalance
 
     public const int StartingFood = 320;
     public const int StartingWater = 360;
-    public const int StartingFuel = 240;
+    public const int StartingFuel = 600;
     public const int StartingMedicine = 40;
     public const int StartingMaterials = 120;
 
