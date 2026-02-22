@@ -38,7 +38,6 @@ public sealed class MedicalTriageLaw : ILaw
         if (deaths > 0)
         {
             state.TotalDeaths += deaths;
-            state.RebalanceHousing();
             report.Add(ReasonTags.LawPassive, $"{Name}: {deaths} sick workers died due to triage limits.");
         }
     }

@@ -31,7 +31,6 @@ public sealed class MandatoryGuardServiceLaw : ILaw
     public void OnEnact(GameState state, DayResolutionReport report)
     {
         var converted = state.Population.ConvertHealthyToGuards(GuardConversion);
-        state.RebalanceHousing();
         report.Add(ReasonTags.LawEnact, $"{Name}: converted {converted} healthy workers into guards permanently.");
         StateChangeApplier.AddMorale(state, -MoraleHit, report, ReasonTags.LawEnact, Name);
     }

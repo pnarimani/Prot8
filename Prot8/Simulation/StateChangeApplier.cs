@@ -1,5 +1,4 @@
 using Prot8.Constants;
-using Prot8.Population;
 using Prot8.Resources;
 using Prot8.Zones;
 
@@ -84,7 +83,6 @@ public static class StateChangeApplier
         if (applied > 0)
         {
             state.TotalDeaths += applied;
-            state.RebalanceHousing();
             report.Add(tag, $"{reason}: {applied} deaths.");
         }
 
@@ -102,7 +100,6 @@ public static class StateChangeApplier
         if (applied > 0)
         {
             state.TotalDesertions += applied;
-            state.RebalanceHousing();
             report.Add(tag, $"{reason}: {applied} workers deserted.");
         }
 
@@ -124,7 +121,6 @@ public static class StateChangeApplier
 
         var recoveryDays = GameBalance.ComputeRecoveryDays(state.Sickness);
         state.Population.AddSickWorkers(converted, recoveryDays);
-        state.RebalanceHousing();
         report.Add(ReasonTags.Sickness, $"{reason}: {converted} workers became sick (recovery base {recoveryDays} days).");
     }
 
@@ -141,7 +137,6 @@ public static class StateChangeApplier
             return;
         }
 
-        state.RebalanceHousing();
         report.RecoveredWorkersToday += recovered;
         state.TotalRecoveredWorkers += recovered;
         report.Add(ReasonTags.RecoveryComplete, $"{reason}: {recovered} sick workers recovered to healthy.");
@@ -164,7 +159,6 @@ public static class StateChangeApplier
         }
 
         state.ZoneLossOccurred = true;
-        state.RebalanceHousing();
 
         if (isControlledEvacuation)
         {

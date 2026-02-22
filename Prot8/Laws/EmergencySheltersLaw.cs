@@ -29,7 +29,6 @@ public sealed class EmergencySheltersLaw : ILaw
     {
         var inner = state.GetZone(ZoneId.InnerDistrict);
         inner.Capacity += CapacityGain;
-        state.RebalanceHousing();
         report.Add(ReasonTags.LawEnact, $"{Name}: Inner District capacity +{CapacityGain}.");
         StateChangeApplier.AddUnrest(state, UnrestHit, report, ReasonTags.LawEnact, Name);
     }

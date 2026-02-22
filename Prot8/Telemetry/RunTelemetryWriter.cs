@@ -97,7 +97,7 @@ public sealed class RunTelemetryWriter : IDisposable
                 name = zone.Name,
                 integrity = zone.Integrity,
                 capacity = zone.Capacity,
-                population = zone.Population,
+                population = state.GetZonePopulation(),
                 is_lost = zone.IsLost
             });
         }

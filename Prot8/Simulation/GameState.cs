@@ -30,7 +30,6 @@ public sealed class GameState
         Allocation = new JobAllocation();
 
         Population.EnqueueRecovery(Population.SickWorkers, GameBalance.ComputeRecoveryDays(Sickness));
-        RebalanceHousing();
     }
 
     public int Day { get; set; } = 1;
@@ -201,29 +200,9 @@ public sealed class GameState
         return count;
     }
 
-    public void RebalanceHousing()
+    public int GetZonePopulation()
     {
-        var remaining = Population.TotalPopulation;
-        ZoneState? lastSurviving = null;
-
-        foreach (var zone in Zones)
-        {
-            if (zone.IsLost)
-            {
-                zone.Population = 0;
-                continue;
-            }
-
-            lastSurviving = zone;
-            var assign = remaining >= zone.Capacity ? zone.Capacity : remaining;
-            zone.Population = assign;
-            remaining -= assign;
-        }
-
-        if (remaining > 0 && lastSurviving is not null)
-        {
-            lastSurviving.Population += remaining;
-        }
+        return Population.TotalPopulation / Zones.Count(x => !x.IsLost);
     }
 
     static IReadOnlyList<ZoneState> CreateZones()
@@ -232,7 +211,7 @@ public sealed class GameState
         foreach (var template in GameBalance.ZoneTemplates)
         {
             list.Add(new ZoneState(template.ZoneId, template.Name, template.StartingIntegrity,
-                template.StartingCapacity, template.StartingPopulation));
+                template.StartingCapacity));
         }
 
         return list;

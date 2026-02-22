@@ -43,7 +43,7 @@ public static class GameStateToViewModels
                 Name = zone.Name,
                 Integrity = zone.Integrity,
                 Capacity = zone.Capacity,
-                Population = zone.Population,
+                Population = state.GetZonePopulation(),
                 IsLost = zone.IsLost,
             }).ToList(),
             ActiveMissions = state.ActiveMissions.Select(m => new ActiveMissionViewModel

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Prot8.Constants;
 using Prot8.Events;
 using Prot8.Jobs;
@@ -39,7 +37,7 @@ public sealed class GameSimulationEngine
         return report;
     }
 
-    private static void PrepareDay(GameState state)
+    static void PrepareDay(GameState state)
     {
         state.DailyEffects = new TemporaryDailyEffects();
         state.ActiveOrderId = null;
@@ -48,7 +46,7 @@ public sealed class GameSimulationEngine
         state.FuelDeficitToday = false;
     }
 
-    private static void ApplyPlayerAction(GameState state, TurnActionChoice action, DayResolutionReport report)
+    static void ApplyPlayerAction(GameState state, TurnActionChoice action, DayResolutionReport report)
     {
         if (!string.IsNullOrWhiteSpace(action.LawId))
         {
@@ -66,7 +64,7 @@ public sealed class GameSimulationEngine
             }
 
             var lawCooldownActive = state.LastLawDay != int.MinValue
-                && state.Day - state.LastLawDay < GameBalance.LawCooldownDays;
+                                    && state.Day - state.LastLawDay < GameBalance.LawCooldownDays;
             if (lawCooldownActive)
             {
                 var nextDay = state.LastLawDay + GameBalance.LawCooldownDays;
@@ -103,7 +101,7 @@ public sealed class GameSimulationEngine
             }
 
             var orderCooldownActive = state.LastOrderDay != int.MinValue
-                && state.Day - state.LastOrderDay < GameBalance.OrderCooldownDays;
+                                      && state.Day - state.LastOrderDay < GameBalance.OrderCooldownDays;
             if (orderCooldownActive)
             {
                 var nextDay = state.LastOrderDay + GameBalance.OrderCooldownDays;
@@ -137,20 +135,23 @@ public sealed class GameSimulationEngine
                 report.Add(ReasonTags.Mission, $"Cannot start mission {mission.Name}: {reason}");
                 return;
             }
-            
-            if(state.IdleWorkers < mission.WorkerCost)
+
+            if (state.IdleWorkers < mission.WorkerCost)
             {
-                report.Add(ReasonTags.Mission, $"Cannot start mission {mission.Name}: not enough idle workers (need {mission.WorkerCost}, have {state.IdleWorkers}).");
+                report.Add(ReasonTags.Mission,
+                    $"Cannot start mission {mission.Name}: not enough idle workers (need {mission.WorkerCost}, have {state.IdleWorkers}).");
                 return;
             }
 
-            state.ActiveMissions.Add(new ActiveMission(mission.Id, mission.Name, mission.DurationDays + 1, mission.WorkerCost));
+            state.ActiveMissions.Add(new ActiveMission(mission.Id, mission.Name, mission.DurationDays + 1,
+                mission.WorkerCost));
             state.MissionCooldowns[mission.Id] = state.Day;
-            report.Add(ReasonTags.Mission, $"Mission started: {mission.Name} ({mission.DurationDays} day(s), {mission.WorkerCost} workers committed).");
+            report.Add(ReasonTags.Mission,
+                $"Mission started: {mission.Name} ({mission.DurationDays} day(s), {mission.WorkerCost} workers committed).");
         }
     }
 
-    private static void ApplyLawPassives(GameState state, DayResolutionReport report)
+    static void ApplyLawPassives(GameState state, DayResolutionReport report)
     {
         foreach (var lawId in state.ActiveLawIds)
         {
@@ -159,7 +160,7 @@ public sealed class GameSimulationEngine
         }
     }
 
-    private static void ApplyEmergencyOrderEffects(GameState state, DayResolutionReport report)
+    static void ApplyEmergencyOrderEffects(GameState state, DayResolutionReport report)
     {
         if (string.IsNullOrWhiteSpace(state.ActiveOrderId))
         {
@@ -175,11 +176,12 @@ public sealed class GameSimulationEngine
         order.Apply(state, report);
     }
 
-    private static DailyProductionResult CalculateProduction(GameState state, DayResolutionReport report)
+    static DailyProductionResult CalculateProduction(GameState state, DayResolutionReport report)
     {
         var result = new DailyProductionResult();
 
-        var globalMultiplier = StatModifiers.ComputeGlobalProductionMultiplier(state) * state.DailyEffects.ProductionMultiplier;
+        var globalMultiplier = StatModifiers.ComputeGlobalProductionMultiplier(state) *
+                               state.DailyEffects.ProductionMultiplier;
 
         foreach (var job in Enum.GetValues<JobType>())
         {
@@ -188,7 +190,7 @@ public sealed class GameSimulationEngine
             {
                 continue;
             }
-            
+
             var zoneMultiplier = 1.0;
             if (job != JobType.Repairs)
             {
@@ -305,12 +307,14 @@ public sealed class GameSimulationEngine
         return result;
     }
 
-    private static void ApplyConsumption(GameState state, DayResolutionReport report)
+    static void ApplyConsumption(GameState state, DayResolutionReport report)
     {
         var population = state.Population.TotalPopulation;
 
-        var foodNeed = (int)Math.Ceiling(population * GameBalance.FoodPerPersonPerDay * state.DailyEffects.FoodConsumptionMultiplier);
-        var waterNeed = (int)Math.Ceiling(population * GameBalance.WaterPerPersonPerDay * state.DailyEffects.WaterConsumptionMultiplier);
+        var foodNeed = (int)Math.Ceiling(population * GameBalance.FoodPerPersonPerDay *
+                                         state.DailyEffects.FoodConsumptionMultiplier);
+        var waterNeed = (int)Math.Ceiling(population * GameBalance.WaterPerPersonPerDay *
+                                          state.DailyEffects.WaterConsumptionMultiplier);
         var fuelNeed = (int)Math.Ceiling(population * GameBalance.FuelPerPersonPerDay);
 
         var foodConsumed = state.Resources.Consume(ResourceKind.Food, foodNeed);
@@ -322,7 +326,8 @@ public sealed class GameSimulationEngine
         state.LastDayFoodConsumed = foodConsumed;
         state.LastDayWaterConsumed = waterConsumed;
 
-        report.Add(ReasonTags.Consumption, $"Daily consumption: food {foodConsumed}/{foodNeed}, water {waterConsumed}/{waterNeed}, fuel {fuelConsumed}/{fuelNeed}.");
+        report.Add(ReasonTags.Consumption,
+            $"Daily consumption: food {foodConsumed}/{foodNeed}, water {waterConsumed}/{waterNeed}, fuel {fuelConsumed}/{fuelNeed}.");
 
         if (foodConsumed < foodNeed)
         {
@@ -346,7 +351,7 @@ public sealed class GameSimulationEngine
         }
     }
 
-    private static void ApplyDeficitPenalties(GameState state, DayResolutionReport report)
+    static void ApplyDeficitPenalties(GameState state, DayResolutionReport report)
     {
         if (state.FoodDeficitToday)
         {
@@ -389,9 +394,11 @@ public sealed class GameSimulationEngine
         }
     }
 
-    private static void ApplyOvercrowdingPenalties(GameState state, DayResolutionReport report)
+    static void ApplyOvercrowdingPenalties(GameState state, DayResolutionReport report)
     {
         var totalStacks = 0;
+
+        var pop = state.GetZonePopulation();
 
         foreach (var zone in state.Zones)
         {
@@ -400,7 +407,7 @@ public sealed class GameSimulationEngine
                 continue;
             }
 
-            var over = zone.Population - zone.Capacity;
+            var over = pop - zone.Capacity;
             if (over < GameBalance.OvercrowdingThreshold)
             {
                 continue;
@@ -418,8 +425,10 @@ public sealed class GameSimulationEngine
 
         report.OvercrowdingStacksToday = totalStacks;
 
-        StateChangeApplier.AddUnrest(state, totalStacks * GameBalance.OvercrowdingUnrestPerStack, report, ReasonTags.Overcrowding, "Overcrowding");
-        StateChangeApplier.AddSickness(state, totalStacks * GameBalance.OvercrowdingSicknessPerStack, report, ReasonTags.Overcrowding, "Overcrowding");
+        StateChangeApplier.AddUnrest(state, totalStacks * GameBalance.OvercrowdingUnrestPerStack, report,
+            ReasonTags.Overcrowding, "Overcrowding");
+        StateChangeApplier.AddSickness(state, totalStacks * GameBalance.OvercrowdingSicknessPerStack, report,
+            ReasonTags.Overcrowding, "Overcrowding");
 
         var multiplier = totalStacks * GameBalance.OvercrowdingConsumptionPerStack;
         var extraFood = (int)Math.Ceiling(report.FoodConsumedToday * multiplier);
@@ -428,17 +437,19 @@ public sealed class GameSimulationEngine
         if (extraFood > 0)
         {
             var consumed = state.Resources.Consume(ResourceKind.Food, extraFood);
-            report.Add(ReasonTags.Overcrowding, $"Overcrowding strain: additional food consumption {consumed}/{extraFood}.");
+            report.Add(ReasonTags.Overcrowding,
+                $"Overcrowding strain: additional food consumption {consumed}/{extraFood}.");
         }
 
         if (extraWater > 0)
         {
             var consumed = state.Resources.Consume(ResourceKind.Water, extraWater);
-            report.Add(ReasonTags.Overcrowding, $"Overcrowding strain: additional water consumption {consumed}/{extraWater}.");
+            report.Add(ReasonTags.Overcrowding,
+                $"Overcrowding strain: additional water consumption {consumed}/{extraWater}.");
         }
     }
 
-    private static void ApplySicknessProgression(GameState state, DailyProductionResult production, DayResolutionReport report)
+    static void ApplySicknessProgression(GameState state, DailyProductionResult production, DayResolutionReport report)
     {
         var sicknessDelta = StatModifiers.ComputeSicknessFromEnvironment(state);
         sicknessDelta -= state.DailyEffects.QuarantineSicknessReduction;
@@ -446,7 +457,8 @@ public sealed class GameSimulationEngine
 
         if (sicknessDelta != 0)
         {
-            StateChangeApplier.AddSickness(state, sicknessDelta, report, ReasonTags.Sickness, "Daily sickness progression");
+            StateChangeApplier.AddSickness(state, sicknessDelta, report, ReasonTags.Sickness,
+                "Daily sickness progression");
         }
 
         var newCases = Math.Max(0, (state.Sickness - 15) / 20);
@@ -469,7 +481,8 @@ public sealed class GameSimulationEngine
         var diseaseDeaths = state.Sickness > 70 ? Math.Max(1, (state.Sickness - 70) / 15) : 0;
         if (diseaseDeaths > 0)
         {
-            StateChangeApplier.ApplyDeaths(state, diseaseDeaths, report, ReasonTags.Sickness, "Critical sickness mortality");
+            StateChangeApplier.ApplyDeaths(state, diseaseDeaths, report, ReasonTags.Sickness,
+                "Critical sickness mortality");
         }
 
         if (state.Sickness < GameBalance.RecoveryThresholdSickness)
@@ -509,12 +522,13 @@ public sealed class GameSimulationEngine
         else
         {
             report.RecoveryEnabledToday = false;
-            report.RecoveryBlockedReason = $"Global sickness is {state.Sickness}, recovery requires below {GameBalance.RecoveryThresholdSickness}.";
+            report.RecoveryBlockedReason =
+                $"Global sickness is {state.Sickness}, recovery requires below {GameBalance.RecoveryThresholdSickness}.";
             report.Add(ReasonTags.RecoveryBlockedThreshold, report.RecoveryBlockedReason);
         }
     }
 
-    private static void ApplyUnrestProgression(GameState state, DayResolutionReport report)
+    static void ApplyUnrestProgression(GameState state, DayResolutionReport report)
     {
         var unrestDelta = StatModifiers.ComputeUnrestProgression(state);
         if (state.FoodDeficitToday)
@@ -541,12 +555,13 @@ public sealed class GameSimulationEngine
         ApplyMartialLawCapsIfNeeded(state, report);
     }
 
-    private static void ApplySiegeDamage(GameState state, DayResolutionReport report)
+    static void ApplySiegeDamage(GameState state, DayResolutionReport report)
     {
         if (state.SiegeEscalationDelayDays > 0)
         {
             state.SiegeEscalationDelayDays -= 1;
-            report.Add(ReasonTags.Siege, $"Night raid pressure delay active: {state.SiegeEscalationDelayDays} day(s) remaining.");
+            report.Add(ReasonTags.Siege,
+                $"Night raid pressure delay active: {state.SiegeEscalationDelayDays} day(s) remaining.");
         }
         else
         {
@@ -592,7 +607,8 @@ public sealed class GameSimulationEngine
 
         var perimeter = state.ActivePerimeterZone;
         var perimeterFactor = ZoneRules.PerimeterFactor(state);
-        var damage = (int)Math.Ceiling((GameBalance.PerimeterScalingBase + state.SiegeIntensity) * perimeterFactor * state.SiegeDamageMultiplier);
+        var damage = (int)Math.Ceiling((GameBalance.PerimeterScalingBase + state.SiegeIntensity) * perimeterFactor *
+                                       state.SiegeDamageMultiplier);
 
         perimeter.Integrity -= damage;
         report.Add(ReasonTags.Siege, $"Siege struck {perimeter.Name}: -{damage} integrity.");
@@ -603,7 +619,7 @@ public sealed class GameSimulationEngine
         }
     }
 
-    private static void ApplyRepairs(GameState state, DailyProductionResult production, DayResolutionReport report)
+    static void ApplyRepairs(GameState state, DailyProductionResult production, DayResolutionReport report)
     {
         var repairPoints = (int)Math.Round(production.RepairPoints * state.DailyEffects.RepairOutputMultiplier);
         if (repairPoints <= 0)
@@ -627,7 +643,7 @@ public sealed class GameSimulationEngine
         }
     }
 
-    private static void ResolveTriggeredEvents(GameState state, DayResolutionReport report)
+    static void ResolveTriggeredEvents(GameState state, DayResolutionReport report)
     {
         var keys = new List<string>(state.EventCooldowns.Keys);
         foreach (var key in keys)
@@ -660,7 +676,7 @@ public sealed class GameSimulationEngine
         }
     }
 
-    private static void ResolveActiveMissions(GameState state, DayResolutionReport report)
+    static void ResolveActiveMissions(GameState state, DayResolutionReport report)
     {
         for (var index = state.ActiveMissions.Count - 1; index >= 0; index--)
         {
@@ -682,7 +698,7 @@ public sealed class GameSimulationEngine
         }
     }
 
-    private static void CheckLossConditions(GameState state, DayResolutionReport report)
+    static void CheckLossConditions(GameState state, DayResolutionReport report)
     {
         if (state.GameOver)
         {
@@ -717,7 +733,7 @@ public sealed class GameSimulationEngine
         }
     }
 
-    private static void FinalizeDay(GameState state, DayResolutionReport report)
+    static void FinalizeDay(GameState state, DayResolutionReport report)
     {
         state.Day += 1;
         state.FoodDeficitYesterday = state.FoodDeficitToday;
@@ -739,11 +755,9 @@ public sealed class GameSimulationEngine
             state.GameOverCause = GameOverCause.None;
             state.GameOverDetails = "Day 40 reached.";
         }
-
-        state.RebalanceHousing();
     }
 
-    private static void ApplyMartialLawCapsIfNeeded(GameState state, DayResolutionReport report)
+    static void ApplyMartialLawCapsIfNeeded(GameState state, DayResolutionReport report)
     {
         if (!state.ActiveLawIds.Contains("martial_law"))
         {
