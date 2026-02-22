@@ -8,21 +8,13 @@ public sealed class PopulationState
 {
     private readonly List<RecoveryCohort> _recoveryQueue = new();
 
-    public PopulationState(int healthyWorkers, int guards, int sickWorkers, int elderly)
-    {
-        HealthyWorkers = healthyWorkers;
-        Guards = guards;
-        SickWorkers = sickWorkers;
-        Elderly = elderly;
-    }
+    public required int HealthyWorkers { get; set; }
 
-    public int HealthyWorkers { get; private set; }
+    public required int Guards { get; set; }
 
-    public int Guards { get; private set; }
+    public required int SickWorkers { get; set; }
 
-    public int SickWorkers { get; private set; }
-
-    public int Elderly { get; private set; }
+    public required int Elderly { get; set; }
 
     public IReadOnlyList<RecoveryCohort> RecoveryQueue => _recoveryQueue;
 

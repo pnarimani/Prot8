@@ -170,14 +170,14 @@ public sealed class ConsoleRenderer(TextWriter output)
     {
         output.WriteLine("Jobs");
 
-        foreach (var jvm in vm.Jobs)
+        foreach (var (jobType, jvm) in vm.Jobs)
         {
             var workers = jvm.AssignedWorkers;
             var inputsPerWorker = string.Join(", ", jvm.InputPerWorker.Select(x => x.ToString()));
             var outputsPerWorker = string.Join(", ", jvm.OutputPerWorker.Select(x => x.ToString()));
             var currentInputs = string.Join(", ", jvm.CurrentInput.Select(x => x.ToString()));
             var currentOutputs = string.Join(", ", jvm.CurrentOutput.Select(x => x.ToString()));
-            output.WriteLine($" {jvm.Job,-18} | {workers,3} workers | {currentInputs,-12} -> {currentOutputs,-12} | {inputsPerWorker,-12} / per worker -> {outputsPerWorker,-12}");
+            output.WriteLine($" {jobType,-18} | {workers,3} workers | {currentInputs,-12} -> {currentOutputs,-12} | {inputsPerWorker,-12} / per worker -> {outputsPerWorker,-12}");
         }
 
         output.WriteLine();
@@ -268,6 +268,13 @@ public sealed class ConsoleRenderer(TextWriter output)
     void RenderAvailableOrders(DayStartViewModel vm)
     {
         output.WriteLine("Available Emergency Orders");
+        if (vm.OrderCooldownDaysRemaining > 0)
+        {
+            output.WriteLine($"  On cooldown ({vm.OrderCooldownDaysRemaining} day(s) remaining).");
+            output.WriteLine();
+            return;
+        }
+
         var available = vm.AvailableOrders;
         if (available.Count == 0)
         {

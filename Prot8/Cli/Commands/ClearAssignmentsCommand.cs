@@ -9,7 +9,7 @@ public sealed class ClearAssignmentsCommand : ICommand
         foreach (var job in Enum.GetValues<JobType>())
             context.State.Allocation.SetWorkers(job, 0);
 
-        context.State.Allocation.SetIdleWorkers(context.State.AvailableHealthyWorkersForAllocation);
+        context.State.Allocation.Clear();
         return new CommandResult(true, "All job assignments cleared.");
     }
 }

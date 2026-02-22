@@ -18,14 +18,18 @@ public static class Agents
             
             You may only choose one of Orders, Laws and Missions to activate on one day.
             For example: You CANNOT activate an order and a law on the same day.
+            
+            You may not assign more workers to a job than `IdleWorkersForAssignment`
+            If you want to move workers between jobs:
+            1. Remove workers from one job with negative delta_workers
+            2. Assign workers to another job with positive delta_workers
 
             You have access to a "Survival Guide" written by your past iterations. You must treat the rules in this guide as absolute truth. If the guide tells you not to do something, do not do it.
 
             Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects. 
             Each command object has a "type" discriminator field and the command's own fields:
             ```
-                { "type": "assign",            "job_id": "<JobType>", "workers": <int> }
-                { "type": "clear_assignments" }
+                { "type": "assign",            "job_id": "<JobType>", "delta_workers": <delta> }
                 { "type": "enact_law",         "law_id": "<LawId>" }
                 { "type": "issue_order",       "order_id": "<OrderId>" }
                 { "type": "start_mission",     "mission_id": "<MissionId>" }
@@ -199,15 +203,9 @@ public static class Agents
                                 "properties": {
                                   "type": { "const": "assign" },
                                   "job_id": { "type": "string" },
-                                  "workers": { "type": "integer" }
+                                  "delta_workers": { "type": "integer" }
                                 },
-                                "required": ["type", "job_id", "workers"],
-                                "additionalProperties": false
-                              },
-                              {
-                                "type": "object",
-                                "properties": { "type": { "const": "clear_assignments" } },
-                                "required": ["type"],
+                                "required": ["type", "job_id", "delta_workers"],
                                 "additionalProperties": false
                               },
                               {
@@ -235,12 +233,6 @@ public static class Agents
                                   "mission_id": { "type": "string" }
                                 },
                                 "required": ["type", "mission_id"],
-                                "additionalProperties": false
-                              },
-                              {
-                                "type": "object",
-                                "properties": { "type": { "const": "clear_action" } },
-                                "required": ["type"],
                                 "additionalProperties": false
                               },
                               {

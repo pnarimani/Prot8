@@ -15,6 +15,8 @@ public sealed class DayStartViewModel
     public int Morale { get; init; }
     public int Unrest { get; init; }
     public int Sickness { get; init; }
+    
+    public int IdleWorkersForAssignment { get; init; }
 
     public ResourceViewModel Resources { get; init; } = new();
     public PopulationViewModel Population { get; init; } = new();
@@ -22,8 +24,9 @@ public sealed class DayStartViewModel
     public IReadOnlyList<ActiveMissionViewModel> ActiveMissions { get; init; } = [];
     public IReadOnlyList<LawViewModel> AvailableLaws { get; init; } = [];
     public IReadOnlyList<OrderViewModel> AvailableOrders { get; init; } = [];
+    public int OrderCooldownDaysRemaining { get; init; }
     public IReadOnlyList<MissionViewModel> AvailableMissions { get; init; } = [];
-    public IReadOnlyList<JobViewModel> Jobs { get; init; } = [];
+    public Dictionary<JobType, JobViewModel> Jobs { get; init; } = [];
 }
 
 public sealed class ResourceViewModel
@@ -87,7 +90,6 @@ public sealed class MissionViewModel
 
 public sealed class JobViewModel
 {
-    public required JobType Job { get; init; }
     public required int AssignedWorkers { get; init; }
     public required List<ResourceQuantity> CurrentInput { get; init; }
     public required List<ResourceQuantity> CurrentOutput { get; init; }

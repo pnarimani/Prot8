@@ -5,7 +5,7 @@ namespace Prot8.Cli.Commands;
 public sealed class AssignCommand : ICommand
 {
     public required string JobId { get; init; }
-    public int Workers { get; init; }
+    public int DeltaWorkers { get; init; }
 
     public CommandResult Execute(CommandContext context)
     {
@@ -14,23 +14,25 @@ public sealed class AssignCommand : ICommand
             return new CommandResult(false, jobReason);
         }
 
-        if (Workers < 0)
-        {
-            return new CommandResult(false, "Workers cannot be negative.");
-        }
-
-        var available = context.State.AvailableHealthyWorkersForAllocation;
+        var available = context.State.IdleWorkers;
         var currentForJob = context.State.Allocation.Workers[job];
-        var newTotalAssigned = context.State.Allocation.TotalAssigned() - currentForJob + Workers;
-        if (newTotalAssigned > available)
+
+        if (DeltaWorkers > available)
         {
-            return new CommandResult(false, $"Assignment exceeds available workers ({newTotalAssigned}/{available}).");
+            return new CommandResult(false,
+                $"Not enough available workers to assign {DeltaWorkers} to {job}. Available: {available}, Current for job: {currentForJob}.");
         }
 
-        context.State.Allocation.SetWorkers(job, Workers);
-        context.State.Allocation.SetIdleWorkers(available - newTotalAssigned);
-        return new CommandResult(true,
-            $"Assigned {Workers} workers to {job}. Total assigned: {newTotalAssigned}/{available}. Idle: {available - newTotalAssigned}.");
+        if (currentForJob + DeltaWorkers < 0)
+        {
+            return new CommandResult(false,
+                $"Cannot assign negative workers to {job}. Current: {currentForJob}, Attempted change: {DeltaWorkers}.");
+        }
+
+
+        var newAssignedWorkers = currentForJob + DeltaWorkers;
+        context.State.Allocation.SetWorkers(job, newAssignedWorkers);
+        return new CommandResult(true, $"Assigned {DeltaWorkers} workers to {job}. Remaining Idle: {available - DeltaWorkers}");
     }
 
     static bool TryResolveJob(string token, out JobType job, out string reason)

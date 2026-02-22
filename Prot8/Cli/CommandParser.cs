@@ -30,7 +30,7 @@ public class CommandParser
                 command = new AssignCommand
                 {
                     JobId = parts[1],
-                    Workers = int.Parse(parts[2]),
+                    DeltaWorkers = int.Parse(parts[2]),
                 };
                 return true;
 

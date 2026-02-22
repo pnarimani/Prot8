@@ -39,10 +39,7 @@ public sealed class ConsoleInputReader(CommandParser parser)
         {
             var raw = Console.ReadLine();
             if (raw is null)
-            {
-                FinalizeAllocation(state, allocation);
                 return new DayCommandPlan(allocation, action);
-            }
 
             var trimmed = raw.Trim();
             if (trimmed.Length == 0)
@@ -80,7 +77,6 @@ public sealed class ConsoleInputReader(CommandParser parser)
                         Console.WriteLine(result.Message);
                         if (result.EndDayRequested)
                         {
-                            FinalizeAllocation(state, allocation);
                             return new DayCommandPlan(allocation, action);
                         }
                     }
@@ -92,16 +88,6 @@ public sealed class ConsoleInputReader(CommandParser parser)
                     break;
             }
         }
-    }
-
-    public static void FinalizeAllocation(GameState state, JobAllocation allocation)
-    {
-        var available = state.AvailableHealthyWorkersForAllocation;
-        var assigned = allocation.TotalAssigned();
-        if (assigned > available)
-            throw new InvalidOperationException("Assigned workers exceed available workers.");
-
-        allocation.SetIdleWorkers(available - assigned);
     }
 
     void PrintInvalidAndHelp(ConsoleRenderer renderer, GameState state, string message)

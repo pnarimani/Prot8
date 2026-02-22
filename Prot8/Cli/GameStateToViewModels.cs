@@ -1,4 +1,5 @@
 using Prot8.Constants;
+using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
 using Prot8.Orders;
@@ -20,6 +21,7 @@ public static class GameStateToViewModels
             Morale = state.Morale,
             Unrest = state.Unrest,
             Sickness = state.Sickness,
+            IdleWorkersForAssignment = state.IdleWorkers,
             Resources = new ResourceViewModel
             {
                 Food = state.Resources[ResourceKind.Food],
@@ -52,6 +54,7 @@ public static class GameStateToViewModels
             }).ToList(),
             AvailableLaws = ToLawViewModels(state),
             AvailableOrders = ToOrderViewModels(state),
+            OrderCooldownDaysRemaining = ComputeOrderCooldown(state),
             AvailableMissions = ToMissionViewModels(state),
             Jobs = CreateJobViewModel(state),
         };
@@ -165,6 +168,17 @@ public static class GameStateToViewModels
         return result;
     }
 
+    static int ComputeOrderCooldown(GameState state)
+    {
+        if (state.LastOrderDay == int.MinValue)
+        {
+            return 0;
+        }
+
+        var remaining = GameBalance.OrderCooldownDays - (state.Day - state.LastOrderDay);
+        return remaining > 0 ? remaining : 0;
+    }
+
     static IReadOnlyList<OrderViewModel> ToOrderViewModels(GameState state)
     {
         var available = ActionAvailability.GetAvailableOrders(state);
@@ -203,10 +217,10 @@ public static class GameStateToViewModels
         return result;
     }
 
-    static IReadOnlyList<JobViewModel> CreateJobViewModel(GameState state)
+    static Dictionary<JobType, JobViewModel> CreateJobViewModel(GameState state)
     {
         var jobs = ActionAvailability.GetJobTypes();
-        var result = new List<JobViewModel>();
+        var result = new Dictionary<JobType, JobViewModel>();
 
         foreach (var job in jobs)
         {
@@ -215,14 +229,13 @@ public static class GameStateToViewModels
             var output = GameBalance.JobOutputs[job]
                 .Select(x => x with { Quantity = x.Quantity * workers })
                 .ToList();
-            
+
             var input = GameBalance.JobInputs[job]
                 .Select(x => x with { Quantity = x.Quantity * workers })
                 .ToList();
 
-            result.Add(new JobViewModel
+            result.Add(job, new JobViewModel
             {
-                Job = job,
                 AssignedWorkers = workers,
                 CurrentOutput = output,
                 CurrentInput = input,

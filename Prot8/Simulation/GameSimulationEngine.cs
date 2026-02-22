@@ -102,6 +102,15 @@ public sealed class GameSimulationEngine
                 return;
             }
 
+            var orderCooldownActive = state.LastOrderDay != int.MinValue
+                && state.Day - state.LastOrderDay < GameBalance.OrderCooldownDays;
+            if (orderCooldownActive)
+            {
+                var nextDay = state.LastOrderDay + GameBalance.OrderCooldownDays;
+                report.Add(ReasonTags.OrderEffect, $"Emergency order cooldown active. Next available day: {nextDay}.");
+                return;
+            }
+
             if (!order.CanIssue(state, out var reason))
             {
                 report.Add(ReasonTags.OrderEffect, $"Cannot issue {order.Name}: {reason}");
@@ -109,6 +118,7 @@ public sealed class GameSimulationEngine
             }
 
             state.ActiveOrderId = order.Id;
+            state.LastOrderDay = state.Day;
             report.Add(ReasonTags.OrderEffect, $"Emergency order prepared: {order.Name}.");
             return;
         }
