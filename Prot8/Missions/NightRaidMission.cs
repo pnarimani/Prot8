@@ -8,7 +8,7 @@ public sealed class NightRaidMission : MissionBase
     private const int GreatChance = 40;
     private const int OkChance = 40;
 
-    public NightRaidMission() : base("night_raid", "Night Raid on Siege Camp", "Can delay enemy escalation for several days or go very wrong.", 1, GameBalance.MissionNightRaidWorkers)
+    public NightRaidMission() : base("night_raid", "Night Raid on Siege Camp", "May delay siege escalation, or fail causing deaths and unrest.", 1, GameBalance.MissionNightRaidWorkers)
     {
     }
 

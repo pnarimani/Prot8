@@ -6,7 +6,7 @@ namespace Prot8.Missions;
 
 public sealed class SearchAbandonedHomesMission : MissionBase
 {
-    public SearchAbandonedHomesMission() : base("search_abandoned_homes", "Search Abandoned Homes", "Can recover materials or medicine, but plague exposure is possible.", 2, GameBalance.MissionSearchHomesWorkers)
+    public SearchAbandonedHomesMission() : base("search_abandoned_homes", "Search Abandoned Homes", "Can recover materials or medicine, or cause sickness from plague exposure.", 2, GameBalance.MissionSearchHomesWorkers)
     {
     }
 

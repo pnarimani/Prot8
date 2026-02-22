@@ -4,12 +4,9 @@ using Prot8.Simulation;
 
 namespace Prot8.Missions;
 
-public sealed class ForageBeyondWallsMission : MissionBase
+public sealed class ForageBeyondWallsMission() : MissionBase("forage_beyond_walls", "Forage Beyond Walls",
+    "Usually returns food, or can result in deaths from ambush.", 5, GameBalance.MissionForageWorkers)
 {
-    public ForageBeyondWallsMission() : base("forage_beyond_walls", "Forage Beyond Walls", "Usually returns food, but ambush risk rises under intense siege.", 5, GameBalance.MissionForageWorkers)
-    {
-    }
-
     public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
         var highFoodChance = state.SiegeIntensity >= 4 ? 49 : 60;

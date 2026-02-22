@@ -6,7 +6,7 @@ namespace Prot8.Missions;
 
 public sealed class NegotiateBlackMarketeersMission : MissionBase
 {
-    public NegotiateBlackMarketeersMission() : base("negotiate_black_marketeers", "Negotiate with Black Marketeers", "May secure water or food, but political scandal can erupt.", 4, GameBalance.MissionBlackMarketeersWorkers)
+    public NegotiateBlackMarketeersMission() : base("negotiate_black_marketeers", "Negotiate with Black Marketeers", "May secure water or food, or provoke political scandal (unrest).", 4, GameBalance.MissionBlackMarketeersWorkers)
     {
     }
 
