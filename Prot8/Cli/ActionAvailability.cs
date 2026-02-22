@@ -39,6 +39,12 @@ public static class ActionAvailability
 
         foreach (var mission in MissionCatalog.GetAll())
         {
+            if (state.MissionCooldowns.TryGetValue(mission.Id, out var lastDay))
+            {
+                if (state.Day - lastDay < GameBalance.MissionCooldownDays)
+                    continue;
+            }
+
             if (mission.CanStart(state, out _))
                 available.Add(mission);
         }

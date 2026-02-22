@@ -41,6 +41,8 @@ public static class GameBalance
 
     public const int OrderCooldownDays = 4;
 
+    public const int MissionCooldownDays = 10;
+
     public const double FoodPerPersonPerDay = 0.45;
     public const double WaterPerPersonPerDay = 0.55;
     public const double FuelPerPersonPerDay = 0.08;

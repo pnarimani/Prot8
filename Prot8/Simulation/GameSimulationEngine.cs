@@ -145,6 +145,7 @@ public sealed class GameSimulationEngine
             }
 
             state.ActiveMissions.Add(new ActiveMission(mission.Id, mission.Name, mission.DurationDays + 1, mission.WorkerCost));
+            state.MissionCooldowns[mission.Id] = state.Day;
             report.Add(ReasonTags.Mission, $"Mission started: {mission.Name} ({mission.DurationDays} day(s), {mission.WorkerCost} workers committed).");
         }
     }

@@ -99,6 +99,8 @@ public sealed class GameState
 
     public Dictionary<string, int> EventCooldowns { get; } = new();
 
+    public Dictionary<string, int> MissionCooldowns { get; } = new();
+
     public double SiegeDamageMultiplier { get; set; } = 1.0;
 
     public bool FoodDeficitYesterday { get; set; }
