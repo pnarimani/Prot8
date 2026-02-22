@@ -79,7 +79,7 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
         var cmds = executedCommands.ToString().Trim();
         var signals = BuildSignals(state, report);
         timeline.AppendLine($"--- Day {state.Day} ---");
-        timeline.AppendLine(daySnapshot.Trim());
+        // timeline.AppendLine(daySnapshot.Trim());
         timeline.AppendLine($"Commands: {cmds}");
         timeline.AppendLine($"Signals: {signals}");
         timeline.AppendLine();
@@ -121,11 +121,9 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
     Console.WriteLine($"\nTelemetry:  {telemetry.FilePath}");
     Console.WriteLine($"Postmortem: {postmortemPath}");
 
-// Extract learnings for the next run
     previousRunLearnings = ExtractLearnings(criticJson);
-} // end for runIndex
+} 
 
-// --- Helper methods ---
 
 static string RenderToString(Action<TextWriter> render)
 {

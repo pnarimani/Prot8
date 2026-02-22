@@ -239,15 +239,11 @@ public sealed class ConsoleRenderer
 
     private static string JobInputShortDesc(JobType job)
     {
-        return job switch
-        {
-            JobType.FoodProduction => "consumes 2 water/slot",
-            JobType.WaterDrawing => "consumes 1 fuel/slot",
-            JobType.MaterialsCrafting => "consumes 2 fuel/slot",
-            JobType.Repairs => "consumes 4 materials + 2 fuel/slot",
-            JobType.ClinicStaff => "consumes 2 medicine/slot",
-            _ => ""
-        };
+        if (!GameBalance.JobInputPerSlot.TryGetValue(job, out var inputs) || inputs.Count == 0)
+            return "";
+
+        var parts = inputs.Select(kvp => $"{kvp.Value} {kvp.Key.ToString().ToLower()}");
+        return $"consumes {string.Join(" + ", parts)}/slot";
     }
 
     private void RenderZones(GameState state)
@@ -384,15 +380,19 @@ public sealed class ConsoleRenderer
 
     private static string JobDescription(JobType job)
     {
-        return job switch
-        {
-            JobType.FoodProduction => "Produce food (+14/slot), consumes water (-2/slot).",
-            JobType.WaterDrawing => "Draw water (+16/slot), consumes fuel (-1/slot).",
-            JobType.MaterialsCrafting => "Craft materials (+10/slot), consumes fuel (-2/slot).",
-            JobType.Repairs => "Repair active perimeter integrity (+3/slot), consumes materials and fuel.",
-            JobType.ClinicStaff => "Provide care, reduce sickness pressure, and enable recoveries.",
-            JobType.FuelScavenging => "Scavenge fuel (+8/slot).",
-            _ => "No description available."
-        };
+        var baseOutput = GameBalance.BaseJobOutputPerSlot[job];
+        var outputResource = GameBalance.JobOutputResource[job];
+        
+        var outputDesc = outputResource.HasValue
+            ? $"+{baseOutput} {outputResource.Value}"
+            : job == JobType.Repairs
+                ? $"+{baseOutput} integrity"
+                : $"+{baseOutput} care pts";
+
+        if (!GameBalance.JobInputPerSlot.TryGetValue(job, out var inputs) || inputs.Count == 0)
+            return $"{job} ({outputDesc}).";
+
+        var inputParts = inputs.Select(kvp => $"-{kvp.Value} {kvp.Key}");
+        return $"{job} ({outputDesc}), {string.Join(", ", inputParts)}/slot).";
     }
 }

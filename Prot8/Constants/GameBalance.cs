@@ -86,10 +86,10 @@ public static class GameBalance
 
     public static readonly Dictionary<JobType, Dictionary<ResourceKind, double>> JobInputPerSlot = new()
     {
-        [JobType.FoodProduction] = new Dictionary<ResourceKind, double> { [ResourceKind.Water] = 2 },
-        [JobType.WaterDrawing] = new Dictionary<ResourceKind, double> { [ResourceKind.Fuel] = 1 },
-        [JobType.MaterialsCrafting] = new Dictionary<ResourceKind, double> { [ResourceKind.Fuel] = 2 },
-        [JobType.Repairs] = new Dictionary<ResourceKind, double> { [ResourceKind.Materials] = 4, [ResourceKind.Fuel] = 2 },
+        [JobType.FoodProduction] = new Dictionary<ResourceKind, double> { [ResourceKind.Fuel] = 2 },
+        [JobType.WaterDrawing] = new Dictionary<ResourceKind, double> {},
+        [JobType.MaterialsCrafting] = new Dictionary<ResourceKind, double> {},
+        [JobType.Repairs] = new Dictionary<ResourceKind, double> { [ResourceKind.Materials] = 4 },
         [JobType.ClinicStaff] = new Dictionary<ResourceKind, double> { [ResourceKind.Medicine] = 2 },
         [JobType.FuelScavenging] = new Dictionary<ResourceKind, double>(),
     };
