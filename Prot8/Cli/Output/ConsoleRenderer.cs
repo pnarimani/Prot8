@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using Prot8.Constants;
 using Prot8.Jobs;
@@ -11,13 +12,22 @@ namespace Prot8.Cli.Output;
 
 public sealed class ConsoleRenderer
 {
+    private readonly TextWriter _out;
+
+    public ConsoleRenderer() : this(Console.Out) { }
+
+    public ConsoleRenderer(TextWriter output)
+    {
+        _out = output;
+    }
+
     public void RenderDayStart(GameState state)
     {
-        Console.WriteLine();
-        Console.WriteLine(new string('=', 76));
-        Console.WriteLine($"Day {state.Day} / {GameBalance.TargetSurvivalDay}  |  Siege Intensity: {state.SiegeIntensity}  |  Active Perimeter: {state.ActivePerimeterZone.Name}");
-        Console.WriteLine(new string('=', 76));
-        Console.WriteLine();
+        _out.WriteLine();
+        _out.WriteLine(new string('=', 76));
+        _out.WriteLine($"Day {state.Day} / {GameBalance.TargetSurvivalDay}  |  Siege Intensity: {state.SiegeIntensity}  |  Active Perimeter: {state.ActivePerimeterZone.Name}");
+        _out.WriteLine(new string('=', 76));
+        _out.WriteLine();
 
         RenderResources(state);
         RenderPopulation(state);
@@ -29,52 +39,52 @@ public sealed class ConsoleRenderer
 
     public void RenderPendingPlan(GameState state, JobAllocation allocation, TurnActionChoice action)
     {
-        Console.WriteLine("Pending Day Plan");
+        _out.WriteLine("Pending Day Plan");
         foreach (var job in ActionAvailability.GetJobTypes())
         {
-            Console.WriteLine($"  {job}: {allocation.Workers[job]} workers");
+            _out.WriteLine($"  {job}: {allocation.Workers[job]} workers");
         }
 
-        Console.WriteLine($"  Total assigned: {allocation.TotalAssigned()} / {state.AvailableHealthyWorkersForAllocation}");
-        Console.WriteLine($"  Idle workers: {allocation.IdleWorkers}");
+        _out.WriteLine($"  Total assigned: {allocation.TotalAssigned()} / {state.AvailableHealthyWorkersForAllocation}");
+        _out.WriteLine($"  Idle workers: {allocation.IdleWorkers}");
 
         if (!action.HasAction)
         {
-            Console.WriteLine("  Queued optional action: none");
+            _out.WriteLine("  Queued optional action: none");
         }
         else if (!string.IsNullOrWhiteSpace(action.LawId))
         {
             var law = LawCatalog.Find(action.LawId);
-            Console.WriteLine($"  Queued optional action: Law -> {law?.Name ?? action.LawId}");
+            _out.WriteLine($"  Queued optional action: Law -> {law?.Name ?? action.LawId}");
         }
         else if (!string.IsNullOrWhiteSpace(action.EmergencyOrderId))
         {
             var order = EmergencyOrderCatalog.Find(action.EmergencyOrderId);
             var zoneSuffix = action.SelectedZoneForOrder.HasValue ? $" ({action.SelectedZoneForOrder.Value})" : string.Empty;
-            Console.WriteLine($"  Queued optional action: Emergency Order -> {order?.Name ?? action.EmergencyOrderId}{zoneSuffix}");
+            _out.WriteLine($"  Queued optional action: Emergency Order -> {order?.Name ?? action.EmergencyOrderId}{zoneSuffix}");
         }
         else if (!string.IsNullOrWhiteSpace(action.MissionId))
         {
             var mission = MissionCatalog.Find(action.MissionId);
-            Console.WriteLine($"  Queued optional action: Mission -> {mission?.Name ?? action.MissionId}");
+            _out.WriteLine($"  Queued optional action: Mission -> {mission?.Name ?? action.MissionId}");
         }
 
-        Console.WriteLine();
+        _out.WriteLine();
     }
 
     public void RenderActionReference(GameState state)
     {
-        Console.WriteLine("Available Actions");
-        Console.WriteLine("  assign <JobRef|JobType> <Workers>  Set workers for one production slot (absolute value, steps of 5).");
-        Console.WriteLine("  enact <LawRef|LawId>               Queue one available law for today.");
-        Console.WriteLine("  order <OrderRef|OrderId> [ZoneId]  Queue one available emergency order for today.");
-        Console.WriteLine("  mission <MissionRef|MissionId>     Queue one available mission for today.");
-        Console.WriteLine("  clear_assignments                   Reset all job assignments to 0.");
-        Console.WriteLine("  clear_action                        Clear queued law/order/mission action.");
-        Console.WriteLine("  show_plan                           Print current pending assignments and queued action.");
-        Console.WriteLine("  help                                Print this available-actions list.");
-        Console.WriteLine("  end_day                             Resolve simulation using current plan.");
-        Console.WriteLine();
+        _out.WriteLine("Available Actions");
+        _out.WriteLine("  assign <JobRef|JobType> <Workers>  Set workers for one production slot (absolute value, steps of 5).");
+        _out.WriteLine("  enact <LawRef|LawId>               Queue one available law for today.");
+        _out.WriteLine("  order <OrderRef|OrderId> [ZoneId]  Queue one available emergency order for today.");
+        _out.WriteLine("  mission <MissionRef|MissionId>     Queue one available mission for today.");
+        _out.WriteLine("  clear_assignments                   Reset all job assignments to 0.");
+        _out.WriteLine("  clear_action                        Clear queued law/order/mission action.");
+        _out.WriteLine("  show_plan                           Print current pending assignments and queued action.");
+        _out.WriteLine("  help                                Print this available-actions list.");
+        _out.WriteLine("  end_day                             Resolve simulation using current plan.");
+        _out.WriteLine();
 
         RenderAvailableJobs();
         RenderAvailableLaws(state);
@@ -84,187 +94,187 @@ public sealed class ConsoleRenderer
 
     public void RenderDayReport(GameState state, DayResolutionReport report)
     {
-        Console.WriteLine();
-        Console.WriteLine($"Day {report.Day} Resolution");
-        Console.WriteLine(new string('-', 76));
+        _out.WriteLine();
+        _out.WriteLine($"Day {report.Day} Resolution");
+        _out.WriteLine(new string('-', 76));
 
         foreach (var entry in report.Entries)
         {
-            Console.WriteLine($"[{entry.Tag}] {entry.Message}");
+            _out.WriteLine($"[{entry.Tag}] {entry.Message}");
         }
 
         if (report.TriggeredEvents.Count > 0)
         {
-            Console.WriteLine();
-            Console.WriteLine("Triggered Events");
+            _out.WriteLine();
+            _out.WriteLine("Triggered Events");
             foreach (var evt in report.TriggeredEvents)
             {
-                Console.WriteLine($"  - {evt}");
+                _out.WriteLine($"  - {evt}");
             }
         }
 
         if (report.ResolvedMissions.Count > 0)
         {
-            Console.WriteLine();
-            Console.WriteLine("Mission Outcomes");
+            _out.WriteLine();
+            _out.WriteLine("Mission Outcomes");
             foreach (var mission in report.ResolvedMissions)
             {
-                Console.WriteLine($"  - {mission}");
+                _out.WriteLine($"  - {mission}");
             }
         }
 
-        Console.WriteLine();
-        Console.WriteLine("Recovery Status");
-        Console.WriteLine($"  Recovery enabled: {(report.RecoveryEnabledToday ? "Yes" : "No")}");
-        Console.WriteLine($"  Queue size: {state.Population.RecoveryQueue.Sum(c => c.Count)}");
-        Console.WriteLine($"  Recovered today: {report.RecoveredWorkersToday}");
-        Console.WriteLine($"  Medicine spent on recovery: {report.RecoveryMedicineSpentToday}");
+        _out.WriteLine();
+        _out.WriteLine("Recovery Status");
+        _out.WriteLine($"  Recovery enabled: {(report.RecoveryEnabledToday ? "Yes" : "No")}");
+        _out.WriteLine($"  Queue size: {state.Population.RecoveryQueue.Sum(c => c.Count)}");
+        _out.WriteLine($"  Recovered today: {report.RecoveredWorkersToday}");
+        _out.WriteLine($"  Medicine spent on recovery: {report.RecoveryMedicineSpentToday}");
         if (!string.IsNullOrWhiteSpace(report.RecoveryBlockedReason))
         {
-            Console.WriteLine($"  Blocked reason: {report.RecoveryBlockedReason}");
+            _out.WriteLine($"  Blocked reason: {report.RecoveryBlockedReason}");
         }
 
-        Console.WriteLine();
-        Console.WriteLine($"End of Day {report.Day}: Food {state.Resources[Resources.ResourceKind.Food]}, Water {state.Resources[Resources.ResourceKind.Water]}, Fuel {state.Resources[Resources.ResourceKind.Fuel]}, Meds {state.Resources[Resources.ResourceKind.Medicine]}, Materials {state.Resources[Resources.ResourceKind.Materials]}");
-        Console.WriteLine($"Morale {state.Morale}, Unrest {state.Unrest}, Sickness {state.Sickness}, Siege Intensity {state.SiegeIntensity}");
+        _out.WriteLine();
+        _out.WriteLine($"End of Day {report.Day}: Food {state.Resources[Resources.ResourceKind.Food]}, Water {state.Resources[Resources.ResourceKind.Water]}, Fuel {state.Resources[Resources.ResourceKind.Fuel]}, Meds {state.Resources[Resources.ResourceKind.Medicine]}, Materials {state.Resources[Resources.ResourceKind.Materials]}");
+        _out.WriteLine($"Morale {state.Morale}, Unrest {state.Unrest}, Sickness {state.Sickness}, Siege Intensity {state.SiegeIntensity}");
     }
 
     public void RenderFinal(GameState state)
     {
-        Console.WriteLine();
-        Console.WriteLine(new string('=', 76));
+        _out.WriteLine();
+        _out.WriteLine(new string('=', 76));
         if (state.Survived)
         {
-            Console.WriteLine($"You endured to Day {GameBalance.TargetSurvivalDay}. The city survives, but at great cost.");
+            _out.WriteLine($"You endured to Day {GameBalance.TargetSurvivalDay}. The city survives, but at great cost.");
         }
         else
         {
-            Console.WriteLine($"Game Over on Day {state.Day}: {state.GameOverCause}");
+            _out.WriteLine($"Game Over on Day {state.Day}: {state.GameOverCause}");
             if (!string.IsNullOrWhiteSpace(state.GameOverDetails))
             {
-                Console.WriteLine(state.GameOverDetails);
+                _out.WriteLine(state.GameOverDetails);
             }
         }
 
-        Console.WriteLine($"Total deaths: {state.TotalDeaths}, total desertions: {state.TotalDesertions}");
-        Console.WriteLine($"Final Morale: {state.Morale}, Unrest: {state.Unrest}, Sickness: {state.Sickness}");
-        Console.WriteLine(new string('=', 76));
-        Console.WriteLine();
+        _out.WriteLine($"Total deaths: {state.TotalDeaths}, total desertions: {state.TotalDesertions}");
+        _out.WriteLine($"Final Morale: {state.Morale}, Unrest: {state.Unrest}, Sickness: {state.Sickness}");
+        _out.WriteLine(new string('=', 76));
+        _out.WriteLine();
     }
 
-    private static void RenderResources(GameState state)
+    private void RenderResources(GameState state)
     {
-        Console.WriteLine("Resources");
-        Console.WriteLine($"  Food: {state.Resources[Resources.ResourceKind.Food],4}  Water: {state.Resources[Resources.ResourceKind.Water],4}  Fuel: {state.Resources[Resources.ResourceKind.Fuel],4}  Medicine: {state.Resources[Resources.ResourceKind.Medicine],4}  Materials: {state.Resources[Resources.ResourceKind.Materials],4}");
-        Console.WriteLine($"  Morale: {state.Morale,3}/100  Unrest: {state.Unrest,3}/100  Sickness: {state.Sickness,3}/100");
-        Console.WriteLine();
+        _out.WriteLine("Resources");
+        _out.WriteLine($"  Food: {state.Resources[Resources.ResourceKind.Food],4}  Water: {state.Resources[Resources.ResourceKind.Water],4}  Fuel: {state.Resources[Resources.ResourceKind.Fuel],4}  Medicine: {state.Resources[Resources.ResourceKind.Medicine],4}  Materials: {state.Resources[Resources.ResourceKind.Materials],4}");
+        _out.WriteLine($"  Morale: {state.Morale,3}/100  Unrest: {state.Unrest,3}/100  Sickness: {state.Sickness,3}/100");
+        _out.WriteLine();
     }
 
-    private static void RenderPopulation(GameState state)
+    private void RenderPopulation(GameState state)
     {
-        Console.WriteLine("Population");
-        Console.WriteLine($"  Healthy Workers: {state.Population.HealthyWorkers}");
-        Console.WriteLine($"  Guards:          {state.Population.Guards}");
-        Console.WriteLine($"  Sick Workers:    {state.Population.SickWorkers}");
-        Console.WriteLine($"  Elderly:         {state.Population.Elderly}");
-        Console.WriteLine($"  Total:           {state.Population.TotalPopulation}");
-        Console.WriteLine($"  Workers reserved on missions: {state.ReservedWorkersForMissions}");
-        Console.WriteLine($"  Available for assignment today: {state.AvailableHealthyWorkersForAllocation}");
-        Console.WriteLine();
+        _out.WriteLine("Population");
+        _out.WriteLine($"  Healthy Workers: {state.Population.HealthyWorkers}");
+        _out.WriteLine($"  Guards:          {state.Population.Guards}");
+        _out.WriteLine($"  Sick Workers:    {state.Population.SickWorkers}");
+        _out.WriteLine($"  Elderly:         {state.Population.Elderly}");
+        _out.WriteLine($"  Total:           {state.Population.TotalPopulation}");
+        _out.WriteLine($"  Workers reserved on missions: {state.ReservedWorkersForMissions}");
+        _out.WriteLine($"  Available for assignment today: {state.AvailableHealthyWorkersForAllocation}");
+        _out.WriteLine();
     }
 
-    private static void RenderZones(GameState state)
+    private void RenderZones(GameState state)
     {
-        Console.WriteLine("Zones");
+        _out.WriteLine("Zones");
         foreach (var zone in state.Zones)
         {
             var status = zone.IsLost ? "LOST" : "ACTIVE";
             var over = zone.Population - zone.Capacity;
             var overText = over > 0 ? $" (Over by {over})" : string.Empty;
-            Console.WriteLine($"  {(int)zone.Id}. {zone.Name,-18} Integrity: {zone.Integrity,3}  Capacity: {zone.Capacity,3}  Housed: {zone.Population,3}  {status}{overText}");
+            _out.WriteLine($"  {(int)zone.Id}. {zone.Name,-18} Integrity: {zone.Integrity,3}  Capacity: {zone.Capacity,3}  Housed: {zone.Population,3}  {status}{overText}");
         }
 
-        Console.WriteLine();
+        _out.WriteLine();
     }
 
-    private static void RenderMissions(GameState state)
+    private void RenderMissions(GameState state)
     {
-        Console.WriteLine("Active Missions");
+        _out.WriteLine("Active Missions");
         if (state.ActiveMissions.Count == 0)
         {
-            Console.WriteLine("  None");
+            _out.WriteLine("  None");
         }
         else
         {
             foreach (var mission in state.ActiveMissions)
             {
-                Console.WriteLine($"  {mission.MissionName}: {mission.DaysRemaining} day(s) remaining, {mission.WorkerCost} workers committed");
+                _out.WriteLine($"  {mission.MissionName}: {mission.DaysRemaining} day(s) remaining, {mission.WorkerCost} workers committed");
             }
         }
 
-        Console.WriteLine();
+        _out.WriteLine();
     }
 
-    private static void RenderLaws(GameState state)
+    private void RenderLaws(GameState state)
     {
-        Console.WriteLine("Enacted Laws");
+        _out.WriteLine("Enacted Laws");
         if (state.ActiveLawIds.Count == 0)
         {
-            Console.WriteLine("  None");
+            _out.WriteLine("  None");
         }
         else
         {
             foreach (var lawId in state.ActiveLawIds)
             {
                 var law = LawCatalog.Find(lawId);
-                Console.WriteLine($"  {law?.Name ?? lawId}");
+                _out.WriteLine($"  {law?.Name ?? lawId}");
             }
         }
 
-        Console.WriteLine();
+        _out.WriteLine();
     }
 
-    private static void RenderAvailableJobs()
+    private void RenderAvailableJobs()
     {
-        Console.WriteLine("Assignable Job Slots");
+        _out.WriteLine("Assignable Job Slots");
         var jobs = ActionAvailability.GetJobTypes();
         for (var index = 0; index < jobs.Count; index++)
         {
             var job = jobs[index];
-            Console.WriteLine($"  j{index + 1}: {job} | {JobDescription(job)}");
+            _out.WriteLine($"  j{index + 1}: {job} | {JobDescription(job)}");
         }
 
-        Console.WriteLine();
+        _out.WriteLine();
     }
 
-    private static void RenderAvailableLaws(GameState state)
+    private void RenderAvailableLaws(GameState state)
     {
-        Console.WriteLine("Available Laws");
+        _out.WriteLine("Available Laws");
         var available = ActionAvailability.GetAvailableLaws(state);
         if (available.Count == 0)
         {
-            Console.WriteLine("  None currently available.");
-            Console.WriteLine();
+            _out.WriteLine("  None currently available.");
+            _out.WriteLine();
             return;
         }
 
         for (var index = 0; index < available.Count; index++)
         {
             var law = available[index];
-            Console.WriteLine($"  l{index + 1}: {law.Name} ({law.Id}) | {law.Summary}");
+            _out.WriteLine($"  l{index + 1}: {law.Name} ({law.Id}) | {law.Summary}");
         }
 
-        Console.WriteLine();
+        _out.WriteLine();
     }
 
-    private static void RenderAvailableOrders(GameState state)
+    private void RenderAvailableOrders(GameState state)
     {
-        Console.WriteLine("Available Emergency Orders");
+        _out.WriteLine("Available Emergency Orders");
         var available = ActionAvailability.GetAvailableOrders(state);
         if (available.Count == 0)
         {
-            Console.WriteLine("  None currently available.");
-            Console.WriteLine();
+            _out.WriteLine("  None currently available.");
+            _out.WriteLine();
             return;
         }
 
@@ -273,36 +283,36 @@ public sealed class ConsoleRenderer
             var order = available[index];
             if (!order.RequiresZoneSelection)
             {
-                Console.WriteLine($"  o{index + 1}: {order.Name} ({order.Id}) | {order.Summary}");
+                _out.WriteLine($"  o{index + 1}: {order.Name} ({order.Id}) | {order.Summary}");
                 continue;
             }
 
             var validZones = ActionAvailability.GetValidZonesForOrder(state, order);
             var zoneList = validZones.Count == 0 ? "none" : string.Join(", ", validZones);
-            Console.WriteLine($"  o{index + 1}: {order.Name} ({order.Id}) | {order.Summary} | valid ZoneId: {zoneList}");
+            _out.WriteLine($"  o{index + 1}: {order.Name} ({order.Id}) | {order.Summary} | valid ZoneId: {zoneList}");
         }
 
-        Console.WriteLine();
+        _out.WriteLine();
     }
 
-    private static void RenderAvailableMissions(GameState state)
+    private void RenderAvailableMissions(GameState state)
     {
-        Console.WriteLine("Available Missions");
+        _out.WriteLine("Available Missions");
         var available = ActionAvailability.GetAvailableMissions(state);
         if (available.Count == 0)
         {
-            Console.WriteLine("  None currently available.");
-            Console.WriteLine();
+            _out.WriteLine("  None currently available.");
+            _out.WriteLine();
             return;
         }
 
         for (var index = 0; index < available.Count; index++)
         {
             var mission = available[index];
-            Console.WriteLine($"  m{index + 1}: {mission.Name} ({mission.Id}) | {mission.OutcomeHint}");
+            _out.WriteLine($"  m{index + 1}: {mission.Name} ({mission.Id}) | {mission.OutcomeHint}");
         }
 
-        Console.WriteLine();
+        _out.WriteLine();
     }
 
     private static string JobDescription(JobType job)
