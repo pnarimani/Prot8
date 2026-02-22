@@ -203,6 +203,7 @@ static string FormatNotebook(string json)
         AppendSection(sb, node, "hypotheses", "HYPOTHESES");
         AppendSection(sb, node, "observations", "OBSERVATIONS");
         AppendSection(sb, node, "open_questions", "OPEN QUESTIONS");
+        AppendSection(sb, node, "plan", "PLAN");
         return sb.ToString().TrimEnd();
     }
     catch
