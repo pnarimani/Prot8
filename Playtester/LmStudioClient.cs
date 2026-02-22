@@ -19,14 +19,16 @@ public sealed class LmStudioClient : IDisposable
 
     public async Task<string> ChatAsync(string systemPrompt,
         string userPrompt,
-        JsonNode responseFormat,
+        string responseFormat,
         double temperature = 0.7)
     {
+        var responseFormatJson = JsonSerializer.Deserialize<JsonElement>(responseFormat);
+
         var request = new ChatRequest
         {
             Model = _model,
             Temperature = temperature,
-            ResponseFormat = responseFormat,
+            ResponseFormat = responseFormatJson,
             Messages =
             [
                 new ChatMessage { Role = "system", Content = systemPrompt },
@@ -48,9 +50,7 @@ public sealed class LmStudioClient : IDisposable
         [JsonPropertyName("model")] public string Model { get; set; } = "";
         [JsonPropertyName("messages")] public List<ChatMessage> Messages { get; set; } = [];
         [JsonPropertyName("temperature")] public double Temperature { get; set; }
-        [JsonPropertyName("response_format")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public JsonNode? ResponseFormat { get; set; }
+        [JsonPropertyName("response_format")] public JsonElement ResponseFormat { get; set; }
     }
 
     private sealed class ChatMessage

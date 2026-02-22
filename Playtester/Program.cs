@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Playtester;
-using Prot8.Cli.Input;
+using Prot8.Cli.Commands;
 using Prot8.Cli.Output;
 using Prot8.Cli.ViewModels;
 using Prot8.Simulation;
@@ -27,6 +27,7 @@ var jsonSerializationOptions = new JsonSerializerOptions
 {
     WriteIndented = true,
     Converters = { new JsonStringEnumConverter() },
+    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
 };
 
 for (var runIndex = 0; runIndex < 100; runIndex++)
@@ -35,7 +36,6 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
 
     var state = new GameState(config.Seed);
     var engine = new GameSimulationEngine();
-    var reader = new ConsoleInputReader(new CommandParser());
     using var telemetry = new RunTelemetryWriter(config.Seed);
 
     var timeline = new StringBuilder();
@@ -68,38 +68,31 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
             var commanderJson = await llm.ChatAsync(
                 AgentPrompts.CommanderSystem, commanderPrompt, AgentPrompts.CommanderResponseFormat, 0.4);
 
-            var commandLines = ParseCommanderJson(commanderJson);
-            Console.WriteLine($"[AI] Commander issued {commandLines.Count} command(s).");
+            var commandList = ParseCommanderCommands(commanderJson);
+            Console.WriteLine($"[AI] Commander issued {commandList.Count} command(s).");
 
             var invalidCommands = new StringBuilder();
             var hasInvalid = false;
 
-            foreach (var (line, reason) in commandLines)
+            foreach (var command in commandList)
             {
-                if (string.IsNullOrEmpty(line))
-                {
-                    continue;
-                }
+                var commandJson = JsonSerializer.Serialize(command);
+                var context = new CommandContext(state, action);
+                var result = command.Execute(context);
+                action = context.Action;
+                Console.WriteLine($"  > {commandJson}  => {result.Message}");
 
-                if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase))
+                if (!result.Success)
                 {
-                    break;
-                }
-
-                var ok = reader.TryExecuteCommand(state, ref action, line, out var msg, out var endDay);
-                Console.WriteLine($"  > {line}  [{reason}]  => {msg}");
-
-                if (!ok)
-                {
-                    invalidCommands.AppendLine($"  Command \"{line}\" was rejected: {msg}");
+                    invalidCommands.AppendLine($"  Command {commandJson} was rejected: {result.Message}");
                     hasInvalid = true;
                 }
                 else
                 {
-                    executedCommands.AppendLine(line);
+                    executedCommands.AppendLine(commandJson);
                 }
 
-                if (endDay)
+                if (result.EndDayRequested)
                 {
                     break;
                 }
@@ -125,7 +118,7 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
 
         // Capture resolution log
         var dayReportVm = GameStateToViewModels.ToDayReportViewModel(state, report);
-        var resolutionLog = RenderToString(w => new ConsoleRenderer(w).RenderDayReport(dayReportVm));
+        var resolutionLog = JsonSerializer.Serialize(dayReportVm, jsonSerializationOptions);
         Console.Write(resolutionLog);
 
         telemetry.LogDay(state, action, report);
@@ -188,7 +181,7 @@ static string RenderToString(Action<TextWriter> render)
     return sw.ToString();
 }
 
-static List<(string Command, string Reason)> ParseCommanderJson(string json)
+List<ICommand> ParseCommanderCommands(string json)
 {
     try
     {
@@ -199,14 +192,29 @@ static List<(string Command, string Reason)> ParseCommanderJson(string json)
             return [];
         }
 
-        return
-        [
-            .. array
-                .Select(x => (
-                    Command: x?["command"]?.GetValue<string>() ?? "",
-                    Reason: x?["reason"]?.GetValue<string>() ?? ""))
-                .Where(x => x.Command.Length > 0),
-        ];
+        var result = new List<ICommand>();
+        foreach (var item in array)
+        {
+            if (item is null)
+            {
+                continue;
+            }
+
+            try
+            {
+                var command = item.Deserialize<ICommand>(jsonSerializationOptions);
+                if (command is not null)
+                {
+                    result.Add(command);
+                }
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"[AI] Warning: failed to deserialize command '{item}': {ex.Message}, skipping.");
+            }
+        }
+
+        return result;
     }
     catch
     {

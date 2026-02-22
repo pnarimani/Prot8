@@ -26,7 +26,12 @@ public class CommandParser
                     error = "Usage: assign <JobType> <Workers>.";
                     return false;
                 }
-                command = new AssignCommand(parts[1], int.Parse(parts[2]));
+
+                command = new AssignCommand
+                {
+                    JobId = parts[1],
+                    Workers = int.Parse(parts[2]),
+                };
                 return true;
 
             case "clear_assignments":
@@ -35,6 +40,7 @@ public class CommandParser
                     error = "clear_assignments takes no parameters.";
                     return false;
                 }
+
                 command = new ClearAssignmentsCommand();
                 return true;
 
@@ -45,7 +51,11 @@ public class CommandParser
                     error = "Usage: enact <LawId>.";
                     return false;
                 }
-                command = new EnactLawCommand(parts[1]);
+
+                command = new EnactLawCommand
+                {
+                    LawId = parts[1],
+                };
                 return true;
 
             case "order":
@@ -56,7 +66,11 @@ public class CommandParser
                     error = $"Usage: order <{orderRef}>";
                     return false;
                 }
-                command = new IssueOrderCommand(parts[1]);
+
+                command = new IssueOrderCommand
+                {
+                    OrderId = parts[1],
+                };
                 return true;
 
             case "mission":
@@ -66,7 +80,11 @@ public class CommandParser
                     error = "Usage: mission <MissionId>.";
                     return false;
                 }
-                command = new StartMissionCommand(parts[1]);
+
+                command = new StartMissionCommand
+                {
+                    MissionId = parts[1],
+                };
                 return true;
 
             case "clear_action":
@@ -75,6 +93,7 @@ public class CommandParser
                     error = "clear_action takes no parameters.";
                     return false;
                 }
+
                 command = new ClearActionCommand();
                 return true;
 
@@ -84,6 +103,7 @@ public class CommandParser
                     error = "end_day takes no parameters.";
                     return false;
                 }
+
                 command = new EndDayCommand();
                 return true;
 
