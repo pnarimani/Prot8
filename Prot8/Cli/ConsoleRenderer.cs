@@ -1,7 +1,6 @@
 using Prot8.Cli.ViewModels;
 using Prot8.Constants;
 using Prot8.Events;
-using Prot8.Jobs;
 
 namespace Prot8.Cli.Output;
 
@@ -16,7 +15,7 @@ public sealed class ConsoleRenderer(TextWriter output)
 
         RenderResources(vm);
         RenderPopulation(vm);
-        RenderJobAssignments(vm);
+        RenderJobs(vm);
         RenderZones(vm);
         RenderMissions(vm);
         RenderLaws(vm);
@@ -24,26 +23,15 @@ public sealed class ConsoleRenderer(TextWriter output)
         RenderActionReference(vm);
     }
 
-    public void RenderPendingPlan(PendingPlanViewModel vm)
+    public void RenderPendingDayAction(PendingPlanViewModel vm)
     {
-        output.WriteLine("Pending Day Plan");
-        foreach (var job in vm.JobAssignments)
-            output.WriteLine($"  {job.Job}: {job.Workers} workers");
-
-        output.WriteLine($"  Total assigned: {vm.TotalAssigned} / {vm.AvailableWorkers}");
-        output.WriteLine($"  Idle workers: {vm.IdleWorkers}");
-
-        if (vm.QueuedActionType is null)
-            output.WriteLine("  Queued optional action: none");
-        else
-            output.WriteLine($"  Queued optional action: {vm.QueuedActionType} -> {vm.QueuedActionName}");
-
+        output.Write("Pending Day Action: ");
+        output.Write(vm.QueuedActionType is null ? "none" : $"{vm.QueuedActionType} -> {vm.QueuedActionName}");
         output.WriteLine();
     }
 
     public void RenderActionReference(DayStartViewModel vm)
     {
-        RenderAvailableJobs(vm);
         RenderAvailableLaws(vm);
         RenderAvailableOrders(vm);
         RenderAvailableMissions(vm);
@@ -57,7 +45,6 @@ public sealed class ConsoleRenderer(TextWriter output)
         output.WriteLine("  mission <MissionId>                 Queue one available mission for today.");
         output.WriteLine("  clear_assignments                   Reset all job assignments to 0.");
         output.WriteLine("  clear_action                        Clear queued law/order/mission action.");
-        output.WriteLine("  show_plan                           Print current pending assignments and queued action.");
         output.WriteLine("  help                                Print this available-actions list.");
         output.WriteLine("  end_day                             Resolve simulation using current plan.");
         output.WriteLine();
@@ -70,14 +57,18 @@ public sealed class ConsoleRenderer(TextWriter output)
         output.WriteLine(new string('-', 76));
 
         foreach (var entry in vm.Entries)
+        {
             output.WriteLine($"[{entry.Tag}] {entry.Message}");
+        }
 
         if (vm.TriggeredEvents.Count > 0)
         {
             output.WriteLine();
             output.WriteLine("Triggered Events");
             foreach (var evt in vm.TriggeredEvents)
+            {
                 output.WriteLine($"  - {evt}");
+            }
         }
 
         if (vm.ResolvedMissions.Count > 0)
@@ -85,7 +76,9 @@ public sealed class ConsoleRenderer(TextWriter output)
             output.WriteLine();
             output.WriteLine("Mission Outcomes");
             foreach (var mission in vm.ResolvedMissions)
+            {
                 output.WriteLine($"  - {mission}");
+            }
         }
 
         output.WriteLine();
@@ -94,7 +87,9 @@ public sealed class ConsoleRenderer(TextWriter output)
         output.WriteLine($"  Recovered today: {vm.RecoveredWorkersToday}");
         output.WriteLine($"  Medicine spent on recovery: {vm.RecoveryMedicineSpentToday}");
         if (!string.IsNullOrWhiteSpace(vm.RecoveryBlockedReason))
+        {
             output.WriteLine($"  Blocked reason: {vm.RecoveryBlockedReason}");
+        }
 
         output.WriteLine();
     }
@@ -112,7 +107,9 @@ public sealed class ConsoleRenderer(TextWriter output)
         {
             output.WriteLine($"Game Over on Day {vm.Day}: {vm.Cause}");
             if (!string.IsNullOrWhiteSpace(vm.Details))
+            {
                 output.WriteLine(vm.Details);
+            }
         }
 
         output.WriteLine($"Total deaths: {vm.TotalDeaths}, total desertions: {vm.TotalDesertions}");
@@ -142,9 +139,15 @@ public sealed class ConsoleRenderer(TextWriter output)
     static string SicknessStatusNote(int sickness)
     {
         if (sickness > 70)
+        {
             return "[recovery LOCKED | deaths each day]";
+        }
+
         if (sickness >= 40)
+        {
             return "[recovery LOCKED at ≥40]";
+        }
+
         return "[recovery enabled]";
     }
 
@@ -163,34 +166,18 @@ public sealed class ConsoleRenderer(TextWriter output)
         output.WriteLine();
     }
 
-    void RenderJobAssignments(DayStartViewModel vm)
+    void RenderJobs(DayStartViewModel vm)
     {
-        var jobs = ActionAvailability.GetJobTypes();
-        output.WriteLine("Job Assignments");
+        output.WriteLine("Jobs");
 
-        foreach (var job in jobs)
+        foreach (var jvm in vm.Jobs)
         {
-            var assignment = vm.JobAssignments.FirstOrDefault(a => a.Job == job);
-            var workers = assignment?.Workers ?? 0;
-            var slots = workers / JobAllocation.Step;
-
-            string outputDesc;
-            if (slots == 0)
-            {
-                outputDesc = "—";
-            }
-            else
-            {
-                var baseOutput = GameBalance.BaseJobOutputPerSlot[job];
-                var outputResource = GameBalance.JobOutputResource[job];
-                outputDesc = outputResource.HasValue
-                    ? $"+{baseOutput} {outputResource.Value}"
-                    : job == JobType.Repairs
-                        ? $"+{baseOutput} integrity"
-                        : $"+{baseOutput} care pts";
-            }
-
-            output.WriteLine($"  {job,-18} {workers,3} workers  {slots} slot(s)  →  {outputDesc,-22}");
+            var workers = jvm.AssignedWorkers;
+            var inputsPerWorker = string.Join(", ", jvm.InputPerWorker.Select(x => x.ToString()));
+            var outputsPerWorker = string.Join(", ", jvm.OutputPerWorker.Select(x => x.ToString()));
+            var currentInputs = string.Join(", ", jvm.CurrentInput.Select(x => x.ToString()));
+            var currentOutputs = string.Join(", ", jvm.CurrentOutput.Select(x => x.ToString()));
+            output.WriteLine($" {jvm.Job,-18} | {workers,3} workers | {currentInputs,-12} -> {currentOutputs,-12} | {inputsPerWorker,-12} / per worker -> {outputsPerWorker,-12}");
         }
 
         output.WriteLine();
@@ -215,13 +202,17 @@ public sealed class ConsoleRenderer(TextWriter output)
     {
         output.WriteLine("Active Missions");
         if (vm.ActiveMissions.Count == 0)
+        {
             output.WriteLine("  None");
+        }
         else
+        {
             foreach (var mission in vm.ActiveMissions)
             {
                 output.WriteLine(
                     $"  {mission.MissionName}: {mission.DaysRemaining} day(s) remaining, {mission.WorkerCost} workers committed");
             }
+        }
 
         output.WriteLine();
     }
@@ -230,10 +221,16 @@ public sealed class ConsoleRenderer(TextWriter output)
     {
         output.WriteLine("Enacted Laws");
         if (vm.AvailableLaws.Count == 0 || !vm.AvailableLaws.Any(l => l.IsActive))
+        {
             output.WriteLine("  None");
+        }
         else
+        {
             foreach (var law in vm.AvailableLaws.Where(l => l.IsActive))
+            {
                 output.WriteLine($"  {law.Name}");
+            }
+        }
 
         output.WriteLine();
     }
@@ -242,16 +239,9 @@ public sealed class ConsoleRenderer(TextWriter output)
     {
         output.WriteLine("Possible Events");
         foreach (var evt in EventCatalog.GetAll())
+        {
             output.WriteLine($"  {evt.Name}: {evt.Description}");
-
-        output.WriteLine();
-    }
-
-    void RenderAvailableJobs(DayStartViewModel vm)
-    {
-        output.WriteLine("Assignable Job Slots");
-        foreach (var job in vm.Jobs)
-            output.WriteLine($"  {job.Job} | {job.Description}");
+        }
 
         output.WriteLine();
     }
@@ -268,7 +258,9 @@ public sealed class ConsoleRenderer(TextWriter output)
         }
 
         foreach (var law in available)
+        {
             output.WriteLine($"  {law.Name} ({law.Id}) | {law.Tooltip}");
+        }
 
         output.WriteLine();
     }
@@ -285,7 +277,9 @@ public sealed class ConsoleRenderer(TextWriter output)
         }
 
         foreach (var order in available)
+        {
             output.WriteLine($"  {order.Name} ({order.Id}) | {order.Tooltip}");
+        }
 
         output.WriteLine();
     }
@@ -302,7 +296,9 @@ public sealed class ConsoleRenderer(TextWriter output)
         }
 
         foreach (var mission in available)
+        {
             output.WriteLine($"  {mission.Name} ({mission.Id}) | {mission.Tooltip}");
+        }
 
         output.WriteLine();
     }

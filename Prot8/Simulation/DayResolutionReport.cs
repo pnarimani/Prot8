@@ -1,25 +1,14 @@
-using System.Collections.Generic;
-
 namespace Prot8.Simulation;
 
-public sealed class DayResolutionReport
+public sealed class DayResolutionReport(int day)
 {
-    private readonly List<DeltaLogEntry> _entries = new();
-    private readonly List<string> _triggeredEvents = new();
-    private readonly List<string> _resolvedMissions = new();
+    public int Day { get; } = day;
 
-    public DayResolutionReport(int day)
-    {
-        Day = day;
-    }
+    public List<DeltaLogEntry> Entries { get; } = [];
 
-    public int Day { get; }
+    public List<string> TriggeredEvents { get; } = [];
 
-    public IReadOnlyList<DeltaLogEntry> Entries => _entries;
-
-    public IReadOnlyList<string> TriggeredEvents => _triggeredEvents;
-
-    public IReadOnlyList<string> ResolvedMissions => _resolvedMissions;
+    public List<string> ResolvedMissions { get; } = [];
 
     public int FoodConsumedToday { get; set; }
 
@@ -43,16 +32,16 @@ public sealed class DayResolutionReport
 
     public void Add(string tag, string message)
     {
-        _entries.Add(new DeltaLogEntry(tag, message));
+        Entries.Add(new DeltaLogEntry(tag, message));
     }
 
     public void AddTriggeredEvent(string eventName)
     {
-        _triggeredEvents.Add(eventName);
+        TriggeredEvents.Add(eventName);
     }
 
     public void AddResolvedMission(string missionName)
     {
-        _resolvedMissions.Add(missionName);
+        ResolvedMissions.Add(missionName);
     }
 }

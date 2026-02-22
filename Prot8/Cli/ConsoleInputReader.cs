@@ -32,8 +32,8 @@ public sealed class ConsoleInputReader(CommandParser parser)
         var allocation = state.Allocation;
         var action = new TurnActionChoice();
 
-        var pendingPlanVm = GameStateToViewModels.ToPendingPlanViewModel(state, allocation, action);
-        renderer.RenderPendingPlan(pendingPlanVm);
+        var pendingPlanVm = GameStateToViewModels.ToPendingPlanViewModel(action);
+        renderer.RenderPendingDayAction(pendingPlanVm);
 
         while (true)
         {
@@ -53,17 +53,6 @@ public sealed class ConsoleInputReader(CommandParser parser)
 
             switch (command)
             {
-                case "show_plan":
-                    if (parts.Length != 1)
-                    {
-                        PrintInvalidAndHelp(renderer, state, "show_plan takes no parameters.");
-                        break;
-                    }
-
-                    var showPlanVm = GameStateToViewModels.ToPendingPlanViewModel(state, allocation, action);
-                    renderer.RenderPendingPlan(showPlanVm);
-                    break;
-
                 case "help":
                     if (parts.Length != 1)
                     {

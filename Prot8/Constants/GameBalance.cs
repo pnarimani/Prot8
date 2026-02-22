@@ -8,10 +8,10 @@ public static class GameBalance
 {
     public const int TargetSurvivalDay = 40;
 
-    public const int StartingHealthyWorkers = 85;
-    public const int StartingGuards = 10;
-    public const int StartingSickWorkers = 15;
-    public const int StartingElderly = 10;
+    public const int StartingHealthyWorkers = 35;
+    public const int StartingGuards = 5;
+    public const int StartingSickWorkers = 5;
+    public const int StartingElderly = 5;
 
     public const int StartingFood = 320;
     public const int StartingWater = 360;
@@ -50,11 +50,6 @@ public static class GameBalance
     public const int RecoveryPerClinicSlot = 2;
     public const int MedicinePerRecovery = 1;
 
-    public const int MissionForageWorkers = 10;
-    public const int MissionNightRaidWorkers = 8;
-    public const int MissionSearchHomesWorkers = 8;
-    public const int MissionBlackMarketeersWorkers = 6;
-
     public static readonly IReadOnlyList<ZoneTemplate> ZoneTemplates = new List<ZoneTemplate>
     {
         new(ZoneId.OuterFarms, "Outer Farms", 100, 35, 30, 1.0),
@@ -74,38 +69,27 @@ public static class GameBalance
         [JobType.FuelScavenging] = ZoneId.OuterResidential,
     };
 
-    public static readonly IReadOnlyDictionary<JobType, double> BaseJobOutputPerSlot = new Dictionary<JobType, double>
+    public static Dictionary<JobType, List<ResourceQuantity>> JobInputs = new()
     {
-        [JobType.FoodProduction] = 14,
-        [JobType.WaterDrawing] = 16,
-        [JobType.MaterialsCrafting] = 10,
-        [JobType.Repairs] = 3,
-        [JobType.ClinicStaff] = 4,
-        [JobType.FuelScavenging] = 8,
+        [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Fuel, 2)],
+        [JobType.WaterDrawing] = [],
+        [JobType.MaterialsCrafting] = [],
+        [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Materials, 3)],
+        [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Medicine, 2)],
+        [JobType.FuelScavenging] = [],
     };
 
-    public static readonly Dictionary<JobType, Dictionary<ResourceKind, double>> JobInputPerSlot = new()
+    public static readonly Dictionary<JobType, List<ResourceQuantity>> JobOutputs = new()
     {
-        [JobType.FoodProduction] = new Dictionary<ResourceKind, double> { [ResourceKind.Fuel] = 2 },
-        [JobType.WaterDrawing] = new Dictionary<ResourceKind, double> {},
-        [JobType.MaterialsCrafting] = new Dictionary<ResourceKind, double> {},
-        [JobType.Repairs] = new Dictionary<ResourceKind, double> { [ResourceKind.Materials] = 4 },
-        [JobType.ClinicStaff] = new Dictionary<ResourceKind, double> { [ResourceKind.Medicine] = 2 },
-        [JobType.FuelScavenging] = new Dictionary<ResourceKind, double>(),
+        [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Food, 14)],
+        [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Water, 16)],
+        [JobType.MaterialsCrafting] = [new ResourceQuantity(ResourceKind.Materials, 10)],
+        [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Integrity, 3)],
+        [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Care, 4)],
+        [JobType.FuelScavenging] = [new ResourceQuantity(ResourceKind.Fuel, 8)],
     };
 
-    public static readonly IReadOnlyDictionary<JobType, ResourceKind?> JobOutputResource =
-        new Dictionary<JobType, ResourceKind?>
-        {
-            [JobType.FoodProduction] = ResourceKind.Food,
-            [JobType.WaterDrawing] = ResourceKind.Water,
-            [JobType.MaterialsCrafting] = ResourceKind.Materials,
-            [JobType.Repairs] = null,
-            [JobType.ClinicStaff] = null,
-            [JobType.FuelScavenging] = ResourceKind.Fuel,
-        };
-
-    public static readonly IReadOnlyDictionary<JobType, double> LostZoneJobMultipliers = new Dictionary<JobType, double>
+    public static readonly Dictionary<JobType, double> LostZoneJobMultipliers = new()
     {
         [JobType.FoodProduction] = 0.35,
         [JobType.WaterDrawing] = 0.6,
@@ -199,16 +183,25 @@ public static class GameBalance
     public static int ComputeRecoveryDays(int sickness)
     {
         if (sickness <= 19)
+        {
             return BaseRecoveryTimeDays;
+        }
 
         if (sickness <= 29)
+        {
             return BaseRecoveryTimeDays + 1;
+        }
 
         if (sickness <= 39)
+        {
             return BaseRecoveryTimeDays + 2;
+        }
 
         return int.MaxValue;
     }
 
-    public static int ClampStat(int value) => Math.Clamp(value, 0, 100);
+    public static int ClampStat(int value)
+    {
+        return Math.Clamp(value, 0, 100);
+    }
 }

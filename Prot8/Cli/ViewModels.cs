@@ -1,8 +1,4 @@
-using System.Collections.Generic;
 using Prot8.Jobs;
-using Prot8.Laws;
-using Prot8.Missions;
-using Prot8.Orders;
 using Prot8.Resources;
 using Prot8.Simulation;
 using Prot8.Zones;
@@ -22,13 +18,12 @@ public sealed class DayStartViewModel
 
     public ResourceViewModel Resources { get; init; } = new();
     public PopulationViewModel Population { get; init; } = new();
-    public IReadOnlyList<JobAssignmentViewModel> JobAssignments { get; init; } = [];
     public IReadOnlyList<ZoneViewModel> Zones { get; init; } = [];
     public IReadOnlyList<ActiveMissionViewModel> ActiveMissions { get; init; } = [];
     public IReadOnlyList<LawViewModel> AvailableLaws { get; init; } = [];
     public IReadOnlyList<OrderViewModel> AvailableOrders { get; init; } = [];
     public IReadOnlyList<MissionViewModel> AvailableMissions { get; init; } = [];
-    public IReadOnlyList<JobReferenceViewModel> Jobs { get; init; } = [];
+    public IReadOnlyList<JobViewModel> Jobs { get; init; } = [];
 }
 
 public sealed class ResourceViewModel
@@ -47,12 +42,6 @@ public sealed class PopulationViewModel
     public int SickWorkers { get; init; }
     public int Elderly { get; init; }
     public int TotalPopulation => HealthyWorkers + Guards + SickWorkers + Elderly;
-}
-
-public sealed class JobAssignmentViewModel
-{
-    public JobType Job { get; init; }
-    public int Workers { get; init; }
 }
 
 public sealed class ZoneViewModel
@@ -96,18 +85,18 @@ public sealed class MissionViewModel
     public int WorkerCost { get; init; }
 }
 
-public sealed class JobReferenceViewModel
+public sealed class JobViewModel
 {
-    public JobType Job { get; init; }
-    public string Description { get; init; } = "";
+    public required JobType Job { get; init; }
+    public required int AssignedWorkers { get; init; }
+    public required List<ResourceQuantity> CurrentInput { get; init; }
+    public required List<ResourceQuantity> CurrentOutput { get; init; }
+    public required List<ResourceQuantity> InputPerWorker { get; init; }
+    public required List<ResourceQuantity> OutputPerWorker { get; init; }
 }
 
 public sealed class PendingPlanViewModel
 {
-    public IReadOnlyList<JobAssignmentViewModel> JobAssignments { get; init; } = [];
-    public int TotalAssigned { get; init; }
-    public int AvailableWorkers { get; init; }
-    public int IdleWorkers { get; init; }
     public string? QueuedActionType { get; init; }
     public string? QueuedActionName { get; init; }
 }

@@ -15,9 +15,6 @@ public sealed class AssignCommand(string jobToken, string workersToken) : IComma
         if (workers < 0)
             return new CommandResult(false, "Workers cannot be negative.");
 
-        if (workers % JobAllocation.Step != 0)
-            return new CommandResult(false, $"Workers must be in increments of {JobAllocation.Step}.");
-
         var available = context.State.AvailableHealthyWorkersForAllocation;
         var currentForJob = context.State.Allocation.Workers[job];
         var newTotalAssigned = context.State.Allocation.TotalAssigned() - currentForJob + workers;

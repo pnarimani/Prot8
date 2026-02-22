@@ -6,5 +6,7 @@ public enum ResourceKind
     Water,
     Fuel,
     Medicine,
-    Materials
+    Materials,
+    Integrity,
+    Care,
 }

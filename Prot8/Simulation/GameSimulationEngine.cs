@@ -171,13 +171,7 @@ public sealed class GameSimulationEngine
             {
                 continue;
             }
-
-            var slots = workers / JobAllocation.Step;
-            if (slots <= 0)
-            {
-                continue;
-            }
-
+            
             var zoneMultiplier = 1.0;
             if (job != JobType.Repairs)
             {
@@ -193,21 +187,21 @@ public sealed class GameSimulationEngine
                 }
             }
 
-            var nominalCycles = slots * globalMultiplier * zoneMultiplier;
+            var nominalCycles = workers * globalMultiplier * zoneMultiplier;
             if (nominalCycles <= 0)
             {
                 continue;
             }
 
             var scale = 1.0;
-            var hasInput = GameBalance.JobInputPerSlot.TryGetValue(job, out var inputs) && inputs is not null && inputs.Count > 0;
-            var inputRequirements = hasInput ? inputs! : null;
+            var inputs = GameBalance.JobInputs[job];
+            var hasInput = inputs.Count > 0;
             if (hasInput)
             {
-                foreach (var pair in inputRequirements!)
+                foreach (var pair in inputs)
                 {
-                    var perCycle = pair.Value;
-                    if (job == JobType.ClinicStaff && pair.Key == ResourceKind.Medicine)
+                    var perCycle = pair.Quantity;
+                    if (job == JobType.ClinicStaff && pair.Resource == ResourceKind.Medicine)
                     {
                         perCycle *= state.DailyEffects.MedicineUsageMultiplier;
                     }
@@ -218,7 +212,7 @@ public sealed class GameSimulationEngine
                     }
 
                     var needed = nominalCycles * perCycle;
-                    var available = state.Resources[pair.Key];
+                    var available = state.Resources[pair.Resource];
                     if (needed > available)
                     {
                         var candidate = available / needed;
@@ -243,10 +237,10 @@ public sealed class GameSimulationEngine
 
             if (hasInput)
             {
-                foreach (var pair in inputRequirements!)
+                foreach (var pair in inputs)
                 {
-                    var perCycle = pair.Value;
-                    if (job == JobType.ClinicStaff && pair.Key == ResourceKind.Medicine)
+                    var perCycle = pair.Quantity;
+                    if (job == JobType.ClinicStaff && pair.Resource == ResourceKind.Medicine)
                     {
                         perCycle *= state.DailyEffects.MedicineUsageMultiplier;
                     }
@@ -254,9 +248,9 @@ public sealed class GameSimulationEngine
                     var spend = (int)Math.Ceiling(effectiveCycles * perCycle);
                     if (spend > 0)
                     {
-                        state.Resources.Consume(pair.Key, spend);
-                        report.Add(ReasonTags.Production, $"{job}: consumed {spend} {pair.Key}.");
-                        if (job == JobType.ClinicStaff && pair.Key == ResourceKind.Medicine)
+                        state.Resources.Consume(pair.Resource, spend);
+                        report.Add(ReasonTags.Production, $"{job}: consumed {spend} {pair.Resource}.");
+                        if (job == JobType.ClinicStaff && pair.Resource == ResourceKind.Medicine)
                         {
                             result.ClinicMedicineSpent += spend;
                         }
@@ -264,18 +258,19 @@ public sealed class GameSimulationEngine
                 }
             }
 
-            var produced = (int)Math.Floor(effectiveCycles * GameBalance.BaseJobOutputPerSlot[job]);
+            var outputs = GameBalance.JobOutputs[job];
+            var outputResource = outputs.FirstOrDefault();
+            var produced = (int)Math.Floor(effectiveCycles * outputResource.Quantity);
             if (produced <= 0)
             {
                 continue;
             }
 
-            var outputResource = GameBalance.JobOutputResource[job];
-            if (outputResource.HasValue)
+            if (outputResource.Resource is not ResourceKind.Integrity and ResourceKind.Care)
             {
-                state.Resources.Add(outputResource.Value, produced);
-                result.AddResourceProduction(outputResource.Value, produced);
-                report.Add(ReasonTags.Production, $"{job}: +{produced} {outputResource.Value}.");
+                state.Resources.Add(outputResource.Resource, produced);
+                result.AddResourceProduction(outputResource.Resource, produced);
+                report.Add(ReasonTags.Production, $"{job}: +{produced} {outputResource.Quantity}.");
             }
             else if (job == JobType.Repairs)
             {

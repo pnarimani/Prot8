@@ -1,5 +1,4 @@
 using Prot8.Constants;
-using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
 using Prot8.Orders;
@@ -12,8 +11,6 @@ public static class GameStateToViewModels
 {
     public static DayStartViewModel ToDayStartViewModel(GameState state)
     {
-        var jobs = ActionAvailability.GetJobTypes();
-
         return new DayStartViewModel
         {
             Day = state.Day,
@@ -38,11 +35,6 @@ public static class GameStateToViewModels
                 SickWorkers = state.Population.SickWorkers,
                 Elderly = state.Population.Elderly,
             },
-            JobAssignments = jobs.Select(job => new JobAssignmentViewModel
-            {
-                Job = job,
-                Workers = state.Allocation.Workers[job],
-            }).ToList(),
             Zones = state.Zones.Select(zone => new ZoneViewModel
             {
                 Id = zone.Id,
@@ -61,20 +53,12 @@ public static class GameStateToViewModels
             AvailableLaws = ToLawViewModels(state),
             AvailableOrders = ToOrderViewModels(state),
             AvailableMissions = ToMissionViewModels(state),
-            Jobs = ToJobReferenceViewModels(),
+            Jobs = CreateJobViewModel(state),
         };
     }
 
-    public static PendingPlanViewModel ToPendingPlanViewModel(GameState state, JobAllocation allocation,
-        TurnActionChoice action)
+    public static PendingPlanViewModel ToPendingPlanViewModel(TurnActionChoice action)
     {
-        var jobs = ActionAvailability.GetJobTypes();
-        var jobAssignments = jobs.Select(job => new JobAssignmentViewModel
-        {
-            Job = job,
-            Workers = allocation.Workers[job],
-        }).ToList();
-
         string? actionType = null;
         string? actionName = null;
 
@@ -102,10 +86,6 @@ public static class GameStateToViewModels
 
         return new PendingPlanViewModel
         {
-            JobAssignments = jobAssignments,
-            TotalAssigned = allocation.TotalAssigned(),
-            AvailableWorkers = state.AvailableHealthyWorkersForAllocation,
-            IdleWorkers = allocation.IdleWorkers,
             QueuedActionType = actionType,
             QueuedActionName = actionName,
         };
@@ -135,8 +115,9 @@ public static class GameStateToViewModels
         };
     }
 
-    public static GameOverViewModel ToGameOverViewModel(GameState state) =>
-        new()
+    public static GameOverViewModel ToGameOverViewModel(GameState state)
+    {
+        return new GameOverViewModel
         {
             Survived = state.Survived,
             Cause = state.GameOverCause,
@@ -161,6 +142,7 @@ public static class GameStateToViewModels
                 Elderly = state.Population.Elderly,
             },
         };
+    }
 
     static IReadOnlyList<LawViewModel> ToLawViewModels(GameState state)
     {
@@ -221,38 +203,34 @@ public static class GameStateToViewModels
         return result;
     }
 
-    static IReadOnlyList<JobReferenceViewModel> ToJobReferenceViewModels()
+    static IReadOnlyList<JobViewModel> CreateJobViewModel(GameState state)
     {
         var jobs = ActionAvailability.GetJobTypes();
-        var result = new List<JobReferenceViewModel>();
+        var result = new List<JobViewModel>();
 
         foreach (var job in jobs)
         {
-            result.Add(new JobReferenceViewModel
+            var workers = state.Allocation.Workers[job];
+
+            var output = GameBalance.JobOutputs[job]
+                .Select(x => x with { Quantity = x.Quantity * workers })
+                .ToList();
+            
+            var input = GameBalance.JobInputs[job]
+                .Select(x => x with { Quantity = x.Quantity * workers })
+                .ToList();
+
+            result.Add(new JobViewModel
             {
                 Job = job,
-                Description = ComputeJobDescription(job),
+                AssignedWorkers = workers,
+                CurrentOutput = output,
+                CurrentInput = input,
+                InputPerWorker = GameBalance.JobInputs[job],
+                OutputPerWorker = GameBalance.JobOutputs[job],
             });
         }
 
         return result;
-    }
-
-    static string ComputeJobDescription(JobType job)
-    {
-        var baseOutput = GameBalance.BaseJobOutputPerSlot[job];
-        var outputResource = GameBalance.JobOutputResource[job];
-
-        var outputDesc = outputResource.HasValue
-            ? $"+{baseOutput} {outputResource.Value}"
-            : job == JobType.Repairs
-                ? $"+{baseOutput} integrity"
-                : $"+{baseOutput} care pts";
-
-        if (!GameBalance.JobInputPerSlot.TryGetValue(job, out var inputs) || inputs.Count == 0)
-            return $"{job} ({outputDesc}).";
-
-        var inputParts = inputs.Select(kvp => $"-{kvp.Value} {kvp.Key}");
-        return $"{job} ({outputDesc}), {string.Join(", ", inputParts)}/slot).";
     }
 }
