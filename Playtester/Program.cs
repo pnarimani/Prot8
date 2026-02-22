@@ -40,21 +40,20 @@ while (!state.GameOver)
     Console.WriteLine($"[AI] Calling Commander for Day {state.Day}...");
     var commanderPrompt = AgentPrompts.CommanderUser(daySnapshot, notebook);
     var commanderJson = await llm.ChatAsync(
-        AgentPrompts.CommanderSystem, commanderPrompt,
-        temperature: 0.4, responseFormat: AgentPrompts.CommanderResponseFormat);
+        AgentPrompts.CommanderSystem, commanderPrompt, responseFormat: AgentPrompts.CommanderResponseFormat, temperature: 0.4);
 
     // Parse commands from JSON
     var commandLines = ParseCommanderJson(commanderJson);
     Console.WriteLine($"[AI] Commander issued {commandLines.Count} command(s).");
 
     var executedCommands = new StringBuilder();
-    foreach (var line in commandLines)
+    foreach (var (line, reason) in commandLines)
     {
         if (string.IsNullOrEmpty(line)) continue;
         if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase)) break;
 
         ConsoleInputReader.TryExecuteCommand(state, allocation, ref action, line, out var msg, out var endDay);
-        Console.WriteLine($"  > {line} => {msg}");
+        Console.WriteLine($"  > {line}  [{reason}]  => {msg}");
         executedCommands.AppendLine(line);
 
         if (endDay) break;
@@ -83,8 +82,7 @@ while (!state.GameOver)
         Console.WriteLine($"[AI] Calling Scribe for Day {state.Day}...");
         var scribePrompt = AgentPrompts.ScribeUser(notebook, daySnapshot, cmds, resolutionLog);
         var scribeJson = await llm.ChatAsync(
-            AgentPrompts.ScribeSystem, scribePrompt,
-            temperature: 0.3, responseFormat: AgentPrompts.ScribeResponseFormat);
+            AgentPrompts.ScribeSystem, scribePrompt, responseFormat: AgentPrompts.ScribeResponseFormat, temperature: 0.3);
 
         notebook = FormatNotebook(scribeJson);
         Console.WriteLine($"[AI] Notebook updated ({notebook.Length} chars).\n");
@@ -102,8 +100,7 @@ telemetry.LogFinal(state);
 Console.WriteLine("[AI] Calling Critic for postmortem...");
 var criticPrompt = AgentPrompts.CriticUser(finalSummary, timeline.ToString(), notebook);
 var criticJson = await llm.ChatAsync(
-    AgentPrompts.CriticSystem, criticPrompt,
-    temperature: 0.5, responseFormat: AgentPrompts.CriticResponseFormat);
+    AgentPrompts.CriticSystem, criticPrompt, responseFormat: AgentPrompts.CriticResponseFormat, temperature: 0.5);
 
 var postmortem = FormatPostmortem(criticJson);
 
@@ -124,14 +121,18 @@ static string RenderToString(Action<TextWriter> render)
     return sw.ToString();
 }
 
-static List<string> ParseCommanderJson(string json)
+static List<(string Command, string Reason)> ParseCommanderJson(string json)
 {
     try
     {
         var node = JsonNode.Parse(json);
         var array = node?["commands"]?.AsArray();
         if (array is null) return [];
-        return [.. array.Select(x => x?.GetValue<string>() ?? "").Where(s => s.Length > 0)];
+        return [.. array
+            .Select(x => (
+                Command: x?["command"]?.GetValue<string>() ?? "",
+                Reason:  x?["reason"]?.GetValue<string>() ?? ""))
+            .Where(x => x.Command.Length > 0)];
     }
     catch
     {

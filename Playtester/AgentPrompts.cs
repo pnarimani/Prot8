@@ -11,17 +11,14 @@ public static class AgentPrompts
 
         Your objective is to survive until Day 40.
 
-        Win and Loss Conditions
-        - Win: reach Day 40.
-        - Lose: Keep integrity reaches 0 or below.
-        - Lose: Unrest rises above 85.
-        - Lose: Food and Water are both 0 for 2 consecutive days.
-
         Rules:
         - You may only use commands explicitly listed in the snapshot.
+        - Total assigned workers must not exceed the available workers shown.
+        - Each day, You may select to queue ONLY one of Emergency Order, Law or Mission. 
         - Do not invent mechanics, rules, commands, or hidden information.
-        - Respond with a JSON object. The "commands" field is an ordered array of CLI
-          command strings to execute today. The last command must be "end_day".
+        - Respond with a JSON object. The "commands" field is an ordered array of objects,
+          each with a "command" string (the CLI command to run) and a "reason" string
+          (one sentence explaining why). The last entry must have command="end_day".
         """;
 
     public static string CommanderUser(string daySnapshot, string notebook)
@@ -36,9 +33,15 @@ public static class AgentPrompts
             <<<
             {notebook}
             >>>
-
-            Choose today's actions and return them in the commands array.
-            The last entry must be "end_day".
+            
+            Win and Loss Conditions
+            - Win: reach Day 40.
+            - Lose: Keep integrity reaches 0 or below.
+            - Lose: Unrest rises above 85.
+            - Lose: Food and Water are both 0 for 2 consecutive days.
+            
+            Respond with a JSON object. The "commands" field is an ordered array of CLI command strings to execute today. 
+            The last command must be "end_day".
             """;
     }
 
@@ -57,8 +60,18 @@ public static class AgentPrompts
                     ["commands"] = new JsonObject
                     {
                         ["type"] = "array",
-                        ["description"] = "Ordered CLI commands to execute today. Last entry must be \"end_day\".",
-                        ["items"] = new JsonObject { ["type"] = "string" }
+                        ["description"] = "Ordered commands to execute today. Last entry must have command=\"end_day\".",
+                        ["items"] = new JsonObject
+                        {
+                            ["type"] = "object",
+                            ["properties"] = new JsonObject
+                            {
+                                ["command"] = new JsonObject { ["type"] = "string", ["description"] = "The CLI command string to execute." },
+                                ["reason"] = new JsonObject { ["type"] = "string", ["description"] = "One-sentence reason for issuing this command." }
+                            },
+                            ["required"] = new JsonArray("command", "reason"),
+                            ["additionalProperties"] = false
+                        }
                     }
                 },
                 ["required"] = new JsonArray("commands"),
