@@ -164,7 +164,10 @@ public sealed class GameState
         get
         {
             var sum = Allocation.Workers.Sum(x => x.Value);
-            return AvailableHealthyWorkersForAllocation - sum;
+            var allocation = AvailableHealthyWorkersForAllocation - sum;
+            return allocation >= 0
+                ? allocation
+                : throw new InvalidOperationException("There are  more workers assigned to jobs than available workers");
         }
     }
 

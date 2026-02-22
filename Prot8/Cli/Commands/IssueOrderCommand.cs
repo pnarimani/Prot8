@@ -13,7 +13,7 @@ public sealed class IssueOrderCommand : ICommand
         var order = available.FirstOrDefault(o => o.Id.Equals(OrderId, StringComparison.OrdinalIgnoreCase));
         if (order == null)
         {
-            return new CommandResult(false, $"Failed to fin dorder with id {OrderId}");
+            return new CommandResult(false, $"Failed to find order with id {OrderId}");
         }
 
         if (!order.CanIssue(context.State, out var reason))

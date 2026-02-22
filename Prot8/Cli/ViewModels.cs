@@ -85,7 +85,7 @@ public sealed class MissionViewModel
     public string Name { get; init; } = "";
     public string Tooltip { get; init; } = "";
     public int DurationDays { get; init; }
-    public int WorkerCost { get; init; }
+    public int RequiredIdleWorkers { get; init; }
 }
 
 public sealed class JobViewModel

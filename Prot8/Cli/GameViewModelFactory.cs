@@ -211,7 +211,7 @@ public class GameViewModelFactory(GameState state)
                 Name = mission.Name,
                 Tooltip = mission.GetTooltip(state),
                 DurationDays = mission.DurationDays,
-                WorkerCost = mission.WorkerCost,
+                RequiredIdleWorkers = mission.WorkerCost,
             });
         }
 

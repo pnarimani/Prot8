@@ -23,6 +23,10 @@ public static class Agents
             If you want to move workers between jobs:
             1. Remove workers from one job with negative delta_workers
             2. Assign workers to another job with positive delta_workers
+            
+            The required workers for a mission need to be IDLE WORKERS BEFORE YOU ACTIVATE A MISSION.
+            
+            YOU CANNOT execute an order if OrderCooldownDaysRemaining is greater than 0.
 
             You have access to a "Survival Guide" written by your past iterations. You must treat the rules in this guide as absolute truth. If the guide tells you not to do something, do not do it.
 
