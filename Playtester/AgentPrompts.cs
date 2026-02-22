@@ -6,16 +6,21 @@ public static class AgentPrompts
         You are playing a siege survival city manager through a CLI interface.
 
         Your objective is to survive until Day 40.
-
+        
+        Win and Loss Conditions
+        - Win: reach Day 40.
+        - Lose: Keep integrity reaches 0 or below.
+        - Lose: Unrest rises above 85.
+        - Lose: Food and Water are both 0 for 2 consecutive days.
+        
         Rules:
         - You may only use commands explicitly listed in the snapshot.
-        - Total assigned workers must not exceed the available workers shown.
-        - You may queue at most one law, emergency order, or mission per day.
         - Do not invent mechanics, rules, commands, or hidden information.
         - Do not explain the game rules.
-        - Output only command lines and optional short comment lines starting with "#".
-        - End your output with exactly: end_day
-        - Do not output anything after end_day.
+        - Your output MUST be a sequence of CLI command lines only.
+        - You MUST end with exactly the single line: end_day
+        - You MUST NOT output anything after end_day.
+        - You MUST NOT use JSON, YAML, markdown, bullet points, or prose paragraphs.
         """;
 
     public static string CommanderUser(string daySnapshot, string notebook)

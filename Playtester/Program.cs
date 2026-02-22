@@ -20,6 +20,7 @@ using var llm = new LmStudioClient(config.Endpoint, config.Model);
 var state = new GameState(config.Seed);
 var engine = new GameSimulationEngine();
 using var telemetry = new RunTelemetryWriter(config.Seed);
+await using var agentResponseLog = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "agents.txt"));
 
 var notebook = "(empty - first day)";
 var timeline = new StringBuilder();
@@ -39,7 +40,7 @@ while (!state.GameOver)
     Console.WriteLine($"[AI] Calling Commander for Day {state.Day}...");
     var commanderPrompt = AgentPrompts.CommanderUser(daySnapshot, notebook);
     var commanderResponse = await llm.ChatAsync(AgentPrompts.CommanderSystem, commanderPrompt, temperature: 0.4);
-    Console.WriteLine($"[AI] Commander response:\n{commanderResponse}\n");
+    agentResponseLog.WriteLine($"[AI] Commander response:\n{commanderResponse}\n");
 
     // Parse and execute commands
     var commandLines = ParseCommandLines(commanderResponse);
@@ -47,6 +48,8 @@ while (!state.GameOver)
 
     foreach (var line in commandLines)
     {
+        if (string.IsNullOrEmpty(line)) 
+            continue;
         if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase))
             break;
 
@@ -83,9 +86,11 @@ while (!state.GameOver)
         // Trim notebook to ~1200 chars
         if (notebook.Length > 1500)
             notebook = notebook[..1500];
+        agentResponseLog.WriteLine($"[AI] Scribe response:\n{notebook}\n");
         Console.WriteLine($"[AI] Notebook updated ({notebook.Length} chars).\n");
 
         state.Day += 1;
+        await agentResponseLog.FlushAsync();
     }
 }
 

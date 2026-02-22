@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using Prot8.Cli;
 using Prot8.Cli.Output;
 using Prot8.Jobs;
 using Prot8.Laws;
@@ -13,7 +10,8 @@ namespace Prot8.Cli.Input;
 
 public sealed class ConsoleInputReader
 {
-    public static bool TryExecuteCommand(GameState state, JobAllocation allocation, ref TurnActionChoice action, string rawCommand, out string message, out bool endDayRequested)
+    public static bool TryExecuteCommand(GameState state, JobAllocation allocation, ref TurnActionChoice action,
+        string rawCommand, out string message, out bool endDayRequested)
     {
         message = string.Empty;
         endDayRequested = false;
@@ -88,11 +86,10 @@ public sealed class ConsoleInputReader
         var allocation = BuildStartingAllocation(state, out var allocationAdjustmentMessage);
         var action = new TurnActionChoice();
 
-        Console.WriteLine("Command mode: enter actions with parameters. Type 'help' for all commands. End with 'end_day'.");
+        Console.WriteLine(
+            "Command mode: enter actions with parameters. Type 'help' for all commands. End with 'end_day'.");
         if (!string.IsNullOrWhiteSpace(allocationAdjustmentMessage))
-        {
             Console.WriteLine(allocationAdjustmentMessage);
-        }
 
         renderer.RenderPendingPlan(state, allocation, action);
 
@@ -107,9 +104,7 @@ public sealed class ConsoleInputReader
 
             var trimmed = raw.Trim();
             if (trimmed.Length == 0)
-            {
                 continue;
-            }
 
             var parts = trimmed.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var command = parts[0].ToLowerInvariant();
@@ -146,7 +141,8 @@ public sealed class ConsoleInputReader
                 case "mission":
                 case "start_mission":
                 case "clear_action":
-                    if (TryExecuteCommand(state, allocation, ref action, trimmed, out var commandMessage, out var endDayRequested))
+                    if (TryExecuteCommand(state, allocation, ref action, trimmed, out var commandMessage,
+                            out var endDayRequested))
                     {
                         Console.WriteLine(commandMessage);
                         if (endDayRequested)
@@ -169,7 +165,7 @@ public sealed class ConsoleInputReader
         }
     }
 
-    private static bool TryAssign(GameState state, JobAllocation allocation, string[] parts, out string message)
+    static bool TryAssign(GameState state, JobAllocation allocation, string[] parts, out string message)
     {
         if (parts.Length != 3)
         {
@@ -212,11 +208,12 @@ public sealed class ConsoleInputReader
 
         allocation.SetWorkers(job, workers);
         allocation.SetIdleWorkers(available - newTotalAssigned);
-        message = $"Assigned {workers} workers to {job}. Total assigned: {newTotalAssigned}/{available}. Idle: {available - newTotalAssigned}.";
+        message =
+            $"Assigned {workers} workers to {job}. Total assigned: {newTotalAssigned}/{available}. Idle: {available - newTotalAssigned}.";
         return true;
     }
 
-    private static bool TryQueueLaw(GameState state, ref TurnActionChoice action, string[] parts, out string message)
+    static bool TryQueueLaw(GameState state, ref TurnActionChoice action, string[] parts, out string message)
     {
         if (parts.Length != 2)
         {
@@ -235,7 +232,7 @@ public sealed class ConsoleInputReader
         return true;
     }
 
-    private static bool TryQueueOrder(GameState state, ref TurnActionChoice action, string[] parts, out string message)
+    static bool TryQueueOrder(GameState state, ref TurnActionChoice action, string[] parts, out string message)
     {
         if (parts.Length < 2 || parts.Length > 3)
         {
@@ -282,7 +279,7 @@ public sealed class ConsoleInputReader
         action = new TurnActionChoice
         {
             EmergencyOrderId = order.Id,
-            SelectedZoneForOrder = zone
+            SelectedZoneForOrder = zone,
         };
 
         message = zone.HasValue
@@ -291,7 +288,7 @@ public sealed class ConsoleInputReader
         return true;
     }
 
-    private static bool TryQueueMission(GameState state, ref TurnActionChoice action, string[] parts, out string message)
+    static bool TryQueueMission(GameState state, ref TurnActionChoice action, string[] parts, out string message)
     {
         if (parts.Length != 2)
         {
@@ -310,7 +307,7 @@ public sealed class ConsoleInputReader
         return true;
     }
 
-    private static bool TryResolveLaw(GameState state, string token, out ILaw? law, out string reason)
+    static bool TryResolveLaw(GameState state, string token, out ILaw? law, out string reason)
     {
         law = null;
         var available = ActionAvailability.GetAvailableLaws(state);
@@ -330,7 +327,8 @@ public sealed class ConsoleInputReader
 
         foreach (var item in available)
         {
-            if (string.Equals(item.Id, token, StringComparison.OrdinalIgnoreCase) || string.Equals(Normalize(item.Name), Normalize(token), StringComparison.Ordinal))
+            if (string.Equals(item.Id, token, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(Normalize(item.Name), Normalize(token), StringComparison.Ordinal))
             {
                 law = item;
                 reason = string.Empty;
@@ -342,7 +340,7 @@ public sealed class ConsoleInputReader
         return false;
     }
 
-    private static bool TryResolveOrder(GameState state, string token, out IEmergencyOrder? order, out string reason)
+    static bool TryResolveOrder(GameState state, string token, out IEmergencyOrder? order, out string reason)
     {
         order = null;
         var available = ActionAvailability.GetAvailableOrders(state);
@@ -362,7 +360,8 @@ public sealed class ConsoleInputReader
 
         foreach (var item in available)
         {
-            if (string.Equals(item.Id, token, StringComparison.OrdinalIgnoreCase) || string.Equals(Normalize(item.Name), Normalize(token), StringComparison.Ordinal))
+            if (string.Equals(item.Id, token, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(Normalize(item.Name), Normalize(token), StringComparison.Ordinal))
             {
                 order = item;
                 reason = string.Empty;
@@ -374,7 +373,7 @@ public sealed class ConsoleInputReader
         return false;
     }
 
-    private static bool TryResolveMission(GameState state, string token, out IMissionDefinition? mission, out string reason)
+    static bool TryResolveMission(GameState state, string token, out IMissionDefinition? mission, out string reason)
     {
         mission = null;
         var available = ActionAvailability.GetAvailableMissions(state);
@@ -394,7 +393,8 @@ public sealed class ConsoleInputReader
 
         foreach (var item in available)
         {
-            if (string.Equals(item.Id, token, StringComparison.OrdinalIgnoreCase) || string.Equals(Normalize(item.Name), Normalize(token), StringComparison.Ordinal))
+            if (string.Equals(item.Id, token, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(Normalize(item.Name), Normalize(token), StringComparison.Ordinal))
             {
                 mission = item;
                 reason = string.Empty;
@@ -406,9 +406,9 @@ public sealed class ConsoleInputReader
         return false;
     }
 
-    private static bool TryResolveJob(string token, out JobType job, out string reason)
+    static bool TryResolveJob(string token, out JobType job, out string reason)
     {
-        if (Enum.TryParse<JobType>(token, true, out job))
+        if (Enum.TryParse(token, true, out job))
         {
             reason = string.Empty;
             return true;
@@ -432,23 +432,19 @@ public sealed class ConsoleInputReader
         return false;
     }
 
-    private static bool TryParseShortcut(string token, char prefix, out int index)
+    static bool TryParseShortcut(string token, char prefix, out int index)
     {
         index = 0;
         if (token.Length < 2 || char.ToLowerInvariant(token[0]) != char.ToLowerInvariant(prefix))
-        {
             return false;
-        }
 
         return int.TryParse(token.Substring(1), out index);
     }
 
-    private static bool TryParseZone(string token, out ZoneId zone)
+    static bool TryParseZone(string token, out ZoneId zone)
     {
-        if (Enum.TryParse<ZoneId>(token, true, out zone))
-        {
+        if (Enum.TryParse(token, true, out zone))
             return true;
-        }
 
         if (int.TryParse(token, out var raw) && raw >= (int)ZoneId.OuterFarms && raw <= (int)ZoneId.Keep)
         {
@@ -459,7 +455,7 @@ public sealed class ConsoleInputReader
         return false;
     }
 
-    private static string Normalize(string value)
+    static string Normalize(string value)
     {
         var chars = value.ToLowerInvariant().ToCharArray();
         var buffer = new char[chars.Length];
@@ -467,20 +463,16 @@ public sealed class ConsoleInputReader
         foreach (var ch in chars)
         {
             if (char.IsLetterOrDigit(ch))
-            {
                 buffer[idx++] = ch;
-            }
         }
 
         return new string(buffer, 0, idx);
     }
 
-    private static void ClearAssignments(GameState state, JobAllocation allocation)
+    static void ClearAssignments(GameState state, JobAllocation allocation)
     {
         foreach (var job in Enum.GetValues<JobType>())
-        {
             allocation.SetWorkers(job, 0);
-        }
 
         allocation.SetIdleWorkers(state.AvailableHealthyWorkersForAllocation);
     }
@@ -490,14 +482,12 @@ public sealed class ConsoleInputReader
         var available = state.AvailableHealthyWorkersForAllocation;
         var assigned = allocation.TotalAssigned();
         if (assigned > available)
-        {
             throw new InvalidOperationException("Assigned workers exceed available workers.");
-        }
 
         allocation.SetIdleWorkers(available - assigned);
     }
 
-    private static void PrintInvalidAndHelp(ConsoleRenderer renderer, GameState state, string message)
+    static void PrintInvalidAndHelp(ConsoleRenderer renderer, GameState state, string message)
     {
         Console.WriteLine($"Invalid command: {message}");
         renderer.RenderActionReference(state);
@@ -507,9 +497,7 @@ public sealed class ConsoleInputReader
     {
         var allocation = new JobAllocation();
         foreach (var job in Enum.GetValues<JobType>())
-        {
             allocation.SetWorkers(job, state.Allocation.Workers[job]);
-        }
 
         adjustmentMessage = null;
         var available = state.AvailableHealthyWorkersForAllocation;
@@ -519,17 +507,14 @@ public sealed class ConsoleInputReader
             foreach (var job in Enum.GetValues<JobType>().Reverse())
             {
                 if (overflow <= 0)
-                {
                     break;
-                }
 
                 var assigned = allocation.Workers[job];
                 if (assigned <= 0)
-                {
                     continue;
-                }
 
-                var reduction = Math.Min(assigned, ((overflow + JobAllocation.Step - 1) / JobAllocation.Step) * JobAllocation.Step);
+                var reduction = Math.Min(assigned,
+                    (overflow + JobAllocation.Step - 1) / JobAllocation.Step * JobAllocation.Step);
                 allocation.SetWorkers(job, assigned - reduction);
                 overflow -= reduction;
             }

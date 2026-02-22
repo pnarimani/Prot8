@@ -24,9 +24,9 @@ public sealed class ConsoleRenderer
     public void RenderDayStart(GameState state)
     {
         _out.WriteLine();
-        _out.WriteLine(new string('=', 76));
+        // _out.WriteLine(new string('=', 76));
         _out.WriteLine($"Day {state.Day} / {GameBalance.TargetSurvivalDay}  |  Siege Intensity: {state.SiegeIntensity}  |  Active Perimeter: {state.ActivePerimeterZone.Name}");
-        _out.WriteLine(new string('=', 76));
+        // _out.WriteLine(new string('=', 76));
         _out.WriteLine();
 
         RenderResources(state);
@@ -74,22 +74,23 @@ public sealed class ConsoleRenderer
 
     public void RenderActionReference(GameState state)
     {
-        _out.WriteLine("Available Actions");
-        _out.WriteLine("  assign <JobRef|JobType> <Workers>  Set workers for one production slot (absolute value, steps of 5).");
-        _out.WriteLine("  enact <LawRef|LawId>               Queue one available law for today.");
-        _out.WriteLine("  order <OrderRef|OrderId> [ZoneId]  Queue one available emergency order for today.");
-        _out.WriteLine("  mission <MissionRef|MissionId>     Queue one available mission for today.");
+        RenderAvailableJobs();
+        RenderAvailableLaws(state);
+        RenderAvailableOrders(state);
+        RenderAvailableMissions(state);
+        
+        _out.WriteLine();
+        _out.WriteLine("Available Commands");
+        _out.WriteLine("  assign <JobRef|JobType> <Workers>   Set workers for one production slot (absolute value, steps of 5).");
+        _out.WriteLine("  enact <LawRef|LawId>                Queue one available law for today.");
+        _out.WriteLine("  order <OrderRef|OrderId> [ZoneId]   Queue one available emergency order for today.");
+        _out.WriteLine("  mission <MissionRef|MissionId>      Queue one available mission for today.");
         _out.WriteLine("  clear_assignments                   Reset all job assignments to 0.");
         _out.WriteLine("  clear_action                        Clear queued law/order/mission action.");
         _out.WriteLine("  show_plan                           Print current pending assignments and queued action.");
         _out.WriteLine("  help                                Print this available-actions list.");
         _out.WriteLine("  end_day                             Resolve simulation using current plan.");
         _out.WriteLine();
-
-        RenderAvailableJobs();
-        RenderAvailableLaws(state);
-        RenderAvailableOrders(state);
-        RenderAvailableMissions(state);
     }
 
     public void RenderDayReport(GameState state, DayResolutionReport report)

@@ -13,6 +13,19 @@
 
     <ItemGroup>
       <None Include="bin\Debug\net10.0\tutorial.md" />
+      <None Remove="bin\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="bin\Debug\net10.0\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="bin\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="bin\**" />
     </ItemGroup>
 
 </Project>

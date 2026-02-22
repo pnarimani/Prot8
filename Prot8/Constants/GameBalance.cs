@@ -1,6 +1,5 @@
-using System;
-using System.Collections.Generic;
 using Prot8.Jobs;
+using Prot8.Resources;
 using Prot8.Zones;
 
 namespace Prot8.Constants;
@@ -62,7 +61,7 @@ public static class GameBalance
         new(ZoneId.OuterResidential, "Outer Residential", 95, 30, 30, 0.9),
         new(ZoneId.ArtisanQuarter, "Artisan Quarter", 90, 25, 25, 0.8),
         new(ZoneId.InnerDistrict, "Inner District", 85, 20, 20, 0.7),
-        new(ZoneId.Keep, "Keep", 80, 20, 15, 0.6)
+        new(ZoneId.Keep, "Keep", 80, 20, 15, 0.6),
     };
 
     public static readonly IReadOnlyDictionary<JobType, ZoneId> JobZoneMap = new Dictionary<JobType, ZoneId>
@@ -72,7 +71,7 @@ public static class GameBalance
         [JobType.MaterialsCrafting] = ZoneId.ArtisanQuarter,
         [JobType.Repairs] = ZoneId.Keep,
         [JobType.ClinicStaff] = ZoneId.InnerDistrict,
-        [JobType.FuelScavenging] = ZoneId.OuterResidential
+        [JobType.FuelScavenging] = ZoneId.OuterResidential,
     };
 
     public static readonly IReadOnlyDictionary<JobType, double> BaseJobOutputPerSlot = new Dictionary<JobType, double>
@@ -82,29 +81,29 @@ public static class GameBalance
         [JobType.MaterialsCrafting] = 10,
         [JobType.Repairs] = 3,
         [JobType.ClinicStaff] = 4,
-        [JobType.FuelScavenging] = 8
+        [JobType.FuelScavenging] = 8,
     };
 
-    public static readonly IReadOnlyDictionary<JobType, IReadOnlyDictionary<Resources.ResourceKind, double>> JobInputPerSlot =
-        new Dictionary<JobType, IReadOnlyDictionary<Resources.ResourceKind, double>>
-        {
-            [JobType.FoodProduction] = new Dictionary<Resources.ResourceKind, double> { [Resources.ResourceKind.Water] = 2 },
-            [JobType.WaterDrawing] = new Dictionary<Resources.ResourceKind, double> { [Resources.ResourceKind.Fuel] = 1 },
-            [JobType.MaterialsCrafting] = new Dictionary<Resources.ResourceKind, double> { [Resources.ResourceKind.Fuel] = 2 },
-            [JobType.Repairs] = new Dictionary<Resources.ResourceKind, double> { [Resources.ResourceKind.Materials] = 4, [Resources.ResourceKind.Fuel] = 2 },
-            [JobType.ClinicStaff] = new Dictionary<Resources.ResourceKind, double> { [Resources.ResourceKind.Medicine] = 2 },
-            [JobType.FuelScavenging] = new Dictionary<Resources.ResourceKind, double>()
-        };
-
-    public static readonly IReadOnlyDictionary<JobType, Resources.ResourceKind?> JobOutputResource = new Dictionary<JobType, Resources.ResourceKind?>
+    public static readonly Dictionary<JobType, Dictionary<ResourceKind, double>> JobInputPerSlot = new()
     {
-        [JobType.FoodProduction] = Resources.ResourceKind.Food,
-        [JobType.WaterDrawing] = Resources.ResourceKind.Water,
-        [JobType.MaterialsCrafting] = Resources.ResourceKind.Materials,
-        [JobType.Repairs] = null,
-        [JobType.ClinicStaff] = null,
-        [JobType.FuelScavenging] = Resources.ResourceKind.Fuel
+        [JobType.FoodProduction] = new Dictionary<ResourceKind, double> { [ResourceKind.Water] = 2 },
+        [JobType.WaterDrawing] = new Dictionary<ResourceKind, double> { [ResourceKind.Fuel] = 1 },
+        [JobType.MaterialsCrafting] = new Dictionary<ResourceKind, double> { [ResourceKind.Fuel] = 2 },
+        [JobType.Repairs] = new Dictionary<ResourceKind, double> { [ResourceKind.Materials] = 4, [ResourceKind.Fuel] = 2 },
+        [JobType.ClinicStaff] = new Dictionary<ResourceKind, double> { [ResourceKind.Medicine] = 2 },
+        [JobType.FuelScavenging] = new Dictionary<ResourceKind, double>(),
     };
+
+    public static readonly IReadOnlyDictionary<JobType, ResourceKind?> JobOutputResource =
+        new Dictionary<JobType, ResourceKind?>
+        {
+            [JobType.FoodProduction] = ResourceKind.Food,
+            [JobType.WaterDrawing] = ResourceKind.Water,
+            [JobType.MaterialsCrafting] = ResourceKind.Materials,
+            [JobType.Repairs] = null,
+            [JobType.ClinicStaff] = null,
+            [JobType.FuelScavenging] = ResourceKind.Fuel,
+        };
 
     public static readonly IReadOnlyDictionary<JobType, double> LostZoneJobMultipliers = new Dictionary<JobType, double>
     {
@@ -113,7 +112,7 @@ public static class GameBalance
         [JobType.MaterialsCrafting] = 0.45,
         [JobType.Repairs] = 1.0,
         [JobType.ClinicStaff] = 0.65,
-        [JobType.FuelScavenging] = 0.6
+        [JobType.FuelScavenging] = 0.6,
     };
 
     public static readonly IReadOnlyDictionary<ZoneId, int> NaturalLossUnrestShock = new Dictionary<ZoneId, int>
@@ -122,7 +121,7 @@ public static class GameBalance
         [ZoneId.OuterResidential] = 10,
         [ZoneId.ArtisanQuarter] = 12,
         [ZoneId.InnerDistrict] = 15,
-        [ZoneId.Keep] = 0
+        [ZoneId.Keep] = 0,
     };
 
     public static readonly IReadOnlyDictionary<ZoneId, int> NaturalLossMoraleShock = new Dictionary<ZoneId, int>
@@ -131,7 +130,7 @@ public static class GameBalance
         [ZoneId.OuterResidential] = 8,
         [ZoneId.ArtisanQuarter] = 10,
         [ZoneId.InnerDistrict] = 14,
-        [ZoneId.Keep] = 0
+        [ZoneId.Keep] = 0,
     };
 
     public static readonly IReadOnlyDictionary<ZoneId, int> NaturalLossSicknessShock = new Dictionary<ZoneId, int>
@@ -140,7 +139,7 @@ public static class GameBalance
         [ZoneId.OuterResidential] = 5,
         [ZoneId.ArtisanQuarter] = 7,
         [ZoneId.InnerDistrict] = 9,
-        [ZoneId.Keep] = 0
+        [ZoneId.Keep] = 0,
     };
 
     public static readonly IReadOnlyDictionary<ZoneId, int> EvacuationUnrestShock = new Dictionary<ZoneId, int>
@@ -149,7 +148,7 @@ public static class GameBalance
         [ZoneId.OuterResidential] = 8,
         [ZoneId.ArtisanQuarter] = 10,
         [ZoneId.InnerDistrict] = 12,
-        [ZoneId.Keep] = 0
+        [ZoneId.Keep] = 0,
     };
 
     public static readonly IReadOnlyDictionary<ZoneId, int> EvacuationMoraleShock = new Dictionary<ZoneId, int>
@@ -158,7 +157,7 @@ public static class GameBalance
         [ZoneId.OuterResidential] = 6,
         [ZoneId.ArtisanQuarter] = 8,
         [ZoneId.InnerDistrict] = 12,
-        [ZoneId.Keep] = 0
+        [ZoneId.Keep] = 0,
     };
 
     public static readonly IReadOnlyDictionary<ZoneId, int> EvacuationSicknessShock = new Dictionary<ZoneId, int>
@@ -167,7 +166,7 @@ public static class GameBalance
         [ZoneId.OuterResidential] = 4,
         [ZoneId.ArtisanQuarter] = 5,
         [ZoneId.InnerDistrict] = 7,
-        [ZoneId.Keep] = 0
+        [ZoneId.Keep] = 0,
     };
 
     public static readonly IReadOnlyDictionary<ZoneId, int> EvacuationMaterialsPenalty = new Dictionary<ZoneId, int>
@@ -176,14 +175,14 @@ public static class GameBalance
         [ZoneId.OuterResidential] = 15,
         [ZoneId.ArtisanQuarter] = 30,
         [ZoneId.InnerDistrict] = 20,
-        [ZoneId.Keep] = 0
+        [ZoneId.Keep] = 0,
     };
 
     public static readonly IReadOnlyDictionary<int, int> RecoveryDelayBySicknessBand = new Dictionary<int, int>
     {
         [19] = 0,
         [29] = 1,
-        [39] = 2
+        [39] = 2,
     };
 
     public static readonly IReadOnlyDictionary<string, int> EventCooldownDays = new Dictionary<string, int>
@@ -194,25 +193,19 @@ public static class GameBalance
         ["wall_breach_attempt"] = 2,
         ["fire_artisan"] = 4,
         ["council_revolt"] = 0,
-        ["total_collapse"] = 0
+        ["total_collapse"] = 0,
     };
 
     public static int ComputeRecoveryDays(int sickness)
     {
         if (sickness <= 19)
-        {
             return BaseRecoveryTimeDays;
-        }
 
         if (sickness <= 29)
-        {
             return BaseRecoveryTimeDays + 1;
-        }
 
         if (sickness <= 39)
-        {
             return BaseRecoveryTimeDays + 2;
-        }
 
         return int.MaxValue;
     }
