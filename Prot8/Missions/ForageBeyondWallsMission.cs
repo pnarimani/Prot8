@@ -7,6 +7,14 @@ namespace Prot8.Missions;
 public sealed class ForageBeyondWallsMission() : MissionBase("forage_beyond_walls", "Forage Beyond Walls",
     "+120 Food (%60) | +80 Food (25%) | 5 Deaths (15%)", 5, GameBalance.MissionForageWorkers)
 {
+    public override string GetDynamicTooltip(GameState state)
+    {
+        var highChance = state.SiegeIntensity >= 4 ? 49 : 60;
+        var mediumChance = state.SiegeIntensity >= 4 ? 21 : 25;
+        var deathChance = 100 - highChance - mediumChance;
+        return $"+120 Food ({highChance}%) | +80 Food ({mediumChance}%) | 5 Deaths ({deathChance}%)";
+    }
+
     public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
         var highFoodChance = state.SiegeIntensity >= 4 ? 49 : 60;

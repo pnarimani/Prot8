@@ -9,6 +9,8 @@ public sealed class NightRaidMission() : MissionBase("night_raid", "Night Raid o
     private const int GreatChance = 40;
     private const int OkChance = 40;
 
+    public override string GetDynamicTooltip(GameState state) => $"Siege Delay +3 days ({GreatChance}%) | Siege Delay +2 ({OkChance}%) | 8 Deaths, +15 Unrest ({100 - GreatChance - OkChance}%)";
+
     public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
         var roll = RollPercent(state);

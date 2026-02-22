@@ -7,10 +7,13 @@ public sealed class PublicExecutionsLaw : LawBase
     private const int UnrestReduction = 25;
     private const int MoraleHit = 20;
     private const int Deaths = 5;
+    private const int UnrestThreshold = 60;
 
-    public PublicExecutionsLaw() : base("public_executions", "Public Executions", "-25 unrest instantly, -20 morale, 5 deaths. Requires unrest > 60.")
+    public PublicExecutionsLaw() : base("public_executions", "Public Executions", $"-{UnrestReduction} unrest instantly, -{MoraleHit} morale, {Deaths} deaths. Requires unrest > {UnrestThreshold}.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"-{UnrestReduction} unrest instantly, -{MoraleHit} morale, {Deaths} deaths. Requires unrest > {UnrestThreshold}.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

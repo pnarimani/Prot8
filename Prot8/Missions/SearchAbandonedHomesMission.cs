@@ -8,6 +8,8 @@ public sealed class SearchAbandonedHomesMission() : MissionBase("search_abandone
     "+60 Materials (50%) | +40 Medicine (30%) | +15 Sickness (20%)", 2,
     GameBalance.MissionSearchHomesWorkers)
 {
+    public override string GetDynamicTooltip(GameState state) => "+60 Materials (50%) | +40 Medicine (30%) | +15 Sickness (20%)";
+
     public override void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
         var roll = RollPercent(state);

@@ -8,9 +8,11 @@ public sealed class CrackdownPatrolsOrder : EmergencyOrderBase
     private const int Deaths = 2;
     private const int MoraleHit = 10;
 
-    public CrackdownPatrolsOrder() : base("crackdown_patrols", "Crackdown Patrols", "-20 unrest today, 2 deaths, -10 morale.")
+    public CrackdownPatrolsOrder() : base("crackdown_patrols", "Crackdown Patrols", $"-{UnrestReduction} unrest today, {Deaths} deaths, -{MoraleHit} morale.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"-{UnrestReduction} unrest today, {Deaths} deaths, -{MoraleHit} morale.";
 
     public override bool CanIssue(GameState state, Zones.ZoneId? selectedZone, out string reason)
     {

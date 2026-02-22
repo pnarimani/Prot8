@@ -8,9 +8,11 @@ public sealed class StrictRationsLaw : LawBase
     private const int MoraleHit = 10;
     private const int DailyUnrest = 5;
 
-    public StrictRationsLaw() : base("strict_rations", "Strict Rations", "-25% food consumption, -10 morale on enact, +5 unrest/day.")
+    public StrictRationsLaw() : base("strict_rations", "Strict Rations", $"-{(1 - FoodConsumptionMultiplier) * 100}% food consumption, -{MoraleHit} morale on enact, +{DailyUnrest} unrest/day.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"-{(1 - FoodConsumptionMultiplier) * 100}% food consumption, -{MoraleHit} morale on enact, +{DailyUnrest} unrest/day.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

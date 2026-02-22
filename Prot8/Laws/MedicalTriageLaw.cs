@@ -6,10 +6,13 @@ public sealed class MedicalTriageLaw : LawBase
 {
     private const double MedicineUsageMultiplier = 0.5;
     private const int DailySickDeaths = 5;
+    private const int MedicineThreshold = 20;
 
-    public MedicalTriageLaw() : base("medical_triage", "Medical Triage", "-50% medicine usage, +5 sick deaths/day. Requires medicine < 20.")
+    public MedicalTriageLaw() : base("medical_triage", "Medical Triage", $"-{MedicineUsageMultiplier * 100}% medicine usage, +{DailySickDeaths} sick deaths/day. Requires medicine < {MedicineThreshold}.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"-{MedicineUsageMultiplier * 100}% medicine usage, +{DailySickDeaths} sick deaths/day. Requires medicine < {MedicineThreshold}.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

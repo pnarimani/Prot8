@@ -1,4 +1,5 @@
 using Prot8.Cli.Output;
+using Prot8.Cli.ViewModels;
 using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
@@ -98,7 +99,8 @@ public sealed class ConsoleInputReader
         if (!string.IsNullOrWhiteSpace(allocationAdjustmentMessage))
             Console.WriteLine(allocationAdjustmentMessage);
 
-        renderer.RenderPendingPlan(state, allocation, action);
+        var pendingPlanVm = GameStateToViewModels.ToPendingPlanViewModel(state, allocation, action, _noShortcuts);
+        renderer.RenderPendingPlan(pendingPlanVm);
 
         while (true)
         {
@@ -125,7 +127,8 @@ public sealed class ConsoleInputReader
                         break;
                     }
 
-                    renderer.RenderPendingPlan(state, allocation, action);
+                    var showPlanVm = GameStateToViewModels.ToPendingPlanViewModel(state, allocation, action, _noShortcuts);
+                    renderer.RenderPendingPlan(showPlanVm);
                     break;
 
                 case "help":
@@ -135,7 +138,8 @@ public sealed class ConsoleInputReader
                         break;
                     }
 
-                    renderer.RenderActionReference(state);
+                    var helpVm = GameStateToViewModels.ToDayStartViewModel(state, _noShortcuts);
+                    renderer.RenderActionReference(helpVm);
                     break;
 
                 case "end_day":
@@ -506,7 +510,8 @@ public sealed class ConsoleInputReader
     static void PrintInvalidAndHelp(ConsoleRenderer renderer, GameState state, string message)
     {
         Console.WriteLine($"Invalid command: {message}");
-        renderer.RenderActionReference(state);
+        var helpVm = GameStateToViewModels.ToDayStartViewModel(state, _noShortcuts);
+        renderer.RenderActionReference(helpVm);
     }
 
     public static JobAllocation BuildStartingAllocation(GameState state, out string? adjustmentMessage)

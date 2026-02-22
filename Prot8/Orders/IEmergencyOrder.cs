@@ -10,6 +10,8 @@ public interface IEmergencyOrder
 
     string Summary { get; }
 
+    string GetDynamicTooltip(GameState state);
+
     bool RequiresZoneSelection { get; }
 
     bool CanIssue(GameState state, Zones.ZoneId? selectedZone, out string reason);

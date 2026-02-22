@@ -6,10 +6,13 @@ public sealed class CurfewLaw : LawBase
 {
     private const int DailyUnrestReduction = 10;
     private const double ProductionMultiplier = 0.8;
+    private const int UnrestThreshold = 50;
 
-    public CurfewLaw() : base("curfew", "Curfew", "-10 unrest/day, -20% production. Requires unrest > 50.")
+    public CurfewLaw() : base("curfew", "Curfew", $"-{DailyUnrestReduction} unrest/day, -{ProductionMultiplier * 100}% production. Requires unrest > {UnrestThreshold}.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"-{DailyUnrestReduction} unrest/day, -{ProductionMultiplier * 100}% production. Requires unrest > {UnrestThreshold}.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

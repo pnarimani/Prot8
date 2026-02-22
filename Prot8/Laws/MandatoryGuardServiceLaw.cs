@@ -7,10 +7,13 @@ public sealed class MandatoryGuardServiceLaw : LawBase
     private const int GuardConversion = 10;
     private const int DailyFoodLoss = 15;
     private const int MoraleHit = 10;
+    private const int UnrestThreshold = 40;
 
-    public MandatoryGuardServiceLaw() : base("mandatory_guard_service", "Mandatory Guard Service", "Convert 10 workers to guards, -15 food/day, -10 morale. Requires unrest > 40.")
+    public MandatoryGuardServiceLaw() : base("mandatory_guard_service", "Mandatory Guard Service", $"Convert {GuardConversion} workers to guards, -{DailyFoodLoss} food/day, -{MoraleHit} morale. Requires unrest > {UnrestThreshold}.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"Convert {GuardConversion} workers to guards, -{DailyFoodLoss} food/day, -{MoraleHit} morale. Requires unrest > {UnrestThreshold}.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

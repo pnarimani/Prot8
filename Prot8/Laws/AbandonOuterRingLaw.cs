@@ -7,10 +7,13 @@ public sealed class AbandonOuterRingLaw : LawBase
 {
     private const int UnrestHit = 15;
     private const double SiegeDamageMultiplier = 0.8;
+    private const int IntegrityThreshold = 40;
 
-    public AbandonOuterRingLaw() : base("abandon_outer_ring", "Abandon the Outer Ring", "Immediately lose Outer Farms, -20% daily siege damage, +15 unrest. Requires Outer Farms integrity < 40.")
+    public AbandonOuterRingLaw() : base("abandon_outer_ring", "Abandon the Outer Ring", $"Immediately lose Outer Farms, -{SiegeDamageMultiplier * 100}% daily siege damage, +{UnrestHit} unrest. Requires Outer Farms integrity < {IntegrityThreshold}.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"Immediately lose Outer Farms, -{SiegeDamageMultiplier * 100}% daily siege damage, +{UnrestHit} unrest. Requires Outer Farms integrity < {IntegrityThreshold}.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

@@ -7,9 +7,11 @@ public sealed class InspireThePeopleOrder : EmergencyOrderBase
     private const int MoraleGain = 15;
     private const int MaterialsCost = 15;
 
-    public InspireThePeopleOrder() : base("inspire_people", "Inspire the People", "+15 morale today, -15 materials.")
+    public InspireThePeopleOrder() : base("inspire_people", "Inspire the People", $"+{MoraleGain} morale today, -{MaterialsCost} materials.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"+{MoraleGain} morale today, -{MaterialsCost} materials.";
 
     public override bool CanIssue(GameState state, Zones.ZoneId? selectedZone, out string reason)
     {

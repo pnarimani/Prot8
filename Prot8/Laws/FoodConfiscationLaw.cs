@@ -7,10 +7,13 @@ public sealed class FoodConfiscationLaw : LawBase
     private const int FoodGain = 100;
     private const int UnrestHit = 20;
     private const int MoraleHit = 20;
+    private const int FoodThreshold = 100;
 
-    public FoodConfiscationLaw() : base("food_confiscation", "Food Confiscation", "+100 food instantly, +20 unrest, -20 morale. Requires food < 100.")
+    public FoodConfiscationLaw() : base("food_confiscation", "Food Confiscation", $"+{FoodGain} food instantly, +{UnrestHit} unrest, -{MoraleHit} morale. Requires food < {FoodThreshold}.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"+{FoodGain} food instantly, +{UnrestHit} unrest, -{MoraleHit} morale. Requires food < {FoodThreshold}.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

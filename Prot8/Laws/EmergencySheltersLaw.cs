@@ -9,9 +9,11 @@ public sealed class EmergencySheltersLaw : LawBase
     private const int DailySickness = 10;
     private const int UnrestHit = 10;
 
-    public EmergencySheltersLaw() : base("emergency_shelters", "Emergency Shelters", "+30 capacity in Inner District, +10 sickness/day, +10 unrest on enact. Requires first zone loss.")
+    public EmergencySheltersLaw() : base("emergency_shelters", "Emergency Shelters", $"+{CapacityGain} capacity in Inner District, +{DailySickness} sickness/day, +{UnrestHit} unrest on enact. Requires first zone loss.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"+{CapacityGain} capacity in Inner District, +{DailySickness} sickness/day, +{UnrestHit} unrest on enact. Requires first zone loss.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

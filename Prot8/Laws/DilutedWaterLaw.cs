@@ -8,9 +8,11 @@ public sealed class DilutedWaterLaw : LawBase
     private const int DailySickness = 5;
     private const int MoraleHit = 5;
 
-    public DilutedWaterLaw() : base("diluted_water", "Diluted Water", "-20% water consumption, +5 sickness/day, -5 morale on enact. Requires prior water deficit.")
+    public DilutedWaterLaw() : base("diluted_water", "Diluted Water", $"-{WaterConsumptionMultiplier * 100}% water consumption, +{DailySickness} sickness/day, -{MoraleHit} morale on enact. Requires prior water deficit.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"-{WaterConsumptionMultiplier * 100}% water consumption, +{DailySickness} sickness/day, -{MoraleHit} morale on enact. Requires prior water deficit.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

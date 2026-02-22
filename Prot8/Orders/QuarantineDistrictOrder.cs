@@ -6,10 +6,13 @@ namespace Prot8.Orders;
 public sealed class QuarantineDistrictOrder : EmergencyOrderBase
 {
     private const int SicknessReduction = 10;
+    private const double ProductionPenalty = 0.5;
 
-    public QuarantineDistrictOrder() : base("quarantine_district", "Quarantine District", "-10 sickness spread today, -50% production in selected zone today.", true)
+    public QuarantineDistrictOrder() : base("quarantine_district", "Quarantine District", $"-{SicknessReduction} sickness spread today, -{ProductionPenalty * 100}% production in selected zone today.", true)
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"-{SicknessReduction} sickness spread today, -{ProductionPenalty * 100}% production in selected zone today.";
 
     public override bool CanIssue(GameState state, ZoneId? selectedZone, out string reason)
     {

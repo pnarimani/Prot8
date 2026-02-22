@@ -7,10 +7,13 @@ public sealed class ExtendedShiftsLaw : LawBase
     private const double ProductionMultiplier = 1.25;
     private const int DailySickness = 8;
     private const int MoraleHit = 15;
+    private const int MinimumDay = 5;
 
-    public ExtendedShiftsLaw() : base("extended_shifts", "Extended Shifts", "+25% production, +8 sickness/day, -15 morale on enact. Day 5+.")
+    public ExtendedShiftsLaw() : base("extended_shifts", "Extended Shifts", $"+{(ProductionMultiplier - 1) * 100}% production, +{DailySickness} sickness/day, -{MoraleHit} morale on enact. Day {MinimumDay}+.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"+{(ProductionMultiplier - 1) * 100}% production, +{DailySickness} sickness/day, -{MoraleHit} morale on enact. Day {MinimumDay}+.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

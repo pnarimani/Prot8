@@ -7,10 +7,13 @@ public sealed class FaithProcessionsLaw : LawBase
     private const int MoraleGain = 15;
     private const int MaterialsCost = 10;
     private const int UnrestHit = 5;
+    private const int MoraleThreshold = 40;
 
-    public FaithProcessionsLaw() : base("faith_processions", "Faith Processions", "+15 morale, -10 materials, +5 unrest. Requires morale < 40.")
+    public FaithProcessionsLaw() : base("faith_processions", "Faith Processions", $"+{MoraleGain} morale, -{MaterialsCost} materials, +{UnrestHit} unrest. Requires morale < {MoraleThreshold}.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"+{MoraleGain} morale, -{MaterialsCost} materials, +{UnrestHit} unrest. Requires morale < {MoraleThreshold}.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

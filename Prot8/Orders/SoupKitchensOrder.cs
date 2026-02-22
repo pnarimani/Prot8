@@ -7,9 +7,11 @@ public sealed class SoupKitchensOrder : EmergencyOrderBase
     private const int FoodCost = 40;
     private const int UnrestReduction = 15;
 
-    public SoupKitchensOrder() : base("soup_kitchens", "Soup Kitchens", "-15 unrest today, -40 food.")
+    public SoupKitchensOrder() : base("soup_kitchens", "Soup Kitchens", $"-{UnrestReduction} unrest today, -{FoodCost} food.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"-{UnrestReduction} unrest today, -{FoodCost} food.";
 
     public override bool CanIssue(GameState state, Zones.ZoneId? selectedZone, out string reason)
     {

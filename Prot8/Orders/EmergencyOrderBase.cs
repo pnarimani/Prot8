@@ -18,6 +18,8 @@ public abstract class EmergencyOrderBase : IEmergencyOrder
 
     public string Summary { get; }
 
+    public virtual string GetDynamicTooltip(GameState state) => Summary;
+
     public bool RequiresZoneSelection { get; }
 
     public abstract bool CanIssue(GameState state, Zones.ZoneId? selectedZone, out string reason);

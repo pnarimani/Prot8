@@ -10,6 +10,8 @@ public interface IMissionDefinition
 
     string OutcomeHint { get; }
 
+    string GetDynamicTooltip(GameState state);
+
     int DurationDays { get; }
 
     int WorkerCost { get; }

@@ -8,9 +8,11 @@ public sealed class DivertSuppliesToRepairsOrder : EmergencyOrderBase
     private const int WaterCost = 20;
     private const double RepairBoost = 1.5;
 
-    public DivertSuppliesToRepairsOrder() : base("divert_supplies_repairs", "Divert Supplies to Repairs", "+50% repair output today, -30 food, -20 water.")
+    public DivertSuppliesToRepairsOrder() : base("divert_supplies_repairs", "Divert Supplies to Repairs", $"+{(RepairBoost - 1) * 100}% repair output today, -{FoodCost} food, -{WaterCost} water.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"+{(RepairBoost - 1) * 100}% repair output today, -{FoodCost} food, -{WaterCost} water.";
 
     public override bool CanIssue(GameState state, Zones.ZoneId? selectedZone, out string reason)
     {

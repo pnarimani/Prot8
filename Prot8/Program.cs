@@ -1,5 +1,6 @@
 using Prot8.Cli.Input;
 using Prot8.Cli.Output;
+using Prot8.Cli.ViewModels;
 using Prot8.Simulation;
 using Prot8.Telemetry;
 
@@ -14,13 +15,15 @@ using var telemetry = new RunTelemetryWriter(seed);
 
 while (!state.GameOver)
 {
-    renderer.RenderDayStart(state);
+    var dayStartVm = GameStateToViewModels.ToDayStartViewModel(state, noShortcuts);
+    renderer.RenderDayStart(dayStartVm);
     var dayPlan = input.ReadDayPlan(state, renderer);
     state.Allocation = dayPlan.Allocation;
     var action = dayPlan.Action;
 
     var report = engine.ResolveDay(state, action);
-    renderer.RenderDayReport(state, report);
+    var dayReportVm = GameStateToViewModels.ToDayReportViewModel(state, report);
+    renderer.RenderDayReport(dayReportVm);
     telemetry.LogDay(state, action, report);
 
     if (!state.GameOver)
@@ -29,7 +32,8 @@ while (!state.GameOver)
     }
 }
 
-renderer.RenderFinal(state);
+var gameOverVm = GameStateToViewModels.ToGameOverViewModel(state);
+renderer.RenderFinal(gameOverVm);
 telemetry.LogFinal(state);
 Console.WriteLine($"Telemetry written to: {telemetry.FilePath}");
 

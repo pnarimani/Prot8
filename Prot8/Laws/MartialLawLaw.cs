@@ -6,10 +6,13 @@ public sealed class MartialLawLaw : LawBase
 {
     private const int UnrestCap = 60;
     private const int MoraleCap = 40;
+    private const int UnrestThreshold = 75;
 
-    public MartialLawLaw() : base("martial_law", "Martial Law", "Unrest cannot exceed 60, morale capped at 40. Requires unrest > 75.")
+    public MartialLawLaw() : base("martial_law", "Martial Law", $"Unrest cannot exceed {UnrestCap}, morale capped at {MoraleCap}. Requires unrest > {UnrestThreshold}.")
     {
     }
+
+    public override string GetDynamicTooltip(GameState state) => $"Unrest cannot exceed {UnrestCap}, morale capped at {MoraleCap}. Requires unrest > {UnrestThreshold}.";
 
     public override bool CanEnact(GameState state, out string reason)
     {

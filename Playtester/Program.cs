@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Playtester;
 using Prot8.Cli.Input;
 using Prot8.Cli.Output;
+using Prot8.Cli.ViewModels;
 using Prot8.Jobs;
 using Prot8.Simulation;
 using Prot8.Telemetry;
@@ -34,7 +35,8 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
     while (!state.GameOver)
     {
         // Capture day snapshot
-        var daySnapshot = RenderToString(w => new ConsoleRenderer(w, true).RenderDayStart(state));
+        var dayStartVm = GameStateToViewModels.ToDayStartViewModel(state, true);
+        var daySnapshot = RenderToString(w => new ConsoleRenderer(w, true).RenderDayStart(dayStartVm));
         Console.Write(daySnapshot);
 
         // Call Commander (with retry on invalid commands)
@@ -107,7 +109,8 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
         var report = engine.ResolveDay(state, action);
 
         // Capture resolution log
-        var resolutionLog = RenderToString(w => new ConsoleRenderer(w, true).RenderDayReport(state, report));
+        var dayReportVm = GameStateToViewModels.ToDayReportViewModel(state, report);
+        var resolutionLog = RenderToString(w => new ConsoleRenderer(w, true).RenderDayReport(dayReportVm));
         Console.Write(resolutionLog);
 
         telemetry.LogDay(state, action, report);
@@ -138,7 +141,8 @@ for (var runIndex = 0; runIndex < 100; runIndex++)
     }
 
 // Render final
-    var finalSummary = RenderToString(w => new ConsoleRenderer(w, true).RenderFinal(state));
+    var gameOverVm = GameStateToViewModels.ToGameOverViewModel(state);
+    var finalSummary = RenderToString(w => new ConsoleRenderer(w, true).RenderFinal(gameOverVm));
     Console.Write(finalSummary);
     telemetry.LogFinal(state);
 

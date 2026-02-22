@@ -10,6 +10,8 @@ public interface ILaw
 
     string Summary { get; }
 
+    string GetDynamicTooltip(GameState state);
+
     bool CanEnact(GameState state, out string reason);
 
     void OnEnact(GameState state, DayResolutionReport report);

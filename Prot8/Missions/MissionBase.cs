@@ -19,6 +19,8 @@ public abstract class MissionBase : IMissionDefinition
 
     public string OutcomeHint { get; }
 
+    public virtual string GetDynamicTooltip(GameState state) => OutcomeHint;
+
     public int DurationDays { get; }
 
     public int WorkerCost { get; }
