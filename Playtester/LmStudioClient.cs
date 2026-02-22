@@ -17,11 +17,10 @@ public sealed class LmStudioClient : IDisposable
         _model = model ?? "";
     }
 
-    public async Task<string> ChatAsync(
-        string systemPrompt,
+    public async Task<string> ChatAsync(string systemPrompt,
         string userPrompt,
-        double temperature = 0.7,
-        JsonNode? responseFormat = null)
+        JsonNode responseFormat,
+        double temperature = 0.7)
     {
         var request = new ChatRequest
         {
