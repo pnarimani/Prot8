@@ -21,7 +21,7 @@ public static class AgentPrompts
           (one sentence explaining why). The last entry must have command="end_day".
         """;
 
-    public static string CommanderUser(string daySnapshot, string notebook)
+    public static string CommanderUser(string daySnapshot, string notebook, string previousRunLearnings)
     {
         return $"""
             DAY SNAPSHOT
@@ -33,7 +33,12 @@ public static class AgentPrompts
             <<<
             {notebook}
             >>>
-            
+
+            LEARNINGS FROM PREVIOUS RUN
+            <<<
+            {previousRunLearnings}
+            >>>
+
             Win and Loss Conditions
             - Win: reach Day 40.
             - Lose: Keep integrity reaches 0 or below.
@@ -99,7 +104,7 @@ public static class AgentPrompts
         - Keep total content concise (aim for under 1200 characters across all fields).
         """;
 
-    public static string ScribeUser(string previousNotebook, string daySnapshot, string commandsExecuted, string resolutionLog)
+    public static string ScribeUser(string previousNotebook, string daySnapshot, string commandsExecuted, string resolutionLog, string previousRunLearnings)
     {
         return $"""
             OLD NOTEBOOK
@@ -120,6 +125,11 @@ public static class AgentPrompts
             RESOLUTION LOG
             <<<
             {resolutionLog}
+            >>>
+
+            LEARNINGS FROM PREVIOUS RUN
+            <<<
+            {previousRunLearnings}
             >>>
 
             Update the notebook. Return JSON with fields:
@@ -158,7 +168,7 @@ public static class AgentPrompts
 
         You must ground all conclusions in:
         - The final state summary
-        - The day-by-day timeline
+        - The day-by-day timeline (each entry includes the full state snapshot, commands, and resolution signals)
         - The playtester notebook
 
         Rules:
@@ -168,10 +178,12 @@ public static class AgentPrompts
         - Distinguish between what felt unclear and what was clearly communicated.
         - Do not write as a designer. Write as a player reflecting on the experience.
         - Keep total postmortem under 900 words.
+        - Generate exactly 10 actionable learnings the commander should apply in the next run.
+        - If learnings from a previous run are provided, evaluate whether the commander demonstrably improved this run.
         - Respond with a JSON object using the fields defined in the schema.
         """;
 
-    public static string CriticUser(string finalSummary, string timeline, string finalNotebook)
+    public static string CriticUser(string finalSummary, string timeline, string finalNotebook, string previousRunLearnings)
     {
         return $"""
             FINAL SUMMARY
@@ -180,7 +192,7 @@ public static class AgentPrompts
             >>>
 
             TIMELINE
-            Format: Day X: <commands> -> <key resolution signals>
+            Format: Each day block shows the full state snapshot, commands executed, and key resolution signals.
             <<<
             {timeline}
             >>>
@@ -190,9 +202,16 @@ public static class AgentPrompts
             {finalNotebook}
             >>>
 
+            LEARNINGS FROM PREVIOUS RUN
+            <<<
+            {previousRunLearnings}
+            >>>
+
             Write the postmortem covering: outcome, cause, three impactful decisions,
-            strategy, what felt unclear, what felt fair vs unfair, suggestions, and
-            what you would try next run.
+            strategy, what felt unclear, what felt fair vs unfair, suggestions,
+            what you would try next run, exactly 10 actionable learnings for the next run,
+            and whether the commander did a better job this run compared to the previous run
+            (use the previous run learnings as your benchmark — if this is the first run, say so).
             """;
     }
 
@@ -222,9 +241,18 @@ public static class AgentPrompts
                     ["unclear"] = new JsonObject { ["type"] = "string", ["description"] = "What felt unclear or confusing during the run." },
                     ["fair_vs_unfair"] = new JsonObject { ["type"] = "string", ["description"] = "What felt fair and what felt unfair." },
                     ["suggestions"] = new JsonObject { ["type"] = "string", ["description"] = "Concrete changes the player would suggest." },
-                    ["next_run"] = new JsonObject { ["type"] = "string", ["description"] = "What the player would try differently next run." }
+                    ["next_run"] = new JsonObject { ["type"] = "string", ["description"] = "What the player would try differently next run." },
+                    ["learnings"] = new JsonObject
+                    {
+                        ["type"] = "array",
+                        ["description"] = "Exactly 10 actionable learnings for the commander to apply in the next run.",
+                        ["items"] = new JsonObject { ["type"] = "string" },
+                        ["minItems"] = 10,
+                        ["maxItems"] = 10
+                    },
+                    ["better_than_previous"] = new JsonObject { ["type"] = "string", ["description"] = "Assessment of whether the commander performed better than the previous run, with specific reasoning." }
                 },
-                ["required"] = new JsonArray("outcome", "cause", "impactful_decisions", "strategy", "unclear", "fair_vs_unfair", "suggestions", "next_run"),
+                ["required"] = new JsonArray("outcome", "cause", "impactful_decisions", "strategy", "unclear", "fair_vs_unfair", "suggestions", "next_run", "learnings", "better_than_previous"),
                 ["additionalProperties"] = false
             }
         }

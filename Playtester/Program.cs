@@ -1,16 +1,14 @@
-using System.IO;
 using System.Text;
 using System.Text.Json.Nodes;
 using Playtester;
 using Prot8.Cli.Input;
 using Prot8.Cli.Output;
-using Prot8.Jobs;
 using Prot8.Simulation;
 using Prot8.Telemetry;
 
 var config = ParseArgs(args);
 
-Console.WriteLine($"Prot8 AI Playtester");
+Console.WriteLine("Prot8 AI Playtester");
 Console.WriteLine($"  Endpoint: {config.Endpoint}");
 Console.WriteLine($"  Model:    {(string.IsNullOrEmpty(config.Model) ? "(server default)" : config.Model)}");
 Console.WriteLine($"  Seed:     {config.Seed?.ToString() ?? "random"}");
@@ -18,105 +16,114 @@ Console.WriteLine();
 
 using var llm = new LmStudioClient(config.Endpoint, config.Model);
 
-var state = new GameState(config.Seed);
-var engine = new GameSimulationEngine();
-using var telemetry = new RunTelemetryWriter(config.Seed);
+var previousRunLearnings = "(no previous run — this is the first run)";
 
-var notebook = "(empty - first day)";
-var timeline = new StringBuilder();
-
-while (!state.GameOver)
+for (var runIndex = 0; runIndex < 100; runIndex++)
 {
-    // Capture day snapshot
-    var daySnapshot = RenderToString(w => new ConsoleRenderer(w).RenderDayStart(state));
-    Console.Write(daySnapshot);
-    
+    Console.WriteLine($"\n{new string('=', 40)} RUN {runIndex + 1} / 100 {new string('=', 40)}\n");
 
-    // Build starting allocation
-    var allocation = ConsoleInputReader.BuildStartingAllocation(state, out var adjustMsg);
-    if (adjustMsg != null) Console.WriteLine(adjustMsg);
-    var action = new TurnActionChoice();
+    var state = new GameState(config.Seed);
+    var engine = new GameSimulationEngine();
+    using var telemetry = new RunTelemetryWriter(config.Seed);
 
-    var currentPlan = RenderToString(w => new ConsoleRenderer(w).RenderPendingPlan(state, allocation, action));
-    Console.Write(currentPlan);
+    var notebook = "(empty - first day)";
+    var timeline = new StringBuilder();
 
-    daySnapshot += currentPlan;
-    
-    // Call Commander
-    Console.WriteLine($"[AI] Calling Commander for Day {state.Day}...");
-    var commanderPrompt = AgentPrompts.CommanderUser(daySnapshot, notebook);
-    var commanderJson = await llm.ChatAsync(
-        AgentPrompts.CommanderSystem, commanderPrompt, responseFormat: AgentPrompts.CommanderResponseFormat, temperature: 0.4);
-
-    // Parse commands from JSON
-    var commandLines = ParseCommanderJson(commanderJson);
-    Console.WriteLine($"[AI] Commander issued {commandLines.Count} command(s).");
-
-    var executedCommands = new StringBuilder();
-    foreach (var (line, reason) in commandLines)
+    while (!state.GameOver)
     {
-        if (string.IsNullOrEmpty(line)) continue;
-        if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase)) break;
+        // Capture day snapshot
+        var daySnapshot = RenderToString(w => new ConsoleRenderer(w).RenderDayStart(state));
+        Console.Write(daySnapshot);
 
-        ConsoleInputReader.TryExecuteCommand(state, allocation, ref action, line, out var msg, out var endDay);
-        Console.WriteLine($"  > {line}  [{reason}]  => {msg}");
-        executedCommands.AppendLine(line);
+        // Build starting allocation
+        var allocation = ConsoleInputReader.BuildStartingAllocation(state, out var adjustMsg);
+        if (adjustMsg != null) Console.WriteLine(adjustMsg);
+        var action = new TurnActionChoice();
 
-        if (endDay) break;
+        // Call Commander
+        Console.WriteLine($"[AI] Calling Commander for Day {state.Day}...");
+        var commanderPrompt = AgentPrompts.CommanderUser(daySnapshot, notebook, previousRunLearnings);
+        var commanderJson = await llm.ChatAsync(
+            AgentPrompts.CommanderSystem, commanderPrompt, AgentPrompts.CommanderResponseFormat, 0.4);
+
+        // Parse commands from JSON
+        var commandLines = ParseCommanderJson(commanderJson);
+        Console.WriteLine($"[AI] Commander issued {commandLines.Count} command(s).");
+
+        var executedCommands = new StringBuilder();
+        foreach (var (line, reason) in commandLines)
+        {
+            if (string.IsNullOrEmpty(line)) continue;
+            if (string.Equals(line, "end_day", StringComparison.OrdinalIgnoreCase)) break;
+
+            ConsoleInputReader.TryExecuteCommand(state, allocation, ref action, line, out var msg, out var endDay);
+            Console.WriteLine($"  > {line}  [{reason}]  => {msg}");
+            executedCommands.AppendLine(line);
+
+            if (endDay) break;
+        }
+
+        // Finalize allocation and resolve
+        ConsoleInputReader.FinalizeAllocation(state, allocation);
+        state.Allocation = allocation;
+
+        var report = engine.ResolveDay(state, action);
+
+        // Capture resolution log
+        var resolutionLog = RenderToString(w => new ConsoleRenderer(w).RenderDayReport(state, report));
+        Console.Write(resolutionLog);
+
+        telemetry.LogDay(state, action, report);
+
+        // Build timeline entry with full day state
+        var cmds = executedCommands.ToString().Trim();
+        var signals = BuildSignals(state, report);
+        timeline.AppendLine($"--- Day {state.Day} ---");
+        timeline.AppendLine(daySnapshot.Trim());
+        timeline.AppendLine($"Commands: {cmds}");
+        timeline.AppendLine($"Signals: {signals}");
+        timeline.AppendLine();
+
+        if (!state.GameOver)
+        {
+            // Call Scribe
+            Console.WriteLine($"[AI] Calling Scribe for Day {state.Day}...");
+            var scribePrompt =
+                AgentPrompts.ScribeUser(notebook, daySnapshot, cmds, resolutionLog, previousRunLearnings);
+            var scribeJson = await llm.ChatAsync(
+                AgentPrompts.ScribeSystem, scribePrompt, AgentPrompts.ScribeResponseFormat, 0.3);
+
+            notebook = FormatNotebook(scribeJson);
+            Console.WriteLine($"[AI] Notebook updated ({notebook.Length} chars).\n");
+
+            state.Day += 1;
+        }
     }
-
-    // Finalize allocation and resolve
-    ConsoleInputReader.FinalizeAllocation(state, allocation);
-    state.Allocation = allocation;
-
-    var report = engine.ResolveDay(state, action);
-
-    // Capture resolution log
-    var resolutionLog = RenderToString(w => new ConsoleRenderer(w).RenderDayReport(state, report));
-    Console.Write(resolutionLog);
-
-    telemetry.LogDay(state, action, report);
-
-    // Build timeline entry
-    var cmds = executedCommands.ToString().Trim();
-    var signals = BuildSignals(state, report);
-    timeline.AppendLine($"Day {state.Day}: {cmds} -> {signals}");
-
-    if (!state.GameOver)
-    {
-        // Call Scribe
-        Console.WriteLine($"[AI] Calling Scribe for Day {state.Day}...");
-        var scribePrompt = AgentPrompts.ScribeUser(notebook, daySnapshot, cmds, resolutionLog);
-        var scribeJson = await llm.ChatAsync(
-            AgentPrompts.ScribeSystem, scribePrompt, responseFormat: AgentPrompts.ScribeResponseFormat, temperature: 0.3);
-
-        notebook = FormatNotebook(scribeJson);
-        Console.WriteLine($"[AI] Notebook updated ({notebook.Length} chars).\n");
-
-        state.Day += 1;
-    }
-}
 
 // Render final
-var finalSummary = RenderToString(w => new ConsoleRenderer(w).RenderFinal(state));
-Console.Write(finalSummary);
-telemetry.LogFinal(state);
+    var finalSummary = RenderToString(w => new ConsoleRenderer(w).RenderFinal(state));
+    Console.Write(finalSummary);
+    telemetry.LogFinal(state);
 
 // Call Critic for postmortem
-Console.WriteLine("[AI] Calling Critic for postmortem...");
-var criticPrompt = AgentPrompts.CriticUser(finalSummary, timeline.ToString(), notebook);
-var criticJson = await llm.ChatAsync(
-    AgentPrompts.CriticSystem, criticPrompt, responseFormat: AgentPrompts.CriticResponseFormat, temperature: 0.5);
+    Console.WriteLine("[AI] Calling Critic for postmortem...");
+    var criticPrompt = AgentPrompts.CriticUser(finalSummary, timeline.ToString(), notebook, previousRunLearnings);
+    var criticJson = await llm.ChatAsync(
+        AgentPrompts.CriticSystem, criticPrompt, AgentPrompts.CriticResponseFormat, 0.5);
 
-var postmortem = FormatPostmortem(criticJson);
+    var postmortem = FormatPostmortem(criticJson);
 
 // Save postmortem next to telemetry
-var postmortemPath = Path.ChangeExtension(telemetry.FilePath, ".postmortem.md");
-await File.WriteAllTextAsync(postmortemPath, postmortem);
+    var postmortemPath = Path.ChangeExtension(telemetry.FilePath, ".postmortem.md");
+    await File.WriteAllTextAsync(postmortemPath, postmortem);
 
-Console.WriteLine($"\n{postmortem}");
-Console.WriteLine($"\nTelemetry:  {telemetry.FilePath}");
-Console.WriteLine($"Postmortem: {postmortemPath}");
+    Console.WriteLine($"\n{postmortem}");
+    Console.WriteLine($"\nTelemetry:  {telemetry.FilePath}");
+    Console.WriteLine($"Postmortem: {postmortemPath}");
+
+// Extract learnings for the next run
+    previousRunLearnings = ExtractLearnings(criticJson);
+} // end for runIndex
 
 // --- Helper methods ---
 
@@ -134,15 +141,18 @@ static List<(string Command, string Reason)> ParseCommanderJson(string json)
         var node = JsonNode.Parse(json);
         var array = node?["commands"]?.AsArray();
         if (array is null) return [];
-        return [.. array
-            .Select(x => (
-                Command: x?["command"]?.GetValue<string>() ?? "",
-                Reason:  x?["reason"]?.GetValue<string>() ?? ""))
-            .Where(x => x.Command.Length > 0)];
+        return
+        [
+            .. array
+                .Select(x => (
+                    Command: x?["command"]?.GetValue<string>() ?? "",
+                    Reason: x?["reason"]?.GetValue<string>() ?? ""))
+                .Where(x => x.Command.Length > 0),
+        ];
     }
     catch
     {
-        Console.WriteLine($"[AI] Warning: failed to parse Commander JSON, treating as empty.");
+        Console.WriteLine("[AI] Warning: failed to parse Commander JSON, treating as empty.");
         return [];
     }
 }
@@ -172,14 +182,10 @@ static void AppendSection(StringBuilder sb, JsonNode node, string key, string he
     sb.AppendLine(header);
     var arr = node[key]?.AsArray();
     if (arr is null || arr.Count == 0)
-    {
         sb.AppendLine("- (none)");
-    }
     else
-    {
         foreach (var item in arr)
             sb.AppendLine($"- {item?.GetValue<string>()}");
-    }
     sb.AppendLine();
 }
 
@@ -191,7 +197,7 @@ static string FormatPostmortem(string json)
         if (node is null) return json;
 
         var sb = new StringBuilder();
-        sb.AppendLine($"## 1) Outcome");
+        sb.AppendLine("## 1) Outcome");
         sb.AppendLine(node["outcome"]?.GetValue<string>());
         sb.AppendLine();
         sb.AppendLine("## 2) What I believe caused the result");
@@ -217,11 +223,38 @@ static string FormatPostmortem(string json)
         sb.AppendLine();
         sb.AppendLine("## 8) What I would try next run");
         sb.AppendLine(node["next_run"]?.GetValue<string>());
+        sb.AppendLine();
+        sb.AppendLine("## 9) 10 Learnings for the next run");
+        var learnings = node["learnings"]?.AsArray();
+        if (learnings is not null)
+            for (var i = 0; i < learnings.Count; i++)
+                sb.AppendLine($"{i + 1}. {learnings[i]?.GetValue<string>()}");
+        sb.AppendLine();
+        sb.AppendLine("## 10) Did the commander do better than the previous run?");
+        sb.AppendLine(node["better_than_previous"]?.GetValue<string>());
         return sb.ToString();
     }
     catch
     {
         return json;
+    }
+}
+
+static string ExtractLearnings(string json)
+{
+    try
+    {
+        var node = JsonNode.Parse(json);
+        var arr = node?["learnings"]?.AsArray();
+        if (arr is null || arr.Count == 0) return "(no learnings available from previous run)";
+        var sb = new StringBuilder();
+        for (var i = 0; i < arr.Count; i++)
+            sb.AppendLine($"{i + 1}. {arr[i]?.GetValue<string>()}");
+        return sb.ToString().TrimEnd();
+    }
+    catch
+    {
+        return "(failed to extract learnings from previous run)";
     }
 }
 
@@ -255,6 +288,7 @@ static PlaytesterConfig ParseArgs(string[] args)
             config.Endpoint = arg["--endpoint=".Length..];
         }
     }
+
     return config;
 }
 
