@@ -10,7 +10,9 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 {
     static string Esc(string text) => Markup.Escape(text);
 
-    public void RenderDayStart(DayStartViewModel vm)
+    public void Clear() => console.Clear(false);
+
+    public void RenderDayStart(DayStartViewModel vm, ActionTab activeTab = ActionTab.Laws)
     {
         console.WriteLine();
         console.Write(new Rule($"[bold yellow]DAY {vm.Day}/{vm.TargetSurvivalDay}  Siege:{vm.SiegeIntensity}  Perimeter:{Esc(vm.ActivePerimeterName)}[/]")
@@ -33,6 +35,24 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
         RenderResources(vm);
         RenderPopulation(vm);
+
+        if (vm.GlobalProductionMultiplier < 1.0)
+            console.MarkupLine($"  [yellow]Production multiplier: {vm.GlobalProductionMultiplier:F2}x[/]");
+        else if (vm.GlobalProductionMultiplier > 1.0)
+            console.MarkupLine($"  [green]Production multiplier: {vm.GlobalProductionMultiplier:F2}x[/]");
+
+        if (vm.ConsecutiveFoodDeficitDays > 0)
+            console.MarkupLine($"  [red]Food deficit: {vm.ConsecutiveFoodDeficitDays} consecutive day(s)[/]");
+        if (vm.ConsecutiveWaterDeficitDays > 0)
+            console.MarkupLine($"  [red]Water deficit: {vm.ConsecutiveWaterDeficitDays} consecutive day(s)[/]");
+        if (vm.ConsecutiveBothZeroDays > 0)
+            console.MarkupLine($"  [bold red]Both food & water zero: {vm.ConsecutiveBothZeroDays} day(s)[/]");
+        if (vm.OvercrowdingStacks > 0)
+            console.MarkupLine($"  [yellow]Overcrowding: {vm.OvercrowdingStacks} stack(s) (+{vm.OvercrowdingStacks * 3} unrest/sickness per day)[/]");
+        if (vm.SiegeEscalationDelayDays > 0)
+            console.MarkupLine($"  [cyan]Siege escalation delayed: {vm.SiegeEscalationDelayDays} day(s)[/]");
+
+        console.WriteLine();
 
         if (vm.ThreatProjection is not null)
         {
@@ -57,7 +77,10 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
         RenderMissions(vm);
         RenderLaws(vm);
-        RenderActionReference(vm);
+
+        RenderTabBar(vm, activeTab);
+        RenderSelectedTab(vm, activeTab);
+        RenderCommandPanel();
     }
 
     public void RenderPendingDayAction(PendingPlanViewModel vm)
@@ -83,7 +106,55 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         RenderAvailableOrders(vm);
         RenderAvailableMissions(vm);
         RenderAvailableDecrees(vm);
+        RenderCommandPanel();
+    }
 
+    void RenderTabBar(DayStartViewModel vm, ActionTab activeTab)
+    {
+        var lawCount = vm.AvailableLaws.Count(l => !l.IsActive);
+        var orderCount = vm.AvailableOrders.Count;
+        var missionCount = vm.AvailableMissions.Count;
+        var decreeCount = vm.AvailableDecrees.Count;
+
+        var lawCd = vm.LawCooldownDaysRemaining > 0 ? $" cd:{vm.LawCooldownDaysRemaining}d" : "";
+        var orderCd = vm.OrderCooldownDaysRemaining > 0 ? $" cd:{vm.OrderCooldownDaysRemaining}d" : "";
+
+        string TabLabel(string name, int count, string extra, ActionTab tab)
+        {
+            var label = $"{name} ({count}){extra}";
+            return tab == activeTab ? $"[bold underline white on blue] {Esc(label)} [/]" : $" {Esc(label)} ";
+        }
+
+        var bar = TabLabel("Laws", lawCount, lawCd, ActionTab.Laws)
+                + " " + TabLabel("Orders", orderCount, orderCd, ActionTab.Orders)
+                + " " + TabLabel("Missions", missionCount, "", ActionTab.Missions)
+                + " " + TabLabel("Decrees", decreeCount, "", ActionTab.Decrees);
+
+        console.MarkupLine(bar);
+        console.WriteLine();
+    }
+
+    void RenderSelectedTab(DayStartViewModel vm, ActionTab activeTab)
+    {
+        switch (activeTab)
+        {
+            case ActionTab.Laws:
+                RenderAvailableLaws(vm);
+                break;
+            case ActionTab.Orders:
+                RenderAvailableOrders(vm);
+                break;
+            case ActionTab.Missions:
+                RenderAvailableMissions(vm);
+                break;
+            case ActionTab.Decrees:
+                RenderAvailableDecrees(vm);
+                break;
+        }
+    }
+
+    void RenderCommandPanel()
+    {
         var panel = new Panel(
             new Markup(
                 "[bold]assign[/] [grey]<Job> <N>[/]  [grey]|[/]  " +
@@ -94,6 +165,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 "[bold]clear_assignments[/]  [grey]|[/]  " +
                 "[bold]clear_action[/]  [grey]|[/]  " +
                 "[bold]end_day[/]  [grey]|[/]  " +
+                "[bold]view[/] [grey]<tab>[/]  [grey]|[/]  " +
                 "[bold]help[/]"))
         {
             Header = new PanelHeader("Commands (<> = required)"),
@@ -263,6 +335,18 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
         console.MarkupLine("[bold]Population[/]");
         console.Write(grid);
+
+        if (vm.Population.SickWorkers > 0)
+        {
+            var recoveryInfo = vm.Population.RecoveryDaysAtCurrentSickness >= 999
+                ? "[red]Recovery locked (sickness >= 50)[/]"
+                : $"Recovery: ~{vm.Population.RecoveryDaysAtCurrentSickness}d at current sickness";
+            var readyStr = vm.Population.SickReadyToRecover > 0
+                ? $"  [green]{vm.Population.SickReadyToRecover} ready to recover[/]"
+                : "";
+            console.MarkupLine($"  {recoveryInfo}{readyStr}");
+        }
+
         console.WriteLine();
     }
 
@@ -342,6 +426,13 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             console.MarkupLine($"[bold]Active Missions[/]  {list}");
         }
 
+        if (vm.MissionCooldowns.Count > 0)
+        {
+            var cdList = string.Join(", ",
+                vm.MissionCooldowns.Select(c => $"{Esc(c.MissionName)} ({c.DaysRemaining}d)"));
+            console.MarkupLine($"  [yellow]Mission cooldowns: {cdList}[/]");
+        }
+
         console.WriteLine();
     }
 
@@ -363,6 +454,12 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     void RenderAvailableLaws(DayStartViewModel vm)
     {
+        if (vm.LawCooldownDaysRemaining > 0)
+        {
+            console.MarkupLine($"[bold]Available Laws[/]  [yellow]On cooldown ({vm.LawCooldownDaysRemaining}d remaining)[/]");
+            return;
+        }
+
         var available = vm.AvailableLaws.Where(l => !l.IsActive).ToList();
         if (available.Count == 0)
         {

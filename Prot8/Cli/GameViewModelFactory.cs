@@ -40,6 +40,8 @@ public class GameViewModelFactory(GameState state)
                 Guards = state.Population.Guards,
                 SickWorkers = state.Population.SickWorkers,
                 Elderly = state.Population.Elderly,
+                SickReadyToRecover = state.Population.ReadyToRecoverCount(),
+                RecoveryDaysAtCurrentSickness = GameBalance.ComputeRecoveryDays(state.Sickness),
             },
             Zones = state.Zones.Select(zone => new ZoneViewModel
             {
@@ -67,6 +69,14 @@ public class GameViewModelFactory(GameState state)
             MoodLine = ComputeMoodLine(state),
             AvailableDecrees = ToDecreeViewModels(state),
             DisruptionText = state.ActiveDisruption,
+            LawCooldownDaysRemaining = ComputeLawCooldown(state),
+            MissionCooldowns = ComputeMissionCooldowns(state),
+            GlobalProductionMultiplier = StatModifiers.ComputeGlobalProductionMultiplier(state),
+            SiegeEscalationDelayDays = state.SiegeEscalationDelayDays,
+            ConsecutiveFoodDeficitDays = state.ConsecutiveFoodDeficitDays,
+            ConsecutiveWaterDeficitDays = state.ConsecutiveWaterDeficitDays,
+            ConsecutiveBothZeroDays = state.ConsecutiveBothFoodWaterZeroDays,
+            OvercrowdingStacks = ComputeOvercrowdingStacks(state),
         };
     }
 
@@ -217,6 +227,50 @@ public class GameViewModelFactory(GameState state)
         }
 
         return result;
+    }
+
+    static int ComputeLawCooldown(GameState state)
+    {
+        if (state.LastLawDay == int.MinValue)
+            return 0;
+
+        var remaining = GameBalance.LawCooldownDays - (state.Day - state.LastLawDay);
+        return remaining > 0 ? remaining : 0;
+    }
+
+    static IReadOnlyList<MissionCooldownViewModel> ComputeMissionCooldowns(GameState state)
+    {
+        var result = new List<MissionCooldownViewModel>();
+        foreach (var (missionId, lastDay) in state.MissionCooldowns)
+        {
+            var remaining = GameBalance.MissionCooldownDays - (state.Day - lastDay);
+            if (remaining > 0)
+            {
+                var mission = MissionCatalog.Find(missionId);
+                result.Add(new MissionCooldownViewModel
+                {
+                    MissionName = mission?.Name ?? missionId,
+                    DaysRemaining = remaining,
+                });
+            }
+        }
+        return result;
+    }
+
+    static int ComputeOvercrowdingStacks(GameState state)
+    {
+        var totalStacks = 0;
+        var pop = state.GetZonePopulation();
+
+        foreach (var zone in state.Zones)
+        {
+            if (zone.IsLost) continue;
+            var over = pop - zone.Capacity;
+            if (over < GameBalance.OvercrowdingThreshold) continue;
+            totalStacks += over / GameBalance.OvercrowdingThreshold;
+        }
+
+        return totalStacks;
     }
 
     static int ComputeOrderCooldown(GameState state)

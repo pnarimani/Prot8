@@ -8,6 +8,8 @@ namespace Prot8.Cli.Input;
 
 public sealed class ConsoleInputReader(CommandParser parser)
 {
+    ActionTab _activeTab = ActionTab.Laws;
+
     public bool TryExecuteCommand(GameState state, ref TurnActionChoice action, string rawCommand, out string message, out bool endDayRequested)
     {
         message = string.Empty;
@@ -37,7 +39,17 @@ public sealed class ConsoleInputReader(CommandParser parser)
 
         while (true)
         {
-            var raw = Console.ReadLine();
+            var currentVm = new GameViewModelFactory(state).Create();
+            var (raw, tabSwitch) = TabCompletingReadLine.ReadLine(currentVm);
+
+            // Tab auto-switch: user pressed Tab after a command prefix like "enact "
+            if (tabSwitch.HasValue)
+            {
+                _activeTab = tabSwitch.Value;
+                ReRender(state, renderer, action);
+                continue;
+            }
+
             if (raw is null)
                 return new DayCommandPlan(allocation, action);
 
@@ -61,6 +73,23 @@ public sealed class ConsoleInputReader(CommandParser parser)
                     renderer.RenderActionReference(helpVm);
                     break;
 
+                case "view":
+                    if (parts.Length != 2)
+                    {
+                        Console.WriteLine("Usage: view <laws|orders|missions|decrees>");
+                        break;
+                    }
+
+                    if (!TryParseTab(parts[1], out var tab))
+                    {
+                        Console.WriteLine($"Unknown tab: {parts[1]}. Use: laws, orders, missions, decrees");
+                        break;
+                    }
+
+                    _activeTab = tab;
+                    ReRender(state, renderer, action);
+                    break;
+
                 default:
                     if (!parser.TryParse(trimmed, out var parsed, out var parseError))
                     {
@@ -74,11 +103,13 @@ public sealed class ConsoleInputReader(CommandParser parser)
 
                     if (result.Success)
                     {
-                        Console.WriteLine(result.Message);
                         if (result.EndDayRequested)
                         {
                             return new DayCommandPlan(allocation, action);
                         }
+
+                        ReRender(state, renderer, action);
+                        Console.WriteLine(result.Message);
                     }
                     else
                     {
@@ -90,10 +121,32 @@ public sealed class ConsoleInputReader(CommandParser parser)
         }
     }
 
+    void ReRender(GameState state, ConsoleRenderer renderer, TurnActionChoice action)
+    {
+        renderer.Clear();
+        var vm = new GameViewModelFactory(state).Create();
+        renderer.RenderDayStart(vm, _activeTab);
+        var pendingVm = GameViewModelFactory.ToPendingPlanViewModel(action);
+        renderer.RenderPendingDayAction(pendingVm);
+    }
+
     void PrintInvalidAndHelp(ConsoleRenderer renderer, GameState state, string message)
     {
         Console.WriteLine($"Invalid command: {message}");
         var helpVm = new GameViewModelFactory(state).Create();
         renderer.RenderActionReference(helpVm);
+    }
+
+    static bool TryParseTab(string input, out ActionTab tab)
+    {
+        tab = input.ToLowerInvariant() switch
+        {
+            "laws" => ActionTab.Laws,
+            "orders" => ActionTab.Orders,
+            "missions" => ActionTab.Missions,
+            "decrees" => ActionTab.Decrees,
+            _ => (ActionTab)(-1),
+        };
+        return (int)tab >= 0;
     }
 }

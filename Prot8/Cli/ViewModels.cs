@@ -37,6 +37,15 @@ public sealed class DayStartViewModel
     public string? MoodLine { get; init; }
     public string? DisruptionText { get; init; }
     public IReadOnlyList<DecreeViewModel> AvailableDecrees { get; init; } = [];
+
+    public int LawCooldownDaysRemaining { get; init; }
+    public IReadOnlyList<MissionCooldownViewModel> MissionCooldowns { get; init; } = [];
+    public double GlobalProductionMultiplier { get; init; } = 1.0;
+    public int SiegeEscalationDelayDays { get; init; }
+    public int ConsecutiveFoodDeficitDays { get; init; }
+    public int ConsecutiveWaterDeficitDays { get; init; }
+    public int ConsecutiveBothZeroDays { get; init; }
+    public int OvercrowdingStacks { get; init; }
 }
 
 public sealed class ResourceViewModel
@@ -55,6 +64,8 @@ public sealed class PopulationViewModel
     public int SickWorkers { get; init; }
     public int Elderly { get; init; }
     public int TotalPopulation => HealthyWorkers + Guards + SickWorkers + Elderly;
+    public int SickReadyToRecover { get; init; }
+    public int RecoveryDaysAtCurrentSickness { get; init; }
 }
 
 public sealed class ZoneViewModel
@@ -113,6 +124,12 @@ public sealed class PendingPlanViewModel
     public string? QueuedActionName { get; init; }
     public string? QueuedDecreeType { get; init; }
     public string? QueuedDecreeName { get; init; }
+}
+
+public sealed class MissionCooldownViewModel
+{
+    public string MissionName { get; init; } = "";
+    public int DaysRemaining { get; init; }
 }
 
 public sealed class DecreeViewModel
