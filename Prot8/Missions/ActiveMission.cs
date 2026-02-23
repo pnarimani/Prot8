@@ -1,20 +1,12 @@
 namespace Prot8.Missions;
 
-public sealed class ActiveMission
+public sealed class ActiveMission(IMissionDefinition mission)
 {
-    public ActiveMission(string missionId, string missionName, int daysRemaining, int workerCost)
-    {
-        MissionId = missionId;
-        MissionName = missionName;
-        DaysRemaining = daysRemaining;
-        WorkerCost = workerCost;
-    }
+    public string MissionId => mission.Id; 
 
-    public string MissionId { get; }
+    public string MissionName => mission.Name;
 
-    public string MissionName { get; }
+    public int DaysRemaining { get; set; } = mission.DurationDays;
 
-    public int DaysRemaining { get; set; }
-
-    public int WorkerCost { get; }
+    public int WorkerCost => mission.WorkerCost;
 }

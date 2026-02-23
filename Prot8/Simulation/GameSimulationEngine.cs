@@ -171,7 +171,8 @@ public sealed class GameSimulationEngine(GameState state)
                 && state.Day - lastDay < order.CooldownDays)
             {
                 var nextDay = lastDay + order.CooldownDays;
-                report.Add(ReasonTags.OrderEffect, $"Emergency order cooldown active for {order.Name}. Next available day: {nextDay}.");
+                report.Add(ReasonTags.OrderEffect,
+                    $"Emergency order cooldown active for {order.Name}. Next available day: {nextDay}.");
                 return;
             }
 
@@ -201,7 +202,8 @@ public sealed class GameSimulationEngine(GameState state)
                 if (state.Day - lastMissionDay < GameBalance.MissionCooldownDays)
                 {
                     var nextDay = lastMissionDay + GameBalance.MissionCooldownDays;
-                    report.Add(ReasonTags.Mission, $"Mission cooldown active for {mission.Name}. Next available day: {nextDay}.");
+                    report.Add(ReasonTags.Mission,
+                        $"Mission cooldown active for {mission.Name}. Next available day: {nextDay}.");
                     return;
                 }
             }
@@ -219,8 +221,7 @@ public sealed class GameSimulationEngine(GameState state)
                 return;
             }
 
-            state.ActiveMissions.Add(new ActiveMission(mission.Id, mission.Name, mission.DurationDays,
-                mission.WorkerCost));
+            state.ActiveMissions.Add(new ActiveMission(mission));
             state.MissionCooldowns[mission.Id] = state.Day;
             report.Add(ReasonTags.Mission,
                 $"Mission started: {mission.Name} ({mission.DurationDays} day(s), {mission.WorkerCost} workers committed).");
@@ -283,13 +284,21 @@ public sealed class GameSimulationEngine(GameState state)
             }
 
             if (job == JobType.WaterDrawing)
+            {
                 zoneMultiplier *= state.DailyEffects.WaterProductionMultiplier;
+            }
             else if (job == JobType.FoodProduction)
+            {
                 zoneMultiplier *= state.DailyEffects.FoodProductionMultiplier;
+            }
             else if (job == JobType.MaterialsCrafting)
+            {
                 zoneMultiplier *= state.DailyEffects.MaterialsProductionMultiplier;
+            }
             else if (job == JobType.Repairs)
+            {
                 zoneMultiplier *= state.DailyEffects.RepairProductionMultiplier;
+            }
 
             var nominalCycles = workers * globalMultiplier * zoneMultiplier;
             if (nominalCycles <= 0)
@@ -481,7 +490,9 @@ public sealed class GameSimulationEngine(GameState state)
         foreach (var zone in state.Zones)
         {
             if (!zone.IsLost)
+            {
                 totalCapacity += zone.Capacity;
+            }
         }
 
         var overflow = totalPop - totalCapacity;
@@ -698,11 +709,22 @@ public sealed class GameSimulationEngine(GameState state)
             var foodRaid = (int)Math.Ceiling(state.Resources[ResourceKind.Food] * 0.15);
             var waterRaid = (int)Math.Ceiling(state.Resources[ResourceKind.Water] * 0.15);
             if (foodRaid > 0)
-                StateChangeApplier.AddResource(state, ResourceKind.Food, -foodRaid, report, ReasonTags.Siege, "Supply line raid");
+            {
+                StateChangeApplier.AddResource(state, ResourceKind.Food, -foodRaid, report, ReasonTags.Siege,
+                    "Supply line raid");
+            }
+
             if (waterRaid > 0)
-                StateChangeApplier.AddResource(state, ResourceKind.Water, -waterRaid, report, ReasonTags.Siege, "Supply line raid");
+            {
+                StateChangeApplier.AddResource(state, ResourceKind.Water, -waterRaid, report, ReasonTags.Siege,
+                    "Supply line raid");
+            }
+
             if (foodRaid > 0 || waterRaid > 0)
-                report.Add(ReasonTags.Siege, $"Supply line raid: enemy forces destroyed {foodRaid} food and {waterRaid} water.");
+            {
+                report.Add(ReasonTags.Siege,
+                    $"Supply line raid: enemy forces destroyed {foodRaid} food and {waterRaid} water.");
+            }
         }
     }
 
@@ -848,7 +870,8 @@ public sealed class GameSimulationEngine(GameState state)
         {
             state.GameOver = true;
             state.GameOverCause = GameOverCause.PandemicCollapse;
-            state.GameOverDetails = $"Sickness at {state.Sickness} with only {state.Population.HealthyWorkers} healthy workers. The city cannot function.";
+            state.GameOverDetails =
+                $"Sickness at {state.Sickness} with only {state.Population.HealthyWorkers} healthy workers. The city cannot function.";
             report.Add(ReasonTags.Event, "Loss: pandemic collapse. Too few healthy workers remain.");
         }
     }
@@ -876,5 +899,4 @@ public sealed class GameSimulationEngine(GameState state)
             state.GameOverDetails = "Day 40 reached.";
         }
     }
-
 }
