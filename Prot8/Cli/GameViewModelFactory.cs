@@ -72,6 +72,7 @@ public class GameViewModelFactory(GameState state)
             LawCooldownDaysRemaining = ComputeLawCooldown(state),
             MissionCooldowns = ComputeMissionCooldowns(state),
             GlobalProductionMultiplier = StatModifiers.ComputeGlobalProductionMultiplier(state),
+            ProductionMultiplierReasons = ComputeProductionMultiplierReasons(state),
             SiegeEscalationDelayDays = state.SiegeEscalationDelayDays,
             ConsecutiveFoodDeficitDays = state.ConsecutiveFoodDeficitDays,
             ConsecutiveWaterDeficitDays = state.ConsecutiveWaterDeficitDays,
@@ -524,6 +525,28 @@ public class GameViewModelFactory(GameState state)
             alerts.Add($"CRITICAL: {perimeter.Name} about to fall");
 
         return alerts;
+    }
+
+    static IReadOnlyList<string> ComputeProductionMultiplierReasons(GameState state)
+    {
+        var reasons = new List<string>();
+
+        var moraleFactor = 0.75 + (state.Morale / 200.0);
+        var unrestFactor = 1.0 - (state.Unrest / 200.0);
+        var sicknessFactor = 1.0 - (state.Sickness / 200.0);
+
+        if (moraleFactor < 1.0)
+            reasons.Add($"Low morale ({state.Morale}): {moraleFactor:F2}x");
+        else if (moraleFactor > 1.0)
+            reasons.Add($"High morale ({state.Morale}): {moraleFactor:F2}x");
+
+        if (unrestFactor < 1.0)
+            reasons.Add($"Unrest ({state.Unrest}): {unrestFactor:F2}x");
+
+        if (sicknessFactor < 1.0)
+            reasons.Add($"Sickness ({state.Sickness}): {sicknessFactor:F2}x");
+
+        return reasons;
     }
 
     static double ComputeFoodConsumptionMultiplier(GameState state)

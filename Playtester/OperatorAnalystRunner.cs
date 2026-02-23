@@ -92,7 +92,7 @@ public class OperatorAnalystRunner
                     var defaultChoices = report.PendingResponses
                         .Select(p => new EventResponseChoice(p.Event.Id, p.Responses[^1].Id))
                         .ToList();
-                    GameSimulationEngine.ApplyEventResponses(state, report, defaultChoices);
+                    engine.ApplyEventResponses(report, defaultChoices);
                 }
 
                 var dayReportVm = GameViewModelFactory.ToDayReportViewModel(state, report);

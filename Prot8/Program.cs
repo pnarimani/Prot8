@@ -16,7 +16,7 @@ using var telemetry = new RunTelemetryWriter(state, seed);
 
 while (!state.GameOver)
 {
-    GameSimulationEngine.RollDailyDisruption(state);
+    engine.RollDailyDisruption();
     var dayStartVm = new GameViewModelFactory(state).Create();
     renderer.RenderDayStart(dayStartVm);
     var dayPlan = input.ReadDayPlan(state, renderer);
@@ -28,7 +28,7 @@ while (!state.GameOver)
     if (report.PendingResponses.Count > 0)
     {
         var choices = input.ReadEventResponses(report.PendingResponses, renderer);
-        GameSimulationEngine.ApplyEventResponses(state, report, choices);
+        engine.ApplyEventResponses(report, choices);
     }
 
     var dayReportVm = GameViewModelFactory.ToDayReportViewModel(state, report);

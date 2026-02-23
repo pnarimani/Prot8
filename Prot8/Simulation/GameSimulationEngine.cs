@@ -11,7 +11,7 @@ namespace Prot8.Simulation;
 
 public sealed class GameSimulationEngine(GameState state)
 {
-    public static void RollDailyDisruption(GameState state)
+    public void RollDailyDisruption()
     {
         state.ActiveDisruption = null;
         state.DailyEffects = new TemporaryDailyEffects();
@@ -57,14 +57,16 @@ public sealed class GameSimulationEngine(GameState state)
 
     public DayResolutionReport ResolveDay(TurnActionChoice action)
     {
-        var report = new DayResolutionReport(state.Day);
-        report.StartFood = state.Resources[Resources.ResourceKind.Food];
-        report.StartWater = state.Resources[Resources.ResourceKind.Water];
-        report.StartFuel = state.Resources[Resources.ResourceKind.Fuel];
-        report.StartMorale = state.Morale;
-        report.StartUnrest = state.Unrest;
-        report.StartSickness = state.Sickness;
-        report.StartHealthyWorkers = state.Population.HealthyWorkers;
+        var report = new DayResolutionReport(state.Day)
+        {
+            StartFood = state.Resources[ResourceKind.Food],
+            StartWater = state.Resources[ResourceKind.Water],
+            StartFuel = state.Resources[ResourceKind.Fuel],
+            StartMorale = state.Morale,
+            StartUnrest = state.Unrest,
+            StartSickness = state.Sickness,
+            StartHealthyWorkers = state.Population.HealthyWorkers,
+        };
 
         PrepareDay(state);
         ApplyPlayerAction(state, action, report);
@@ -84,7 +86,7 @@ public sealed class GameSimulationEngine(GameState state)
         ResolveActiveMissions(state, report);
         CheckLossConditions(state, report);
 
-        FinalizeDay(state, report);
+        FinalizeDay(state);
         return report;
     }
 
@@ -439,10 +441,7 @@ public sealed class GameSimulationEngine(GameState state)
     {
         if (state.FoodDeficitToday)
         {
-            if (!state.DayFirstFoodDeficit.HasValue)
-            {
-                state.DayFirstFoodDeficit = state.Day;
-            }
+            state.DayFirstFoodDeficit ??= state.Day;
 
             state.ConsecutiveFoodDeficitDays += 1;
             StateChangeApplier.AddUnrest(state, 6, report, ReasonTags.Deficit, "Food deficit pressure");
@@ -456,10 +455,7 @@ public sealed class GameSimulationEngine(GameState state)
 
         if (state.WaterDeficitToday)
         {
-            if (!state.DayFirstWaterDeficit.HasValue)
-            {
-                state.DayFirstWaterDeficit = state.Day;
-            }
+            state.DayFirstWaterDeficit ??= state.Day;
 
             state.ConsecutiveWaterDeficitDays += 1;
             StateChangeApplier.AddUnrest(state, 7, report, ReasonTags.Deficit, "Water deficit pressure");
@@ -699,12 +695,12 @@ public sealed class GameSimulationEngine(GameState state)
 
         if (state.SiegeIntensity >= 4 && state.RollPercent() <= 15)
         {
-            var foodRaid = (int)Math.Ceiling(state.Resources[Resources.ResourceKind.Food] * 0.15);
-            var waterRaid = (int)Math.Ceiling(state.Resources[Resources.ResourceKind.Water] * 0.15);
+            var foodRaid = (int)Math.Ceiling(state.Resources[ResourceKind.Food] * 0.15);
+            var waterRaid = (int)Math.Ceiling(state.Resources[ResourceKind.Water] * 0.15);
             if (foodRaid > 0)
-                StateChangeApplier.AddResource(state, Resources.ResourceKind.Food, -foodRaid, report, ReasonTags.Siege, "Supply line raid");
+                StateChangeApplier.AddResource(state, ResourceKind.Food, -foodRaid, report, ReasonTags.Siege, "Supply line raid");
             if (waterRaid > 0)
-                StateChangeApplier.AddResource(state, Resources.ResourceKind.Water, -waterRaid, report, ReasonTags.Siege, "Supply line raid");
+                StateChangeApplier.AddResource(state, ResourceKind.Water, -waterRaid, report, ReasonTags.Siege, "Supply line raid");
             if (foodRaid > 0 || waterRaid > 0)
                 report.Add(ReasonTags.Siege, $"Supply line raid: enemy forces destroyed {foodRaid} food and {waterRaid} water.");
         }
@@ -775,7 +771,7 @@ public sealed class GameSimulationEngine(GameState state)
         }
     }
 
-    public static void ApplyEventResponses(GameState state, DayResolutionReport report, IReadOnlyList<EventResponseChoice> choices)
+    public void ApplyEventResponses(DayResolutionReport report, IReadOnlyList<EventResponseChoice> choices)
     {
         foreach (var pending in report.PendingResponses)
         {
@@ -848,7 +844,7 @@ public sealed class GameSimulationEngine(GameState state)
             return;
         }
 
-        if (state.Sickness >= 90 && state.Population.HealthyWorkers < 8)
+        if (state is { Sickness: >= 90, Population.HealthyWorkers: < 8 })
         {
             state.GameOver = true;
             state.GameOverCause = GameOverCause.PandemicCollapse;
@@ -857,7 +853,7 @@ public sealed class GameSimulationEngine(GameState state)
         }
     }
 
-    static void FinalizeDay(GameState state, DayResolutionReport report)
+    static void FinalizeDay(GameState state)
     {
         state.Day += 1;
         state.FoodDeficitYesterday = state.FoodDeficitToday;
@@ -872,7 +868,7 @@ public sealed class GameSimulationEngine(GameState state)
             state.ConsecutiveBothFoodWaterZeroDays = 0;
         }
 
-        if (!state.GameOver && state.Day >= GameBalance.TargetSurvivalDay)
+        if (state is { GameOver: false, Day: >= GameBalance.TargetSurvivalDay })
         {
             state.Survived = true;
             state.GameOver = true;

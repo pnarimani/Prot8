@@ -121,7 +121,7 @@ public class CommanderScribeRunner
                     var defaultChoices = report.PendingResponses
                         .Select(p => new EventResponseChoice(p.Event.Id, p.Responses[^1].Id))
                         .ToList();
-                    GameSimulationEngine.ApplyEventResponses(state, report, defaultChoices);
+                    engine.ApplyEventResponses(report, defaultChoices);
                 }
 
                 // Capture resolution log

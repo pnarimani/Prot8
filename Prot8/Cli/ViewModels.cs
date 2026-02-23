@@ -40,6 +40,7 @@ public sealed class DayStartViewModel
     public int LawCooldownDaysRemaining { get; init; }
     public IReadOnlyList<MissionCooldownViewModel> MissionCooldowns { get; init; } = [];
     public double GlobalProductionMultiplier { get; init; } = 1.0;
+    public IReadOnlyList<string> ProductionMultiplierReasons { get; init; } = [];
     public int SiegeEscalationDelayDays { get; init; }
     public int ConsecutiveFoodDeficitDays { get; init; }
     public int ConsecutiveWaterDeficitDays { get; init; }

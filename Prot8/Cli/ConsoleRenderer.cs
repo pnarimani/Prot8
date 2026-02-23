@@ -15,22 +15,19 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     public void RenderDayStart(DayStartViewModel vm, ActionTab activeTab = ActionTab.Laws)
     {
-        var tablesRow = new Grid();
-        tablesRow.AddColumn(new GridColumn().NoWrap());
-        tablesRow.AddColumn(new GridColumn().Width(1));
-        tablesRow.AddColumn(new GridColumn().NoWrap());
-        tablesRow.AddRow(BuildJobsTable(vm), new Text(""), BuildZonesTable(vm));
-
-        console.Write(new Rows(
-            BuildHeader(vm),
-            new Columns(BuildResourcesTable(vm), BuildPopulationTable(vm)),
-            BuildStatusWarnings(vm),
-            tablesRow,
-            new Rule { Style = Style.Parse("grey") },
-            BuildStateSection(vm),
-            new Text(""),
-            BuildActionsSection(vm, activeTab),
-            BuildCommandPanel()));
+        console.Write(
+            new Rows(
+                BuildHeader(vm),
+                new Columns(BuildResourcesTable(vm), BuildPopulationTable(vm)),
+                BuildStatusWarnings(vm),
+                new Columns(BuildJobsTable(vm), new Text(""), BuildZonesTable(vm)),
+                new Rule { Style = Style.Parse("grey") },
+                BuildStateSection(vm),
+                new Rule { Style = Style.Parse("grey") },
+                BuildActionsSection(vm, activeTab),
+                BuildCommandPanel()
+            )
+        );
     }
 
     static IRenderable BuildHeader(DayStartViewModel vm)
@@ -44,7 +41,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
         if (vm.MoodLine is not null)
             items.Add(Align.Center(new Markup($"[italic]\"{Esc(vm.MoodLine)}\"[/]")));
-        
+
         if (vm.SituationAlerts.Count > 0)
         {
             foreach (var alert in vm.SituationAlerts)
@@ -65,9 +62,19 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         var items = new List<IRenderable>();
 
         if (vm.GlobalProductionMultiplier < 1.0)
-            items.Add(new Markup($"  [yellow]Production multiplier: {vm.GlobalProductionMultiplier:F2}x[/]"));
+        {
+            var reasons = vm.ProductionMultiplierReasons.Count > 0
+                ? " ← " + string.Join(", ", vm.ProductionMultiplierReasons.Select(Esc))
+                : "";
+            items.Add(new Markup($"  [yellow]Production multiplier: {vm.GlobalProductionMultiplier:F2}x{reasons}[/]"));
+        }
         else if (vm.GlobalProductionMultiplier > 1.0)
-            items.Add(new Markup($"  [green]Production multiplier: {vm.GlobalProductionMultiplier:F2}x[/]"));
+        {
+            var reasons = vm.ProductionMultiplierReasons.Count > 0
+                ? " ← " + string.Join(", ", vm.ProductionMultiplierReasons.Select(Esc))
+                : "";
+            items.Add(new Markup($"  [green]Production multiplier: {vm.GlobalProductionMultiplier:F2}x{reasons}[/]"));
+        }
 
         if (vm.ConsecutiveFoodDeficitDays > 0)
             items.Add(new Markup($"  [red]Food deficit: {vm.ConsecutiveFoodDeficitDays} consecutive day(s)[/]"));
