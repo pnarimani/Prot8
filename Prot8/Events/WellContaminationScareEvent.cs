@@ -3,15 +3,12 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class WellContaminationScareEvent : TriggeredEventBase
+public sealed class WellContaminationScareEvent : TriggeredEventBase, IRespondableEvent
 {
     private const int TriggerDay = 5;
-    private const int SicknessHit = 5;
-    private const int ReducedSicknessHit = 2;
-    private const int MedicineCost = 5;
 
     public WellContaminationScareEvent() : base("well_contamination", "Well Contamination Scare",
-        "Day 5: Well contamination suspected. +5 sickness (or +2 if medicine >= 5, auto-spends 5 medicine).")
+        "Reports of fouled water spread through the city. The wells may be contaminated.")
     {
     }
 
@@ -22,16 +19,44 @@ public sealed class WellContaminationScareEvent : TriggeredEventBase
 
     public override void Apply(GameState state, DayResolutionReport report)
     {
-        if (state.Resources.Has(ResourceKind.Medicine, MedicineCost))
+        ApplyResponse("ignore", state, report);
+    }
+
+    public IReadOnlyList<EventResponse> GetResponses(GameState state)
+    {
+        var responses = new List<EventResponse>();
+
+        if (state.Resources.Has(ResourceKind.Medicine, 5))
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Medicine, -MedicineCost, report, ReasonTags.Event, Name);
-            StateChangeApplier.AddSickness(state, ReducedSicknessHit, report, ReasonTags.Event, Name);
-            report.Add(ReasonTags.Event, $"{Name}: Medicine purifies the wells. The worst is averted — for now.");
+            responses.Add(new EventResponse("medicine", "Treat with medicine"));
         }
-        else
+
+        responses.Add(new EventResponse("boil", "Boil all water"));
+        responses.Add(new EventResponse("ignore", "Ignore the warnings"));
+
+        return responses;
+    }
+
+    public void ApplyResponse(string responseId, GameState state, DayResolutionReport report)
+    {
+        switch (responseId)
         {
-            StateChangeApplier.AddSickness(state, SicknessHit, report, ReasonTags.Event, Name);
-            report.Add(ReasonTags.Event, $"{Name}: Without medicine to treat the wells, sickness spreads through the water.");
+            case "medicine":
+                StateChangeApplier.AddResource(state, ResourceKind.Medicine, -5, report, ReasonTags.Event, Name);
+                StateChangeApplier.AddSickness(state, 2, report, ReasonTags.Event, Name);
+                report.Add(ReasonTags.Event, $"{Name}: Medicine purifies the wells. The worst is averted — for now.");
+                break;
+
+            case "boil":
+                StateChangeApplier.AddSickness(state, 3, report, ReasonTags.Event, Name);
+                state.TaintedWellDaysRemaining = 1;
+                report.Add(ReasonTags.Event, $"{Name}: You order all water boiled. It slows production, but limits the contamination.");
+                break;
+
+            default: // ignore
+                StateChangeApplier.AddSickness(state, 5, report, ReasonTags.Event, Name);
+                report.Add(ReasonTags.Event, $"{Name}: Without action, sickness spreads through the water supply.");
+                break;
         }
 
         StartCooldown(state);

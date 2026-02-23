@@ -1,5 +1,6 @@
 using Prot8.Cli.ViewModels;
 using Prot8.Constants;
+using Prot8.Events;
 using Prot8.Simulation;
 using Spectre.Console;
 using Spectre.Console.Rendering;
@@ -194,6 +195,14 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         if (vm.TriggeredEvents.Count > 0)
         {
             console.MarkupLine($"[bold orange1]Events:[/] {Esc(string.Join(", ", vm.TriggeredEvents))}");
+        }
+
+        if (vm.EventResponses.Count > 0)
+        {
+            foreach (var resp in vm.EventResponses)
+            {
+                console.MarkupLine($"[bold orange1]Response:[/] {Esc(resp.EventName)} -> {Esc(resp.ChosenResponse)}");
+            }
         }
 
         if (vm.ResolvedMissions.Count > 0)
@@ -576,6 +585,23 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         >= 50 => "[yellow][[recovery LOCKED at ≥50]][/]",
         _ => "[green][[recovery enabled]][/]"
     };
+
+    public void RenderEventPrompt(PendingEventResponse pending)
+    {
+        console.WriteLine();
+        console.Write(new Rule($"[bold orange1]EVENT: {Esc(pending.Event.Name)}[/]") { Style = Style.Parse("orange1") });
+        console.MarkupLine($"  {Esc(pending.Event.Description)}");
+        console.WriteLine();
+
+        for (var i = 0; i < pending.Responses.Count; i++)
+        {
+            var r = pending.Responses[i];
+            var tooltip = r.Tooltip is not null ? $" [grey]({Esc(r.Tooltip)})[/]" : "";
+            console.MarkupLine($"  [bold]{i + 1}.[/] {Esc(r.Label)}{tooltip}");
+        }
+
+        console.WriteLine();
+    }
 
     static string GetTagColor(string tag) => tag switch
     {

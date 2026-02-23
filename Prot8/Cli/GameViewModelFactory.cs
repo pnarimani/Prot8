@@ -1,5 +1,6 @@
 using Prot8.Cli.ViewModels;
 using Prot8.Constants;
+using Prot8.Events;
 using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
@@ -133,6 +134,18 @@ public class GameViewModelFactory(GameState state)
             allocationAlert = $"ATTENTION: {-workerDelta} workers removed from assignments due to population loss. Review allocations.";
         }
 
+        var eventResponseSummaries = report.EventResponsesMade
+            .Select(choice =>
+            {
+                var pending = report.PendingResponses.FirstOrDefault(p => p.Event.Id == choice.EventId);
+                var responseName = pending?.Responses.FirstOrDefault(r => r.Id == choice.ResponseId)?.Label ?? choice.ResponseId;
+                return new EventResponseSummary
+                {
+                    EventName = pending?.Event.Name ?? choice.EventId,
+                    ChosenResponse = responseName,
+                };
+            }).ToList();
+
         return new DayReportViewModel
         {
             Day = report.Day,
@@ -143,6 +156,7 @@ public class GameViewModelFactory(GameState state)
             }).ToList(),
             TriggeredEvents = report.TriggeredEvents,
             ResolvedMissions = report.ResolvedMissions,
+            EventResponses = eventResponseSummaries,
             FoodConsumedToday = report.FoodConsumedToday,
             WaterConsumedToday = report.WaterConsumedToday,
             FoodDeficitToday = report.FoodDeficitToday,

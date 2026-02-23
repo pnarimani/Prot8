@@ -1,3 +1,5 @@
+using Prot8.Events;
+
 namespace Prot8.Simulation;
 
 public sealed class DayResolutionReport(int day)
@@ -9,6 +11,10 @@ public sealed class DayResolutionReport(int day)
     public List<string> TriggeredEvents { get; } = [];
 
     public List<string> ResolvedMissions { get; } = [];
+
+    public List<PendingEventResponse> PendingResponses { get; } = [];
+
+    public List<EventResponseChoice> EventResponsesMade { get; } = [];
 
     public int FoodConsumedToday { get; set; }
 

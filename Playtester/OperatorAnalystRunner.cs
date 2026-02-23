@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Prot8.Cli;
 using Prot8.Cli.Commands;
 using Prot8.Cli.ViewModels;
+using Prot8.Events;
 using Prot8.Simulation;
 using Prot8.Telemetry;
 
@@ -85,6 +86,14 @@ public class OperatorAnalystRunner
                 }
 
                 var report = engine.ResolveDay(action);
+
+                if (report.PendingResponses.Count > 0)
+                {
+                    var defaultChoices = report.PendingResponses
+                        .Select(p => new EventResponseChoice(p.Event.Id, p.Responses[^1].Id))
+                        .ToList();
+                    GameSimulationEngine.ApplyEventResponses(state, report, defaultChoices);
+                }
 
                 var dayReportVm = GameViewModelFactory.ToDayReportViewModel(state, report);
                 lastDayResolution = JsonSerializer.Serialize(dayReportVm, jsonOptions);

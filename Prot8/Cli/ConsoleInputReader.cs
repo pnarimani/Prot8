@@ -1,6 +1,7 @@
 using Prot8.Cli.Commands;
 using Prot8.Cli.Output;
 using Prot8.Cli.ViewModels;
+using Prot8.Events;
 using Prot8.Jobs;
 using Prot8.Simulation;
 
@@ -144,6 +145,37 @@ public sealed class ConsoleInputReader(CommandParser parser)
         Console.WriteLine($"Invalid command: {message}");
         var helpVm = new GameViewModelFactory(state).Create();
         renderer.RenderActionReference(helpVm);
+    }
+
+    public List<EventResponseChoice> ReadEventResponses(IReadOnlyList<PendingEventResponse> pendingResponses, ConsoleRenderer renderer)
+    {
+        var choices = new List<EventResponseChoice>();
+
+        foreach (var pending in pendingResponses)
+        {
+            renderer.RenderEventPrompt(pending);
+            Console.Write("Enter your choice (or press Enter for default): ");
+
+            var line = Console.ReadLine()?.Trim();
+            string responseId;
+
+            if (string.IsNullOrEmpty(line))
+            {
+                responseId = pending.Responses[^1].Id;
+            }
+            else if (int.TryParse(line, out var num) && num >= 1 && num <= pending.Responses.Count)
+            {
+                responseId = pending.Responses[num - 1].Id;
+            }
+            else
+            {
+                responseId = pending.Responses[^1].Id;
+            }
+
+            choices.Add(new EventResponseChoice(pending.Event.Id, responseId));
+        }
+
+        return choices;
     }
 
     static bool TryParseTab(string input, out ActionTab tab)

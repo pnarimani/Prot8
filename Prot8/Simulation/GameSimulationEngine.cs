@@ -762,8 +762,32 @@ public sealed class GameSimulationEngine(GameState state)
                 continue;
             }
 
+            if (evt is IRespondableEvent respondable)
+            {
+                var responses = respondable.GetResponses(state);
+                report.PendingResponses.Add(new PendingEventResponse(evt, responses));
+                report.AddTriggeredEvent(evt.Name);
+                continue;
+            }
+
             evt.Apply(state, report);
             report.AddTriggeredEvent(evt.Name);
+        }
+    }
+
+    public static void ApplyEventResponses(GameState state, DayResolutionReport report, IReadOnlyList<EventResponseChoice> choices)
+    {
+        foreach (var pending in report.PendingResponses)
+        {
+            var choice = choices.FirstOrDefault(c => c.EventId == pending.Event.Id);
+            var responseId = choice?.ResponseId ?? pending.Responses[^1].Id;
+
+            if (pending.Event is IRespondableEvent respondable)
+            {
+                respondable.ApplyResponse(responseId, state, report);
+            }
+
+            report.EventResponsesMade.Add(new EventResponseChoice(pending.Event.Id, responseId));
         }
     }
 

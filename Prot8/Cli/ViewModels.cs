@@ -149,6 +149,7 @@ public sealed class DayReportViewModel
     public IReadOnlyList<DeltaLogEntryViewModel> Entries { get; init; } = [];
     public IReadOnlyList<string> TriggeredEvents { get; init; } = [];
     public IReadOnlyList<string> ResolvedMissions { get; init; } = [];
+    public IReadOnlyList<EventResponseSummary> EventResponses { get; init; } = [];
     public int FoodConsumedToday { get; init; }
     public int WaterConsumedToday { get; init; }
     public bool FoodDeficitToday { get; init; }
@@ -160,6 +161,12 @@ public sealed class DayReportViewModel
     public string? RecoveryBlockedReason { get; init; }
     public string? DeltaSummary { get; init; }
     public string? AllocationAlert { get; init; }
+}
+
+public sealed class EventResponseSummary
+{
+    public string EventName { get; init; } = "";
+    public string ChosenResponse { get; init; } = "";
 }
 
 public sealed class DeltaLogEntryViewModel

@@ -24,6 +24,13 @@ while (!state.GameOver)
     var action = dayPlan.Action;
 
     var report = engine.ResolveDay(action);
+
+    if (report.PendingResponses.Count > 0)
+    {
+        var choices = input.ReadEventResponses(report.PendingResponses, renderer);
+        GameSimulationEngine.ApplyEventResponses(state, report, choices);
+    }
+
     var dayReportVm = GameViewModelFactory.ToDayReportViewModel(state, report);
     renderer.RenderDayReport(dayReportVm);
     telemetry.LogDay(action, report);
