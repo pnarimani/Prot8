@@ -4,6 +4,7 @@ using Prot8.Events;
 using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
+using Prot8.Mood;
 using Prot8.Orders;
 using Prot8.Resources;
 using Prot8.Simulation;
@@ -66,7 +67,7 @@ public class GameViewModelFactory(GameState state)
             ThreatProjection = ComputeThreatProjection(state),
             ProductionForecast = ComputeProductionForecast(state),
             ZoneWarnings = ComputeZoneWarnings(state),
-            MoodLine = ComputeMoodLine(state),
+            MoodLine = MoodSelector.Select(state),
             DisruptionText = state.ActiveDisruption,
             LawCooldownDaysRemaining = ComputeLawCooldown(state),
             MissionCooldowns = ComputeMissionCooldowns(state),
@@ -473,23 +474,6 @@ public class GameViewModelFactory(GameState state)
         }
 
         return warnings.Count > 0 ? string.Join("\n", warnings) : null;
-    }
-
-    static string? ComputeMoodLine(GameState state)
-    {
-        if (state.Sickness > 60)
-            return "The coughing never stops. Even the healthy avoid each other's eyes.";
-        if (state.Unrest > 65)
-            return "A guard was found beaten in an alley. Trust is eroding.";
-        if (state.Morale < 25)
-            return "Whispers of surrender echo through the streets.";
-        if (state.Morale >= 50)
-            return "People work in grim silence. They endure.";
-        if (state.Unrest > 50)
-            return "Arguments break out in the food lines. Tension hangs in the air.";
-        if (state.Sickness > 40)
-            return "The clinic is overcrowded. Families leave offerings at the temple.";
-        return "Another dawn behind the walls. The city holds.";
     }
 
     static IReadOnlyList<string> ComputeSituationAlerts(GameState state)

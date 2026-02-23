@@ -42,6 +42,9 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 { Style = Style.Parse("yellow") }
         };
 
+        if (vm.MoodLine is not null)
+            items.Add(Align.Center(new Markup($"[italic]\"{Esc(vm.MoodLine)}\"[/]")));
+        
         if (vm.SituationAlerts.Count > 0)
         {
             foreach (var alert in vm.SituationAlerts)
@@ -50,9 +53,6 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 items.Add(new Markup($"[{color}]  {Esc(alert)}[/]"));
             }
         }
-
-        if (vm.MoodLine is not null)
-            items.Add(new Markup($"  [italic]\"{Esc(vm.MoodLine)}\"[/]"));
 
         if (vm.DisruptionText is not null)
             items.Add(new Markup($"[bold red]*** {Esc(vm.DisruptionText)} ***[/]"));
