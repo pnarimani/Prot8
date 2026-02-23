@@ -1,12 +1,37 @@
+using Prot8.Constants;
+using Prot8.Jobs;
+using Prot8.Missions;
+using Prot8.Population;
+using Prot8.Resources;
+using Prot8.Zones;
+
 namespace Prot8.Simulation;
 
 public static class StatModifiers
 {
     public static double ComputeGlobalProductionMultiplier(GameState state)
     {
-        var moraleFactor = 0.75 + (state.Morale / 200.0);
-        var unrestFactor = 1.0 - (state.Unrest / 200.0);
-        var sicknessFactor = 1.0 - (state.Sickness / 200.0);
+        var moraleFactor = 1.0;
+        var unrestFactor = 1.0;
+        var sicknessFactor = 1.0;
+
+        // Only apply morale penalty if below threshold
+        if (state.Morale < GameBalance.MoraleProductionThreshold)
+        {
+            moraleFactor = 0.75 + (state.Morale / 200.0);
+        }
+
+        // Only apply unrest penalty if above threshold
+        if (state.Unrest > GameBalance.UnrestProductionThreshold)
+        {
+            unrestFactor = 1.0 - (state.Unrest / 200.0);
+        }
+
+        // Only apply sickness penalty if above threshold
+        if (state.Sickness > GameBalance.SicknessProductionThreshold)
+        {
+            sicknessFactor = 1.0 - (state.Sickness / 200.0);
+        }
 
         var combined = moraleFactor * unrestFactor * sicknessFactor;
         if (combined < 0.25)

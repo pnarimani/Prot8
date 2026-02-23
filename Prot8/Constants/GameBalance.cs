@@ -54,6 +54,11 @@ public static class GameBalance
     public const int RecoveryPerClinicSlot = 2;
     public const int MedicinePerRecovery = 1;
 
+    // Production penalty thresholds - penalties only apply after these values
+    public const int MoraleProductionThreshold = 65;
+    public const int UnrestProductionThreshold = 65;
+    public const int SicknessProductionThreshold = 65;
+
     public static readonly IReadOnlyList<ZoneTemplate> ZoneTemplates = new List<ZoneTemplate>
     {
         new(ZoneId.OuterFarms, "Outer Farms", 70, 12, 1.0),
