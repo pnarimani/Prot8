@@ -5,13 +5,14 @@ namespace Prot8.Laws;
 
 public sealed class EmergencySheltersLaw : ILaw
 {
-    private const int CapacityGain = 30;
-    private const int DailySickness = 10;
+    private const int CapacityGain = 20;
+    private const int DailySickness = 6;
+    private const int DailyUnrest = 3;
     private const int UnrestHit = 10;
 
     public string Id => "emergency_shelters";
     public string Name => "Emergency Shelters";
-    public string GetTooltip(GameState state) => $"+{CapacityGain} capacity in Inner District, +{DailySickness} sickness/day, +{UnrestHit} unrest on enact. Requires first zone loss.";
+    public string GetTooltip(GameState state) => $"+{CapacityGain} capacity in Inner District, +{DailySickness} sickness/day, +{DailyUnrest} unrest/day, +{UnrestHit} unrest on enact. Requires first zone loss.";
 
     public bool CanEnact(GameState state, out string reason)
     {
@@ -36,5 +37,6 @@ public sealed class EmergencySheltersLaw : ILaw
     public void ApplyDaily(GameState state, DayResolutionReport report)
     {
         StateChangeApplier.AddSickness(state, DailySickness, report, ReasonTags.LawPassive, Name);
+        StateChangeApplier.AddUnrest(state, DailyUnrest, report, ReasonTags.LawPassive, Name);
     }
 }

@@ -21,9 +21,9 @@ public sealed class GameSimulationEngine(GameState state)
         ApplyLawPassives(state, report);
         ApplyEmergencyOrderEffects(state, report);
 
-        var production = CalculateProduction(state, report);
         ApplyConsumption(state, report);
         ApplyDeficitPenalties(state, report);
+        var production = CalculateProduction(state, report);
         ApplyOvercrowdingPenalties(state, report);
         ApplySicknessProgression(state, production, report);
         ApplyUnrestProgression(state, report);
@@ -143,7 +143,7 @@ public sealed class GameSimulationEngine(GameState state)
                 return;
             }
 
-            state.ActiveMissions.Add(new ActiveMission(mission.Id, mission.Name, mission.DurationDays + 1,
+            state.ActiveMissions.Add(new ActiveMission(mission.Id, mission.Name, mission.DurationDays,
                 mission.WorkerCost));
             state.MissionCooldowns[mission.Id] = state.Day;
             report.Add(ReasonTags.Mission,
@@ -551,8 +551,6 @@ public sealed class GameSimulationEngine(GameState state)
         {
             StateChangeApplier.AddMorale(state, moraleDelta, report, ReasonTags.Unrest, "Daily morale drift");
         }
-
-        ApplyMartialLawCapsIfNeeded(state, report);
     }
 
     static void ApplySiegeDamage(GameState state, DayResolutionReport report)
@@ -565,7 +563,7 @@ public sealed class GameSimulationEngine(GameState state)
         }
         else
         {
-            var shouldEscalate = state.Day % 7 == 0;
+            var shouldEscalate = state.Day % GameBalance.SiegeEscalationIntervalDays == 0;
             var pressureFlags = 0;
 
             if (state.Unrest >= 65)
@@ -757,21 +755,4 @@ public sealed class GameSimulationEngine(GameState state)
         }
     }
 
-    static void ApplyMartialLawCapsIfNeeded(GameState state, DayResolutionReport report)
-    {
-        if (!state.ActiveLawIds.Contains("martial_law"))
-        {
-            return;
-        }
-
-        if (state.Unrest > 60)
-        {
-            StateChangeApplier.AddUnrest(state, -(state.Unrest - 60), report, ReasonTags.LawPassive, "Martial Law cap");
-        }
-
-        if (state.Morale > 40)
-        {
-            StateChangeApplier.AddMorale(state, -(state.Morale - 40), report, ReasonTags.LawPassive, "Martial Law cap");
-        }
-    }
 }

@@ -7,21 +7,23 @@ public sealed class FaithProcessionsLaw : ILaw
     private const int MoraleGain = 15;
     private const int MaterialsCost = 10;
     private const int UnrestHit = 5;
+    private const int DailySickness = 2;
+    private const int DailyMaterialsCost = 3;
     private const int MoraleThreshold = 40;
 
     public string Id => "faith_processions";
-    public string Name => "Fatih Processions";
-    public string GetTooltip(GameState state) => $"+{MoraleGain} morale, -{MaterialsCost} materials, +{UnrestHit} unrest. Requires morale < {MoraleThreshold}.";
+    public string Name => "Faith Processions";
+    public string GetTooltip(GameState state) => $"+{MoraleGain} morale on enact, -{MaterialsCost} materials, +{UnrestHit} unrest. Daily: -{DailyMaterialsCost} materials, +{DailySickness} sickness from gatherings. Requires morale < {MoraleThreshold}.";
 
     public bool CanEnact(GameState state, out string reason)
     {
-        if (state.Morale < 40)
+        if (state.Morale < MoraleThreshold)
         {
             reason = string.Empty;
             return true;
         }
 
-        reason = "Requires morale below 40.";
+        reason = $"Requires morale below {MoraleThreshold}.";
         return false;
     }
 
@@ -34,6 +36,7 @@ public sealed class FaithProcessionsLaw : ILaw
 
     public void ApplyDaily(GameState state, DayResolutionReport report)
     {
-        
+        StateChangeApplier.AddResource(state, Resources.ResourceKind.Materials, -DailyMaterialsCost, report, ReasonTags.LawPassive, Name);
+        StateChangeApplier.AddSickness(state, DailySickness, report, ReasonTags.LawPassive, $"{Name} gatherings");
     }
 }

@@ -11,7 +11,8 @@ public static class EmergencyOrderCatalog
         new EmergencyWaterRationOrder(),
         new CrackdownPatrolsOrder(),
         new InspireThePeopleOrder(),
-        new VoluntaryEvacuationOrder()
+        new VoluntaryEvacuationOrder(),
+        new ScavengeMedicineOrder()
     };
 
     public static IReadOnlyList<IEmergencyOrder> GetAll() => AllOrders;

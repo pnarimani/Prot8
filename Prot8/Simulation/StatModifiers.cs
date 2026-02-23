@@ -5,8 +5,8 @@ public static class StatModifiers
     public static double ComputeGlobalProductionMultiplier(GameState state)
     {
         var moraleFactor = 0.75 + (state.Morale / 200.0);
-        var unrestFactor = 1.0 - (state.Unrest / 220.0);
-        var sicknessFactor = 1.0 - (state.Sickness / 250.0);
+        var unrestFactor = 1.0 - (state.Unrest / 200.0);
+        var sicknessFactor = 1.0 - (state.Sickness / 200.0);
 
         var combined = moraleFactor * unrestFactor * sicknessFactor;
         if (combined < 0.25)
@@ -31,9 +31,19 @@ public static class StatModifiers
             delta += 1;
         }
 
-        if (state.Resources[Resources.ResourceKind.Fuel] == 0)
+        if (state.Unrest >= 75)
         {
             delta += 1;
+        }
+
+        if (state.Resources[Resources.ResourceKind.Fuel] == 0)
+        {
+            delta += 2;
+        }
+
+        if (state.PlagueRatsActive)
+        {
+            delta += 3;
         }
 
         return delta;
@@ -41,10 +51,11 @@ public static class StatModifiers
 
     public static int ComputeUnrestProgression(GameState state)
     {
-        var delta = 1;
+        var delta = 2;
         delta += state.Morale < 40 ? 2 : 0;
-        delta += state.Morale < 25 ? 2 : 0;
+        delta += state.Morale < 25 ? 3 : 0;
         delta += state.Sickness > 50 ? 1 : 0;
+        delta += state.Sickness > 70 ? 1 : 0;
         delta += state.CountLostZones();
         delta -= state.Population.Guards >= 15 ? 1 : 0;
 
@@ -54,9 +65,10 @@ public static class StatModifiers
     public static int ComputeMoraleDrift(GameState state)
     {
         var delta = -1;
-        delta -= state.Unrest > 60 ? 1 : 0;
-        delta -= state.Sickness > 60 ? 1 : 0;
+        delta -= state.Unrest > 50 ? 1 : 0;
+        delta -= state.Sickness > 50 ? 1 : 0;
         delta -= state.CountLostZones();
+        delta -= state.Day > 25 ? 1 : 0;
         return delta;
     }
 }

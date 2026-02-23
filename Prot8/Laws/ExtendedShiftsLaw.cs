@@ -5,13 +5,14 @@ namespace Prot8.Laws;
 public sealed class ExtendedShiftsLaw : ILaw
 {
     private const double ProductionMultiplier = 1.25;
-    private const int DailySickness = 8;
+    private const int DailySickness = 4;
+    private const int DailyDeaths = 1;
     private const int MoraleHit = 15;
     private const int MinimumDay = 5;
 
     public string Id => "extended_shifts";
     public string Name => "Extended Shifts";
-    public string GetTooltip(GameState state) => $"+{(ProductionMultiplier - 1) * 100}% production, +{DailySickness} sickness/day, -{MoraleHit} morale on enact. Day {MinimumDay}+.";
+    public string GetTooltip(GameState state) => $"+{(ProductionMultiplier - 1) * 100}% production, +{DailySickness} sickness/day, {DailyDeaths} death/day from exhaustion, -{MoraleHit} morale on enact. Day {MinimumDay}+.";
 
     public bool CanEnact(GameState state, out string reason)
     {
@@ -34,5 +35,6 @@ public sealed class ExtendedShiftsLaw : ILaw
     {
         state.DailyEffects.ProductionMultiplier *= ProductionMultiplier;
         StateChangeApplier.AddSickness(state, DailySickness, report, ReasonTags.LawPassive, Name);
+        StateChangeApplier.ApplyDeaths(state, DailyDeaths, report, ReasonTags.LawPassive, $"{Name} exhaustion");
     }
 }

@@ -4,12 +4,13 @@ namespace Prot8.Orders;
 
 public sealed class SoupKitchensOrder : IEmergencyOrder
 {
-    private const int FoodCost = 40;
-    private const int UnrestReduction = 15;
+    private const int FoodCost = 30;
+    private const int UnrestReduction = 10;
+    private const int MoraleGain = 5;
 
     public string Id => "soup_kitchens";
     public string Name => "Soup Kitchens";
-    public string GetTooltip(GameState state) => $"-{UnrestReduction} unrest today, -{FoodCost} food.";
+    public string GetTooltip(GameState state) => $"-{UnrestReduction} unrest, +{MoraleGain} morale, -{FoodCost} food.";
 
     public bool CanIssue(GameState state, out string reason)
     {
@@ -20,6 +21,7 @@ public sealed class SoupKitchensOrder : IEmergencyOrder
     public void Apply(GameState state, DayResolutionReport report)
     {
         StateChangeApplier.AddUnrest(state, -UnrestReduction, report, ReasonTags.OrderEffect, Name);
+        StateChangeApplier.AddMorale(state, MoraleGain, report, ReasonTags.OrderEffect, Name);
         StateChangeApplier.AddResource(state, Resources.ResourceKind.Food, -FoodCost, report, ReasonTags.OrderEffect, Name);
     }
 }

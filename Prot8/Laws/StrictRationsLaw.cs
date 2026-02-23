@@ -6,7 +6,7 @@ public sealed class StrictRationsLaw : ILaw
 {
     private const double FoodConsumptionMultiplier = 0.75;
     private const int MoraleHit = 10;
-    private const int DailyUnrest = 5;
+    private const int DailyUnrest = 3;
 
     public string Id => "strict_rations";
     public string Name => "Strict Rations";

@@ -9,7 +9,7 @@ public sealed class NegotiateBlackMarketeersMission : IMissionDefinition
     public string Name => "Negotiate Black Marketeers";
     public int DurationDays => 3;
     public int WorkerCost => 2;
-    public string GetTooltip(GameState state) => "+100 water (50%) | +80 food (30%) | +20 unrest (20%)";
+    public string GetTooltip(GameState state) => "+60 water, +10 unrest (45%) | +50 food, +10 unrest (30%) | +25 unrest, 2 deaths (25%)";
 
     public bool CanStart(GameState state, out string reason)
     {
@@ -20,21 +20,24 @@ public sealed class NegotiateBlackMarketeersMission : IMissionDefinition
     public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
         var roll = state.RollPercent();
-        if (roll <= 50)
+        if (roll <= 45)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Water, 100, report, ReasonTags.Mission, Name);
-            report.AddResolvedMission($"{Name}: acquired +100 water.");
+            StateChangeApplier.AddResource(state, ResourceKind.Water, 60, report, ReasonTags.Mission, Name);
+            StateChangeApplier.AddUnrest(state, 10, report, ReasonTags.Mission, $"{Name} corruption");
+            report.AddResolvedMission($"{Name}: acquired +60 water (+10 unrest).");
             return;
         }
 
-        if (roll <= 80)
+        if (roll <= 75)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Food, 80, report, ReasonTags.Mission, Name);
-            report.AddResolvedMission($"{Name}: acquired +80 food.");
+            StateChangeApplier.AddResource(state, ResourceKind.Food, 50, report, ReasonTags.Mission, Name);
+            StateChangeApplier.AddUnrest(state, 10, report, ReasonTags.Mission, $"{Name} corruption");
+            report.AddResolvedMission($"{Name}: acquired +50 food (+10 unrest).");
             return;
         }
 
-        StateChangeApplier.AddUnrest(state, 20, report, ReasonTags.Mission, Name);
-        report.AddResolvedMission($"{Name}: scandal erupted (+20 unrest).");
+        StateChangeApplier.AddUnrest(state, 25, report, ReasonTags.Mission, Name);
+        StateChangeApplier.ApplyDeaths(state, 2, report, ReasonTags.Mission, $"{Name} betrayal");
+        report.AddResolvedMission($"{Name}: betrayal (+25 unrest, 2 deaths).");
     }
 }

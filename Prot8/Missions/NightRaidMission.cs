@@ -4,13 +4,13 @@ namespace Prot8.Missions;
 
 public sealed class NightRaidMission : IMissionDefinition
 {
-    const int GreatChance = 40;
+    const int GreatChance = 30;
     const int OkChance = 40;
 
     public string Id => "night_raid";
-    public string Name => "Night Raid Mission";
+    public string Name => "Night Raid";
     public int DurationDays => 2;
-    public int WorkerCost => 8;
+    public int WorkerCost => 6;
 
     public string GetTooltip(GameState state) =>
         $"Siege Delay +3 days ({GreatChance}%) | Siege Delay +2 ({OkChance}%) | {WorkerCost} Deaths, +15 Unrest ({100 - GreatChance - OkChance}%)";
@@ -38,8 +38,8 @@ public sealed class NightRaidMission : IMissionDefinition
             return;
         }
 
-        StateChangeApplier.ApplyDeaths(state, 8, report, ReasonTags.Mission, Name);
+        StateChangeApplier.ApplyDeaths(state, WorkerCost, report, ReasonTags.Mission, Name);
         StateChangeApplier.AddUnrest(state, 15, report, ReasonTags.Mission, Name);
-        report.AddResolvedMission($"{Name}: operation failed (8 deaths, +15 unrest).");
+        report.AddResolvedMission($"{Name}: operation failed ({WorkerCost} deaths, +15 unrest).");
     }
 }

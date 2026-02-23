@@ -11,6 +11,10 @@ public static class EventCatalog
         new DesertionWaveEvent(),
         new WallBreachAttemptEvent(),
         new FireInArtisanQuarterEvent(),
+        new SiegeBombardmentEvent(),
+        new DespairEvent(),
+        new PlagueRatsEvent(),
+        new EnemyUltimatumEvent(),
         new CouncilRevoltEvent(),
         new TotalCollapseEvent()
     };

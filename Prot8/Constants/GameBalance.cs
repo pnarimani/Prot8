@@ -13,25 +13,25 @@ public static class GameBalance
     public const int StartingSickWorkers = 5;
     public const int StartingElderly = 5;
 
-    public const int StartingFood = 80;
-    public const int StartingWater = 80;
-    public const int StartingFuel = 40;
-    public const int StartingMedicine = 20;
-    public const int StartingMaterials = 40;
+    public const int StartingFood = 60;
+    public const int StartingWater = 60;
+    public const int StartingFuel = 30;
+    public const int StartingMedicine = 15;
+    public const int StartingMaterials = 30;
 
-    public const int StartingMorale = 55;
-    public const int StartingUnrest = 25;
+    public const int StartingMorale = 50;
+    public const int StartingUnrest = 30;
     public const int StartingSickness = 20;
-    public const int StartingSiegeIntensity = 1;
+    public const int StartingSiegeIntensity = 2;
 
     public const int MaxSiegeIntensity = 6;
 
     public const int RevoltThreshold = 85;
     public const int FoodWaterLossThresholdDays = 2;
 
-    public const int OvercrowdingThreshold = 10;
-    public const int OvercrowdingUnrestPerStack = 2;
-    public const int OvercrowdingSicknessPerStack = 2;
+    public const int OvercrowdingThreshold = 8;
+    public const int OvercrowdingUnrestPerStack = 3;
+    public const int OvercrowdingSicknessPerStack = 3;
     public const double OvercrowdingConsumptionPerStack = 0.05;
 
     public const int EvacIntegrityThreshold = 35;
@@ -39,15 +39,17 @@ public static class GameBalance
 
     public const int LawCooldownDays = 4;
 
-    public const int OrderCooldownDays = 4;
+    public const int OrderCooldownDays = 5;
 
-    public const int MissionCooldownDays = 10;
+    public const int MissionCooldownDays = 8;
 
     public const double FoodPerPersonPerDay = 0.45;
     public const double WaterPerPersonPerDay = 0.55;
     public const double FuelPerPersonPerDay = 0.08;
 
     public const double PerimeterScalingBase = 4.0;
+
+    public const int SiegeEscalationIntervalDays = 5;
 
     public const int RecoveryThresholdSickness = 40;
     public const int BaseRecoveryTimeDays = 4;
@@ -56,11 +58,11 @@ public static class GameBalance
 
     public static readonly IReadOnlyList<ZoneTemplate> ZoneTemplates = new List<ZoneTemplate>
     {
-        new(ZoneId.OuterFarms, "Outer Farms", 100, 15, 1.0),
-        new(ZoneId.OuterResidential, "Outer Residential", 95, 15, 0.9),
-        new(ZoneId.ArtisanQuarter, "Artisan Quarter", 90, 15, 0.8),
-        new(ZoneId.InnerDistrict, "Inner District", 85, 15, 0.7),
-        new(ZoneId.Keep, "Keep", 80, 15, 0.6),
+        new(ZoneId.OuterFarms, "Outer Farms", 70, 12, 1.0),
+        new(ZoneId.OuterResidential, "Outer Residential", 75, 12, 0.9),
+        new(ZoneId.ArtisanQuarter, "Artisan Quarter", 70, 12, 0.8),
+        new(ZoneId.InnerDistrict, "Inner District", 65, 12, 0.7),
+        new(ZoneId.Keep, "Keep", 60, 12, 0.6),
     };
 
     public static readonly IReadOnlyDictionary<JobType, ZoneId> JobZoneMap = new Dictionary<JobType, ZoneId>
@@ -76,7 +78,7 @@ public static class GameBalance
     public static readonly Dictionary<JobType, List<ResourceQuantity>> JobInputs = new()
     {
         [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Fuel, 2)],
-        [JobType.WaterDrawing] = [],
+        [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Fuel, 1)],
         [JobType.MaterialsCrafting] = [],
         [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Materials, 3)],
         [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Medicine, 1)],
@@ -86,7 +88,7 @@ public static class GameBalance
     public static readonly Dictionary<JobType, List<ResourceQuantity>> JobOutputs = new()
     {
         [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Food, 2)],
-        [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Water, 3)],
+        [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Water, 2)],
         [JobType.MaterialsCrafting] = [new ResourceQuantity(ResourceKind.Materials, 2)],
         [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Integrity, 1d )],
         [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Care, 1)],
@@ -182,6 +184,10 @@ public static class GameBalance
         ["fire_artisan"] = 4,
         ["council_revolt"] = 0,
         ["total_collapse"] = 0,
+        ["siege_bombardment"] = 3,
+        ["despair"] = 4,
+        ["plague_rats"] = 0,
+        ["enemy_ultimatum"] = 0,
     };
 
     public static int ComputeRecoveryDays(int sickness)

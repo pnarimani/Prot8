@@ -17,7 +17,9 @@ public static class LawCatalog
         new MedicalTriageLaw(),
         new CurfewLaw(),
         new AbandonOuterRingLaw(),
-        new MartialLawLaw()
+        new MartialLawLaw(),
+        new ConscriptElderlyLaw(),
+        new BurnTheDeadLaw()
     };
 
     public static IReadOnlyList<ILaw> GetAll() => AllLaws;
