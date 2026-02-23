@@ -15,6 +15,7 @@ using var telemetry = new RunTelemetryWriter(state, seed);
 
 while (!state.GameOver)
 {
+    GameSimulationEngine.RollDailyDisruption(state);
     var dayStartVm = new GameViewModelFactory(state).Create();
     renderer.RenderDayStart(dayStartVm);
     var dayPlan = input.ReadDayPlan(state, renderer);

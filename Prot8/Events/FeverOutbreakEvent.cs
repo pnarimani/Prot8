@@ -20,6 +20,7 @@ public sealed class FeverOutbreakEvent : TriggeredEventBase
 
     public override void Apply(GameState state, DayResolutionReport report)
     {
+        report.Add(ReasonTags.Event, "The clinic overflows. Corpses line the halls. The stench of death fills every corner.");
         StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.Event, Name);
         StateChangeApplier.AddUnrest(state, UnrestGain, report, ReasonTags.Event, Name);
         StartCooldown(state);

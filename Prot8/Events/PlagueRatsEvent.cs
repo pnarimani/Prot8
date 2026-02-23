@@ -4,13 +4,13 @@ namespace Prot8.Events;
 
 public sealed class PlagueRatsEvent : TriggeredEventBase
 {
-    private const int TriggerDay = 22;
+    private const int TriggerDay = 18;
     private const int SicknessGain = 15;
     private const int Deaths = 3;
     private const int UnrestGain = 10;
 
     public PlagueRatsEvent() : base("plague_rats", "Plague Rats",
-        $"Triggers on day {TriggerDay}. +{SicknessGain} sickness, {Deaths} deaths, +{UnrestGain} unrest. Permanently increases sickness growth.")
+        "Triggers on day 18. +15 sickness, 3 deaths, +10 unrest. Permanently increases sickness growth.")
     {
     }
 

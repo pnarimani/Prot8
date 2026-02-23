@@ -102,7 +102,15 @@ public sealed class GameState
 
     public double SiegeDamageMultiplier { get; set; } = 1.0;
 
+    public int SiegeDamageReductionDaysRemaining { get; set; }
+
     public bool PlagueRatsActive { get; set; }
+
+    public int TaintedWellDaysRemaining { get; set; }
+
+    public bool FinalAssaultActive { get; set; }
+
+    public string? ActiveDisruption { get; set; }
 
     public bool FoodDeficitYesterday { get; set; }
 

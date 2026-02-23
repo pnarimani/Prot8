@@ -12,6 +12,7 @@ namespace Prot8.Cli.Commands;
 [JsonDerivedType(typeof(StartMissionCommand), "start_mission")]
 [JsonDerivedType(typeof(ClearActionCommand), "clear_action")]
 [JsonDerivedType(typeof(EndDayCommand), "end_day")]
+[JsonDerivedType(typeof(IssueDecreeCommand), "decree")]
 public interface ICommand
 {
     CommandResult Execute(CommandContext context);

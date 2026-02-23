@@ -30,6 +30,14 @@ public sealed class DayResolutionReport(int day)
 
     public string? RecoveryBlockedReason { get; set; }
 
+    public int StartFood { get; set; }
+    public int StartWater { get; set; }
+    public int StartFuel { get; set; }
+    public int StartMorale { get; set; }
+    public int StartUnrest { get; set; }
+    public int StartSickness { get; set; }
+    public int StartHealthyWorkers { get; set; }
+
     public void Add(string tag, string message)
     {
         Entries.Add(new DeltaLogEntry(tag, message));

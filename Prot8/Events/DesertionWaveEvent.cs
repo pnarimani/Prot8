@@ -19,6 +19,7 @@ public sealed class DesertionWaveEvent : TriggeredEventBase
 
     public override void Apply(GameState state, DayResolutionReport report)
     {
+        report.Add(ReasonTags.Event, "At dawn, the western gate stands open. Footprints lead into the fog. They chose the enemy over you.");
         StateChangeApplier.ApplyDesertions(state, Desertions, report, ReasonTags.Event, Name);
         StartCooldown(state);
     }

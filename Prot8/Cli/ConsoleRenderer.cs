@@ -11,10 +11,42 @@ public sealed class ConsoleRenderer(TextWriter output)
         output.WriteLine($"=== DAY {vm.Day}/{vm.TargetSurvivalDay}  Siege:{vm.SiegeIntensity}  Perimeter:{vm.ActivePerimeterName} ===");
         output.WriteLine();
 
+        if (vm.MoodLine is not null)
+        {
+            output.WriteLine($"  \"{vm.MoodLine}\"");
+            output.WriteLine();
+        }
+
+        if (vm.DisruptionText is not null)
+        {
+            output.WriteLine($"*** {vm.DisruptionText} ***");
+            output.WriteLine();
+        }
+
         RenderResources(vm);
         RenderPopulation(vm);
+
+        if (vm.ThreatProjection is not null)
+        {
+            output.WriteLine(vm.ThreatProjection);
+            output.WriteLine();
+        }
+
+        if (vm.ProductionForecast is not null)
+        {
+            output.WriteLine(vm.ProductionForecast);
+            output.WriteLine();
+        }
+
         RenderJobs(vm);
         RenderZones(vm);
+
+        if (vm.ZoneWarnings is not null)
+        {
+            output.WriteLine(vm.ZoneWarnings);
+            output.WriteLine();
+        }
+
         RenderMissions(vm);
         RenderLaws(vm);
         RenderActionReference(vm);
@@ -23,6 +55,10 @@ public sealed class ConsoleRenderer(TextWriter output)
     public void RenderPendingDayAction(PendingPlanViewModel vm)
     {
         output.WriteLine($"Action: {(vm.QueuedActionType is null ? "none" : $"{vm.QueuedActionType} -> {vm.QueuedActionName}")}");
+        if (vm.QueuedDecreeType is not null)
+        {
+            output.WriteLine($"Decree: {vm.QueuedDecreeType} -> {vm.QueuedDecreeName}");
+        }
     }
 
     public void RenderActionReference(DayStartViewModel vm)
@@ -30,8 +66,9 @@ public sealed class ConsoleRenderer(TextWriter output)
         RenderAvailableLaws(vm);
         RenderAvailableOrders(vm);
         RenderAvailableMissions(vm);
+        RenderAvailableDecrees(vm);
 
-        output.WriteLine("Commands (<> required): assign <Job> <N>  |  enact <LawId>  |  order <OrderId> [ZoneId]  |  mission <MissionId>  |  clear_assignments  |  clear_action  |  end_day  |  help");
+        output.WriteLine("Commands (<> required): assign <Job> <N>  |  enact <LawId>  |  order <OrderId>  |  mission <MissionId>  |  decree <DecreeId>  |  clear_assignments  |  clear_action  |  end_day  |  help");
         output.WriteLine();
     }
 
@@ -39,6 +76,13 @@ public sealed class ConsoleRenderer(TextWriter output)
     {
         output.WriteLine();
         output.WriteLine($"--- Day {vm.Day} Resolution ---");
+
+        if (vm.DeltaSummary is not null)
+        {
+            output.WriteLine(vm.DeltaSummary);
+        }
+
+        output.WriteLine();
 
         foreach (var entry in vm.Entries)
             output.WriteLine($"[{entry.Tag}] {entry.Message}");
@@ -53,6 +97,12 @@ public sealed class ConsoleRenderer(TextWriter output)
             ? $"recovered {vm.RecoveredWorkersToday} workers (medicine -{vm.RecoveryMedicineSpentToday})"
             : $"blocked — {vm.RecoveryBlockedReason}";
         output.WriteLine($"Recovery: {recoveryStatus}");
+
+        if (vm.AllocationAlert is not null)
+        {
+            output.WriteLine();
+            output.WriteLine(vm.AllocationAlert);
+        }
 
         output.WriteLine();
     }
@@ -101,9 +151,9 @@ public sealed class ConsoleRenderer(TextWriter output)
             return "[recovery LOCKED | deaths each day]";
         }
 
-        if (sickness >= 40)
+        if (sickness >= 50)
         {
-            return "[recovery LOCKED at ≥40]";
+            return "[recovery LOCKED at ≥50]";
         }
 
         return "[recovery enabled]";
@@ -194,6 +244,19 @@ public sealed class ConsoleRenderer(TextWriter output)
         output.WriteLine("Available Orders");
         foreach (var order in vm.AvailableOrders)
             output.WriteLine($"  {order.Id,-20} {order.Name} | {order.Tooltip}");
+        output.WriteLine();
+    }
+
+    void RenderAvailableDecrees(DayStartViewModel vm)
+    {
+        if (vm.AvailableDecrees.Count == 0)
+        {
+            output.WriteLine("Available Decrees  None");
+            return;
+        }
+        output.WriteLine("Available Decrees (1 per day, no cooldown, in addition to law/order/mission)");
+        foreach (var decree in vm.AvailableDecrees)
+            output.WriteLine($"  {decree.Id,-20} {decree.Name} | {decree.Tooltip}");
         output.WriteLine();
     }
 

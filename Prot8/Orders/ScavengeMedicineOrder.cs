@@ -5,7 +5,7 @@ namespace Prot8.Orders;
 
 public sealed class ScavengeMedicineOrder : IEmergencyOrder
 {
-    private const int MedicineGain = 8;
+    private const int MedicineGain = 12;
     private const int SicknessHit = 5;
     private const int Deaths = 1;
 

@@ -30,6 +30,13 @@ public sealed class DayStartViewModel
     public int OrderCooldownDaysRemaining { get; init; }
     public IReadOnlyList<MissionViewModel> AvailableMissions { get; init; } = [];
     public Dictionary<JobType, JobViewModel> Jobs { get; init; } = [];
+
+    public string? ThreatProjection { get; init; }
+    public string? ProductionForecast { get; init; }
+    public string? ZoneWarnings { get; init; }
+    public string? MoodLine { get; init; }
+    public string? DisruptionText { get; init; }
+    public IReadOnlyList<DecreeViewModel> AvailableDecrees { get; init; } = [];
 }
 
 public sealed class ResourceViewModel
@@ -104,6 +111,15 @@ public sealed class PendingPlanViewModel
 {
     public string? QueuedActionType { get; init; }
     public string? QueuedActionName { get; init; }
+    public string? QueuedDecreeType { get; init; }
+    public string? QueuedDecreeName { get; init; }
+}
+
+public sealed class DecreeViewModel
+{
+    public string Id { get; init; } = "";
+    public string Name { get; init; } = "";
+    public string Tooltip { get; init; } = "";
 }
 
 public sealed class DayReportViewModel
@@ -121,6 +137,8 @@ public sealed class DayReportViewModel
     public int RecoveryMedicineSpentToday { get; init; }
     public bool RecoveryEnabledToday { get; init; }
     public string? RecoveryBlockedReason { get; init; }
+    public string? DeltaSummary { get; init; }
+    public string? AllocationAlert { get; init; }
 }
 
 public sealed class DeltaLogEntryViewModel

@@ -14,6 +14,8 @@ public sealed class ForageBeyondWallsMission() : IMissionDefinition
     const int SiegeThreshold = 4;
     const int AmbushDeaths = 5;
     const int AmbushUnrest = 10;
+    const int MoraleBonus = 5;
+    const int MoraleThreshold = 60;
 
     public string Id => "forage_beyond_walls";
     public string Name => "Forage Beyond Walls";
@@ -57,8 +59,17 @@ public sealed class ForageBeyondWallsMission() : IMissionDefinition
         report.AddResolvedMission($"{Name}: crew ambushed ({AmbushDeaths} deaths, +{AmbushUnrest} unrest).");
     }
 
-    static (int highChance, int mediumChance) GetChances(GameState state) =>
-        state.SiegeIntensity >= SiegeThreshold
+    (int highChance, int mediumChance) GetChances(GameState state)
+    {
+        var (baseHigh, baseMedium) = state.SiegeIntensity >= SiegeThreshold
             ? (HighChanceSiege, MediumChanceSiege)
             : (HighChanceNormal, MediumChanceNormal);
+
+        if (state.Morale >= MoraleThreshold)
+        {
+            baseHigh += MoraleBonus;
+        }
+
+        return (baseHigh, baseMedium);
+    }
 }

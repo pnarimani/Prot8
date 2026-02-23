@@ -6,7 +6,7 @@ namespace Prot8.Laws;
 public sealed class EmergencySheltersLaw : ILaw
 {
     private const int CapacityGain = 20;
-    private const int DailySickness = 6;
+    private const int DailySickness = 3;
     private const int DailyUnrest = 3;
     private const int UnrestHit = 10;
 

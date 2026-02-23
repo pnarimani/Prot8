@@ -51,13 +51,13 @@ public static class StatModifiers
 
     public static int ComputeUnrestProgression(GameState state)
     {
-        var delta = 2;
-        delta += state.Morale < 40 ? 2 : 0;
+        var delta = 1;
+        delta += state.Morale < 40 ? 1 : 0;
         delta += state.Morale < 25 ? 3 : 0;
         delta += state.Sickness > 50 ? 1 : 0;
         delta += state.Sickness > 70 ? 1 : 0;
         delta += state.CountLostZones();
-        delta -= state.Population.Guards >= 15 ? 1 : 0;
+        delta -= state.Population.Guards / 5;
 
         return delta < 0 ? 0 : delta;
     }

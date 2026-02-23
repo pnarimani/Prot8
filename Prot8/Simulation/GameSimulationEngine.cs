@@ -1,4 +1,5 @@
 using Prot8.Constants;
+using Prot8.Decrees;
 using Prot8.Events;
 using Prot8.Jobs;
 using Prot8.Laws;
@@ -11,12 +12,64 @@ namespace Prot8.Simulation;
 
 public sealed class GameSimulationEngine(GameState state)
 {
+    public static void RollDailyDisruption(GameState state)
+    {
+        state.ActiveDisruption = null;
+        state.DailyEffects = new TemporaryDailyEffects();
+
+        if (state.Day < 3)
+        {
+            return;
+        }
+
+        if (state.RollPercent() > 25)
+        {
+            return;
+        }
+
+        var roll = state.Random.Next(0, 5);
+        switch (roll)
+        {
+            case 0:
+                state.ActiveDisruption = "Heavy Rains: Food production -30%, water production +30% today.";
+                state.DailyEffects.FoodProductionMultiplier *= 0.7;
+                state.DailyEffects.WaterProductionMultiplier *= 1.3;
+                break;
+            case 1:
+                state.ActiveDisruption = "Cold Snap: Fuel consumption +50% today, +2 sickness.";
+                state.DailyEffects.FuelConsumptionMultiplier = 1.5;
+                break;
+            case 2:
+                state.ActiveDisruption = "Dust Storm: Materials crafting -40%, siege damage -20% today.";
+                state.DailyEffects.MaterialsProductionMultiplier *= 0.6;
+                state.DailyEffects.DustStormActive = true;
+                break;
+            case 3:
+                state.ActiveDisruption = "Clear Skies: All production +15% today.";
+                state.DailyEffects.ProductionMultiplier *= 1.15;
+                break;
+            case 4:
+                state.ActiveDisruption = "Fog Cover: Missions +10% success, repairs -30% today.";
+                state.DailyEffects.MissionSuccessBonus = 0.10;
+                state.DailyEffects.RepairProductionMultiplier *= 0.7;
+                break;
+        }
+    }
+
     public DayResolutionReport ResolveDay(TurnActionChoice action)
     {
         var report = new DayResolutionReport(state.Day);
+        report.StartFood = state.Resources[Resources.ResourceKind.Food];
+        report.StartWater = state.Resources[Resources.ResourceKind.Water];
+        report.StartFuel = state.Resources[Resources.ResourceKind.Fuel];
+        report.StartMorale = state.Morale;
+        report.StartUnrest = state.Unrest;
+        report.StartSickness = state.Sickness;
+        report.StartHealthyWorkers = state.Population.HealthyWorkers;
 
         PrepareDay(state);
         ApplyPlayerAction(state, action, report);
+        ApplyDecree(state, action, report);
 
         ApplyLawPassives(state, report);
         ApplyEmergencyOrderEffects(state, report);
@@ -39,11 +92,25 @@ public sealed class GameSimulationEngine(GameState state)
 
     static void PrepareDay(GameState state)
     {
-        state.DailyEffects = new TemporaryDailyEffects();
         state.ActiveOrderId = null;
         state.FoodDeficitToday = false;
         state.WaterDeficitToday = false;
         state.FuelDeficitToday = false;
+
+        if (state.SiegeDamageReductionDaysRemaining > 0)
+        {
+            state.SiegeDamageReductionDaysRemaining -= 1;
+            if (state.SiegeDamageReductionDaysRemaining <= 0)
+            {
+                state.SiegeDamageMultiplier = 1.0;
+            }
+        }
+
+        if (state.TaintedWellDaysRemaining > 0)
+        {
+            state.DailyEffects.WaterProductionMultiplier = 0.6;
+            state.TaintedWellDaysRemaining -= 1;
+        }
     }
 
     static void ApplyPlayerAction(GameState state, TurnActionChoice action, DayResolutionReport report)
@@ -161,6 +228,30 @@ public sealed class GameSimulationEngine(GameState state)
         }
     }
 
+    static void ApplyDecree(GameState state, TurnActionChoice action, DayResolutionReport report)
+    {
+        if (string.IsNullOrWhiteSpace(action.DecreeId))
+        {
+            return;
+        }
+
+        var decree = DecreeCatalog.Find(action.DecreeId);
+        if (decree is null)
+        {
+            report.Add(ReasonTags.OrderEffect, "Decree not found.");
+            return;
+        }
+
+        if (!decree.CanIssue(state, out var reason))
+        {
+            report.Add(ReasonTags.OrderEffect, $"Cannot issue decree {decree.Name}: {reason}");
+            return;
+        }
+
+        decree.Apply(state, report);
+        report.Add(ReasonTags.OrderEffect, $"Decree issued: {decree.Name}.");
+    }
+
     static void ApplyLawPassives(GameState state, DayResolutionReport report)
     {
         foreach (var lawId in state.ActiveLawIds)
@@ -215,6 +306,15 @@ public sealed class GameSimulationEngine(GameState state)
                     zoneMultiplier *= 0.5;
                 }
             }
+
+            if (job == JobType.WaterDrawing)
+                zoneMultiplier *= state.DailyEffects.WaterProductionMultiplier;
+            else if (job == JobType.FoodProduction)
+                zoneMultiplier *= state.DailyEffects.FoodProductionMultiplier;
+            else if (job == JobType.MaterialsCrafting)
+                zoneMultiplier *= state.DailyEffects.MaterialsProductionMultiplier;
+            else if (job == JobType.Repairs)
+                zoneMultiplier *= state.DailyEffects.RepairProductionMultiplier;
 
             var nominalCycles = workers * globalMultiplier * zoneMultiplier;
             if (nominalCycles <= 0)
@@ -325,7 +425,8 @@ public sealed class GameSimulationEngine(GameState state)
                                          state.DailyEffects.FoodConsumptionMultiplier);
         var waterNeed = (int)Math.Ceiling(population * GameBalance.WaterPerPersonPerDay *
                                           state.DailyEffects.WaterConsumptionMultiplier);
-        var fuelNeed = (int)Math.Ceiling(population * GameBalance.FuelPerPersonPerDay);
+        var fuelNeed = (int)Math.Ceiling(population * GameBalance.FuelPerPersonPerDay *
+                                         state.DailyEffects.FuelConsumptionMultiplier);
 
         var foodConsumed = state.Resources.Consume(ResourceKind.Food, foodNeed);
         var waterConsumed = state.Resources.Consume(ResourceKind.Water, waterNeed);
@@ -463,7 +564,12 @@ public sealed class GameSimulationEngine(GameState state)
     {
         var sicknessDelta = StatModifiers.ComputeSicknessFromEnvironment(state);
         sicknessDelta -= state.DailyEffects.QuarantineSicknessReduction;
-        sicknessDelta -= production.ClinicCarePoints / 8;
+        sicknessDelta -= production.ClinicCarePoints / 5;
+
+        if (state.DailyEffects.FuelConsumptionMultiplier > 1.0)
+        {
+            sicknessDelta += 2;
+        }
 
         if (sicknessDelta != 0)
         {
@@ -615,8 +721,10 @@ public sealed class GameSimulationEngine(GameState state)
 
         var perimeter = state.ActivePerimeterZone;
         var perimeterFactor = ZoneRules.PerimeterFactor(state);
+        var finalAssaultMultiplier = state.FinalAssaultActive ? 1.5 : 1.0;
+        var dustStormMultiplier = state.DailyEffects.DustStormActive ? 0.8 : 1.0;
         var damage = (int)Math.Ceiling((GameBalance.PerimeterScalingBase + state.SiegeIntensity) * perimeterFactor *
-                                       state.SiegeDamageMultiplier);
+                                       state.SiegeDamageMultiplier * finalAssaultMultiplier * dustStormMultiplier);
 
         perimeter.Integrity -= damage;
         report.Add(ReasonTags.Siege, $"Siege struck {perimeter.Name}: -{damage} integrity.");
@@ -624,6 +732,18 @@ public sealed class GameSimulationEngine(GameState state)
         if (perimeter.Integrity <= 0)
         {
             StateChangeApplier.LoseZone(state, perimeter.Id, false, report);
+        }
+
+        if (state.SiegeIntensity >= 4 && state.RollPercent() <= 15)
+        {
+            var foodRaid = (int)Math.Ceiling(state.Resources[Resources.ResourceKind.Food] * 0.15);
+            var waterRaid = (int)Math.Ceiling(state.Resources[Resources.ResourceKind.Water] * 0.15);
+            if (foodRaid > 0)
+                StateChangeApplier.AddResource(state, Resources.ResourceKind.Food, -foodRaid, report, ReasonTags.Siege, "Supply line raid");
+            if (waterRaid > 0)
+                StateChangeApplier.AddResource(state, Resources.ResourceKind.Water, -waterRaid, report, ReasonTags.Siege, "Supply line raid");
+            if (foodRaid > 0 || waterRaid > 0)
+                report.Add(ReasonTags.Siege, $"Supply line raid: enemy forces destroyed {foodRaid} food and {waterRaid} water.");
         }
     }
 
@@ -738,6 +858,15 @@ public sealed class GameSimulationEngine(GameState state)
             state.GameOverCause = GameOverCause.TotalCollapse;
             state.GameOverDetails = "Food and water at zero for 2 consecutive days.";
             report.Add(ReasonTags.Event, "Loss: total collapse from sustained zero food and water.");
+            return;
+        }
+
+        if (state.Sickness >= 90 && state.Population.HealthyWorkers < 8)
+        {
+            state.GameOver = true;
+            state.GameOverCause = GameOverCause.PandemicCollapse;
+            state.GameOverDetails = $"Sickness at {state.Sickness} with only {state.Population.HealthyWorkers} healthy workers. The city cannot function.";
+            report.Add(ReasonTags.Event, "Loss: pandemic collapse. Too few healthy workers remain.");
         }
     }
 

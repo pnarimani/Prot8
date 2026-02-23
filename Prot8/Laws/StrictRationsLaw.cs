@@ -7,10 +7,11 @@ public sealed class StrictRationsLaw : ILaw
     private const double FoodConsumptionMultiplier = 0.75;
     private const int MoraleHit = 10;
     private const int DailyUnrest = 3;
+    private const int DailySickness = 1;
 
     public string Id => "strict_rations";
     public string Name => "Strict Rations";
-    public string GetTooltip(GameState state) => $"-{(1 - FoodConsumptionMultiplier) * 100}% food consumption, -{MoraleHit} morale on enact, +{DailyUnrest} unrest/day.";
+    public string GetTooltip(GameState state) => $"-{(1 - FoodConsumptionMultiplier) * 100}% food consumption, -{MoraleHit} morale on enact, +{DailyUnrest} unrest/day, +{DailySickness} sickness/day.";
 
     public bool CanEnact(GameState state, out string reason)
     {
@@ -27,5 +28,6 @@ public sealed class StrictRationsLaw : ILaw
     {
         state.DailyEffects.FoodConsumptionMultiplier *= FoodConsumptionMultiplier;
         StateChangeApplier.AddUnrest(state, DailyUnrest, report, ReasonTags.LawPassive, Name);
+        StateChangeApplier.AddSickness(state, DailySickness, report, ReasonTags.LawPassive, $"{Name} malnourishment");
     }
 }

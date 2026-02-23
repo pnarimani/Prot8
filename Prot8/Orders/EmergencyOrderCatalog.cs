@@ -12,7 +12,8 @@ public static class EmergencyOrderCatalog
         new CrackdownPatrolsOrder(),
         new InspireThePeopleOrder(),
         new VoluntaryEvacuationOrder(),
-        new ScavengeMedicineOrder()
+        new ScavengeMedicineOrder(),
+        new QuarantineDistrictOrder()
     };
 
     public static IReadOnlyList<IEmergencyOrder> GetAll() => AllOrders;

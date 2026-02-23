@@ -23,6 +23,7 @@ public sealed class HungerRiotEvent : TriggeredEventBase
 
     public override void Apply(GameState state, DayResolutionReport report)
     {
+        report.Add(ReasonTags.Event, "The granary is ransacked by a mob. Guards are overwhelmed. Screaming from the lower quarter.");
         StateChangeApplier.AddResource(state, ResourceKind.Food, -FoodLost, report, ReasonTags.Event, Name);
         StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.Event, Name);
         StateChangeApplier.AddUnrest(state, UnrestGain, report, ReasonTags.Event, Name);

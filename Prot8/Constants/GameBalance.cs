@@ -13,8 +13,8 @@ public static class GameBalance
     public const int StartingSickWorkers = 5;
     public const int StartingElderly = 5;
 
-    public const int StartingFood = 60;
-    public const int StartingWater = 60;
+    public const int StartingFood = 50;
+    public const int StartingWater = 50;
     public const int StartingFuel = 30;
     public const int StartingMedicine = 15;
     public const int StartingMaterials = 30;
@@ -29,7 +29,7 @@ public static class GameBalance
     public const int RevoltThreshold = 85;
     public const int FoodWaterLossThresholdDays = 2;
 
-    public const int OvercrowdingThreshold = 8;
+    public const int OvercrowdingThreshold = 4;
     public const int OvercrowdingUnrestPerStack = 3;
     public const int OvercrowdingSicknessPerStack = 3;
     public const double OvercrowdingConsumptionPerStack = 0.05;
@@ -41,7 +41,7 @@ public static class GameBalance
 
     public const int OrderCooldownDays = 5;
 
-    public const int MissionCooldownDays = 8;
+    public const int MissionCooldownDays = 6;
 
     public const double FoodPerPersonPerDay = 0.45;
     public const double WaterPerPersonPerDay = 0.55;
@@ -51,7 +51,7 @@ public static class GameBalance
 
     public const int SiegeEscalationIntervalDays = 5;
 
-    public const int RecoveryThresholdSickness = 40;
+    public const int RecoveryThresholdSickness = 50;
     public const int BaseRecoveryTimeDays = 4;
     public const int RecoveryPerClinicSlot = 2;
     public const int MedicinePerRecovery = 1;
@@ -92,7 +92,7 @@ public static class GameBalance
         [JobType.MaterialsCrafting] = [new ResourceQuantity(ResourceKind.Materials, 2)],
         [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Integrity, 1d )],
         [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Care, 1)],
-        [JobType.FuelScavenging] = [new ResourceQuantity(ResourceKind.Fuel, 1)],
+        [JobType.FuelScavenging] = [new ResourceQuantity(ResourceKind.Fuel, 2)],
     };
 
     public static readonly Dictionary<JobType, double> LostZoneJobMultipliers = new()
@@ -181,6 +181,18 @@ public static class GameBalance
         ["despair"] = 4,
         ["plague_rats"] = 0,
         ["enemy_ultimatum"] = 0,
+        ["opening_bombardment"] = 0,
+        ["supply_carts_intercepted"] = 0,
+        ["refugees_at_gates"] = 0,
+        ["enemy_sappers"] = 0,
+        ["tainted_well"] = 0,
+        ["final_assault"] = 0,
+        ["betrayal_within"] = 0,
+        ["narrative_messenger"] = 0,
+        ["narrative_towers"] = 0,
+        ["narrative_letter"] = 0,
+        ["narrative_burning_farms"] = 0,
+        ["narrative_horns"] = 0,
     };
 
     public static int ComputeRecoveryDays(int sickness)
@@ -198,6 +210,11 @@ public static class GameBalance
         if (sickness <= 39)
         {
             return BaseRecoveryTimeDays + 2;
+        }
+
+        if (sickness <= 49)
+        {
+            return BaseRecoveryTimeDays + 3;
         }
 
         return 999;

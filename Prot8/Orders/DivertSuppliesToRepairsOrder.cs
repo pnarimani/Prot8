@@ -5,27 +5,27 @@ namespace Prot8.Orders;
 
 public sealed class DivertSuppliesToRepairsOrder : IEmergencyOrder
 {
-    const int FoodCost = 30;
-    const int WaterCost = 20;
-    const double RepairBoost = 1.5;
+    const int MaterialsCost = 20;
+    const int FuelCost = 5;
+    const double RepairBoost = 2.0;
 
     public string Id => "divert_supplies";
     public string Name => "Divert Supplies to Repairs";
 
     public string GetTooltip(GameState state) =>
-        $"+{(RepairBoost - 1) * 100}% repair output today, -{FoodCost} food, -{WaterCost} water.";
+        $"+{(RepairBoost - 1) * 100}% repair output today, -{MaterialsCost} materials, -{FuelCost} fuel.";
 
     public bool CanIssue(GameState state, out string reason)
     {
-        if (!state.Resources.Has(ResourceKind.Food, FoodCost))
+        if (!state.Resources.Has(ResourceKind.Materials, MaterialsCost))
         {
-            reason = $"Requires at least {FoodCost} food.";
+            reason = $"Requires at least {MaterialsCost} materials.";
             return false;
         }
 
-        if (!state.Resources.Has(ResourceKind.Water, WaterCost))
+        if (!state.Resources.Has(ResourceKind.Fuel, FuelCost))
         {
-            reason = $"Requires at least {WaterCost} water.";
+            reason = $"Requires at least {FuelCost} fuel.";
             return false;
         }
 
@@ -36,7 +36,7 @@ public sealed class DivertSuppliesToRepairsOrder : IEmergencyOrder
     public void Apply(GameState state, DayResolutionReport report)
     {
         state.DailyEffects.RepairOutputMultiplier *= RepairBoost;
-        StateChangeApplier.AddResource(state, ResourceKind.Food, -FoodCost, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddResource(state, ResourceKind.Water, -WaterCost, report, ReasonTags.OrderEffect, Name);
+        StateChangeApplier.AddResource(state, ResourceKind.Materials, -MaterialsCost, report, ReasonTags.OrderEffect, Name);
+        StateChangeApplier.AddResource(state, ResourceKind.Fuel, -FuelCost, report, ReasonTags.OrderEffect, Name);
     }
 }

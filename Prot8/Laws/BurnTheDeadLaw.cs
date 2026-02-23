@@ -4,7 +4,7 @@ namespace Prot8.Laws;
 
 public sealed class BurnTheDeadLaw : ILaw
 {
-    private const int DailySicknessReduction = 3;
+    private const int DailySicknessReduction = 2;
     private const int DailyMoraleHit = 3;
     private const int DailyFuelCost = 3;
     private const int MoraleHit = 10;

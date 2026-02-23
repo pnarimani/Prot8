@@ -92,6 +92,19 @@ public class CommandParser
                 };
                 return true;
 
+            case "decree":
+                if (parts.Length != 2)
+                {
+                    error = "Usage: decree <DecreeId>.";
+                    return false;
+                }
+
+                command = new IssueDecreeCommand
+                {
+                    DecreeId = parts[1],
+                };
+                return true;
+
             case "clear_action":
                 if (parts.Length != 1)
                 {

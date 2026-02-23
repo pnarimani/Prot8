@@ -5,13 +5,15 @@ namespace Prot8.Missions;
 
 public sealed class SearchAbandonedHomesMission : IMissionDefinition
 {
-    const int MaterialsChance = 45;
-    const int MedicineChance = 35;
+    const int BaseMaterialsChance = 45;
+    const int BaseMedicineChance = 35;
     const int MaterialsGain = 40;
     const int MedicineGain = 25;
     const int SuccessSickness = 5;
     const int PlagueSickness = 15;
     const int PlagueDeaths = 2;
+    const int LowSicknessBonus = 5;
+    const int LowSicknessThreshold = 20;
 
     public string Id => "search_abandoned_homes";
     public string Name => "Search Abandoned Homes";
@@ -20,8 +22,9 @@ public sealed class SearchAbandonedHomesMission : IMissionDefinition
 
     public string GetTooltip(GameState state)
     {
-        var failChance = 100 - MaterialsChance - MedicineChance;
-        return $"+{MaterialsGain} Materials, +{SuccessSickness} Sickness ({MaterialsChance}%) | +{MedicineGain} Medicine, +{SuccessSickness} Sickness ({MedicineChance}%) | +{PlagueSickness} Sickness, {PlagueDeaths} Deaths ({failChance}%)";
+        var (materialsChance, medicineChance) = GetChances(state);
+        var failChance = 100 - materialsChance - medicineChance;
+        return $"+{MaterialsGain} Materials, +{SuccessSickness} Sickness ({materialsChance}%) | +{MedicineGain} Medicine, +{SuccessSickness} Sickness ({medicineChance}%) | +{PlagueSickness} Sickness, {PlagueDeaths} Deaths ({failChance}%)";
     }
 
     public bool CanStart(GameState state, out string reason)
@@ -32,8 +35,9 @@ public sealed class SearchAbandonedHomesMission : IMissionDefinition
 
     public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
+        var (materialsChance, medicineChance) = GetChances(state);
         var roll = state.RollPercent();
-        if (roll <= MaterialsChance)
+        if (roll <= materialsChance)
         {
             StateChangeApplier.AddResource(state, ResourceKind.Materials, MaterialsGain, report, ReasonTags.Mission, Name);
             StateChangeApplier.AddSickness(state, SuccessSickness, report, ReasonTags.Mission, $"{Name} exposure");
@@ -41,7 +45,7 @@ public sealed class SearchAbandonedHomesMission : IMissionDefinition
             return;
         }
 
-        if (roll <= MaterialsChance + MedicineChance)
+        if (roll <= materialsChance + medicineChance)
         {
             StateChangeApplier.AddResource(state, ResourceKind.Medicine, MedicineGain, report, ReasonTags.Mission, Name);
             StateChangeApplier.AddSickness(state, SuccessSickness, report, ReasonTags.Mission, $"{Name} exposure");
@@ -52,5 +56,17 @@ public sealed class SearchAbandonedHomesMission : IMissionDefinition
         StateChangeApplier.AddSickness(state, PlagueSickness, report, ReasonTags.Mission, Name);
         StateChangeApplier.ApplyDeaths(state, PlagueDeaths, report, ReasonTags.Mission, $"{Name} plague");
         report.AddResolvedMission($"{Name}: plague exposure (+{PlagueSickness} sickness, {PlagueDeaths} deaths).");
+    }
+
+    (int materialsChance, int medicineChance) GetChances(GameState state)
+    {
+        var matChance = BaseMaterialsChance;
+        var medChance = BaseMedicineChance;
+        if (state.Sickness < LowSicknessThreshold)
+        {
+            matChance += LowSicknessBonus;
+        }
+
+        return (matChance, medChance);
     }
 }

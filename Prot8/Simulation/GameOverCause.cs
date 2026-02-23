@@ -6,5 +6,6 @@ public enum GameOverCause
     KeepBreached,
     Revolt,
     TotalCollapse,
-    CouncilRevolt
+    CouncilRevolt,
+    PandemicCollapse
 }
