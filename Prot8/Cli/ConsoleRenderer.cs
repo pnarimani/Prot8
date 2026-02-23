@@ -9,9 +9,15 @@ namespace Prot8.Cli.Output;
 
 public sealed class ConsoleRenderer(IAnsiConsole console)
 {
-    static string Esc(string text) => Markup.Escape(text);
+    static string Esc(string text)
+    {
+        return Markup.Escape(text);
+    }
 
-    public void Clear() => console.Clear(false);
+    public void Clear()
+    {
+        console.Clear(false);
+    }
 
     public void RenderDayStart(DayStartViewModel vm, ActionTab activeTab = ActionTab.Laws)
     {
@@ -36,11 +42,13 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         {
             new Rule(
                     $"[bold yellow]DAY {vm.Day}/{vm.TargetSurvivalDay}  Siege Intensity:{vm.SiegeIntensity}  Perimeter:{Esc(vm.ActivePerimeterName)}[/]")
-                { Style = Style.Parse("yellow") }
+                { Style = Style.Parse("yellow") },
         };
 
         if (vm.MoodLine is not null)
+        {
             items.Add(Align.Center(new Markup($"[italic]\"{Esc(vm.MoodLine)}\"[/]")));
+        }
 
         if (vm.SituationAlerts.Count > 0)
         {
@@ -52,7 +60,9 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         }
 
         if (vm.DisruptionText is not null)
+        {
             items.Add(Align.Center(new Markup($"[bold red]*** {Esc(vm.DisruptionText)} ***[/]")));
+        }
 
         return new Rows(items);
     }
@@ -77,21 +87,40 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         }
 
         if (vm.ConsecutiveFoodDeficitDays > 0)
+        {
             items.Add(new Markup($"  [red]Food deficit: {vm.ConsecutiveFoodDeficitDays} consecutive day(s)[/]"));
+        }
+
         if (vm.ConsecutiveWaterDeficitDays > 0)
+        {
             items.Add(new Markup($"  [red]Water deficit: {vm.ConsecutiveWaterDeficitDays} consecutive day(s)[/]"));
+        }
+
         if (vm.ConsecutiveBothZeroDays > 0)
+        {
             items.Add(new Markup($"  [bold red]Both food & water zero: {vm.ConsecutiveBothZeroDays} day(s)[/]"));
+        }
+
         if (vm.OvercrowdingStacks > 0)
+        {
             items.Add(new Markup(
                 $"  [yellow]Overcrowding: {vm.OvercrowdingStacks} stack(s) (+{vm.OvercrowdingStacks * 3} unrest/sickness per day)[/]"));
+        }
+
         if (vm.SiegeEscalationDelayDays > 0)
+        {
             items.Add(new Markup($"  [cyan]Siege escalation delayed: {vm.SiegeEscalationDelayDays} day(s)[/]"));
+        }
 
         if (vm.ThreatProjection is not null)
+        {
             items.Add(new Text(vm.ThreatProjection));
+        }
+
         if (vm.ProductionForecast is not null)
+        {
             items.Add(new Text(vm.ProductionForecast));
+        }
 
         return items.Count > 0 ? new Rows(items) : new Text("");
     }
@@ -170,7 +199,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         {
             var recoveryInfo = vm.Population.RecoveryDaysAtCurrentSickness >= 999
                 ? "[red]No Recovery (sickness >= 50)[/]"
-                : $"Recovery Days: ~{vm.Population.RecoveryDaysAtCurrentSickness}d";
+                : $"Recovery: ~{vm.Population.RecoveryDaysAtCurrentSickness}d";
             var readyStr = vm.Population.SickReadyToRecover > 0
                 ? $"  [green]{vm.Population.SickReadyToRecover} to Recover[/]"
                 : "";
@@ -237,7 +266,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             {
                 <= 25 => "bold red",
                 <= 50 => "yellow",
-                _ => "green"
+                _ => "green",
             };
             var over = zone.Population - zone.Capacity;
             var overText = over > 0 ? $" [red]OVER+{over}[/]" : "";
@@ -294,7 +323,9 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
         // Zone warnings
         if (vm.ZoneWarnings is not null)
+        {
             items.Add(new Markup($"[bold yellow]{Esc(vm.ZoneWarnings)}[/]"));
+        }
 
         return new Rows(items);
     }
@@ -308,7 +339,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             ActionTab.Laws => BuildAvailableLaws(vm),
             ActionTab.Orders => BuildAvailableOrders(vm),
             ActionTab.Missions => BuildAvailableMissions(vm),
-            _ => new Text("")
+            _ => new Text(""),
         };
 
         items.Add(tabContent);
@@ -339,12 +370,16 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
     static IRenderable BuildAvailableLaws(DayStartViewModel vm)
     {
         if (vm.LawCooldownDaysRemaining > 0)
+        {
             return new Markup(
                 $"[bold]Available Laws[/]  [yellow]On cooldown ({vm.LawCooldownDaysRemaining}d remaining)[/]");
+        }
 
         var available = vm.AvailableLaws.Where(l => !l.IsActive).ToList();
         if (available.Count == 0)
+        {
             return new Markup("[bold]Available Laws[/]  [grey]None[/]");
+        }
 
         var table = new Table
         {
@@ -357,7 +392,9 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         table.AddColumn("Effect");
 
         foreach (var law in available)
+        {
             table.AddRow($"[green]{Esc(law.Id)}[/]", Esc(law.Name), Esc(law.Tooltip));
+        }
 
         return table;
     }
@@ -365,7 +402,9 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
     static IRenderable BuildAvailableOrders(DayStartViewModel vm)
     {
         if (vm.AvailableOrders.Count == 0 && vm.OrderCooldowns.Count == 0)
+        {
             return new Markup("[bold]Available Orders[/]  [grey]None[/]");
+        }
 
         var items = new List<IRenderable>();
 
@@ -379,8 +418,10 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             table.AddColumn("CD");
 
             foreach (var order in vm.AvailableOrders)
+            {
                 table.AddRow($"[orange1]{Esc(order.Id)}[/]", Esc(order.Name), Esc(order.Tooltip),
                     $"{order.CooldownDays}d");
+            }
 
             items.Add(table);
         }
@@ -398,7 +439,9 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
     static IRenderable BuildAvailableMissions(DayStartViewModel vm)
     {
         if (vm.AvailableMissions.Count == 0)
+        {
             return new Markup("[bold]Available Missions[/]  [grey]None[/]");
+        }
 
         var table = new Table { Border = TableBorder.Simple, Expand = false };
         table.Title = new TableTitle("[bold]Available Missions[/]");
@@ -409,12 +452,14 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         table.AddColumn("Effect");
 
         foreach (var mission in vm.AvailableMissions)
+        {
             table.AddRow(
                 $"[dodgerblue1]{Esc(mission.Id)}[/]",
                 Esc(mission.Name),
                 $"{mission.DurationDays}d",
                 $"{mission.RequiredIdleWorkers} wkrs",
                 Esc(mission.Tooltip));
+        }
 
         return table;
     }
@@ -430,12 +475,11 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 "[bold]clear_assignments[/]  [grey]|[/]  " +
                 "[bold]clear_action[/]  [grey]|[/]  " +
                 "[bold]end_day[/]  [grey]|[/]  " +
-                "[bold]view[/] [grey]<tab>[/]  [grey]|[/]  " +
-                "[bold]help[/]"))
+                "[bold]view[/] [grey]<tab>[/]  [grey]|[/]"))
         {
             Header = new PanelHeader("Commands (<> = required)"),
             Border = BoxBorder.Rounded,
-            Padding = new Padding(1, 0)
+            Padding = new Padding(1, 0),
         };
     }
 
@@ -450,14 +494,6 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             console.MarkupLine(
                 $"Action: [cyan]{Esc(vm.QueuedActionType)}[/] -> [bold]{Esc(vm.QueuedActionName ?? "")}[/]");
         }
-    }
-
-    public void RenderActionReference(DayStartViewModel vm)
-    {
-        console.Write(BuildAvailableLaws(vm));
-        console.Write(BuildAvailableOrders(vm));
-        console.Write(BuildAvailableMissions(vm));
-        console.Write(BuildCommandPanel());
     }
 
     public void RenderDayReport(DayReportViewModel vm)
@@ -515,7 +551,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
         console.WriteLine();
         console.MarkupLine("[grey]Press any key to continue...[/]");
-        Console.ReadKey(intercept: true);
+        Console.ReadKey(true);
     }
 
     void TypewriteLine(string markup)
@@ -525,7 +561,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         foreach (var ch in plain)
         {
             Console.Write(ch);
-            Thread.Sleep(ch == ' ' ? 10 : 20);
+            Thread.Sleep(ch == ' ' ? 5 : 10);
         }
 
         // Overwrite the plain-text line with the fully styled markup version
@@ -551,7 +587,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 Header = new PanelHeader("[bold green]VICTORY[/]"),
                 Border = BoxBorder.Double,
                 BorderStyle = Style.Parse("green"),
-                Padding = new Padding(2, 1)
+                Padding = new Padding(2, 1),
             };
             console.Write(panel);
         }
@@ -559,7 +595,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         {
             var lines = new List<Markup>
             {
-                new($"[bold]Game Over on Day {vm.Day}:[/] {Esc(vm.Cause.ToString())}")
+                new($"[bold]Game Over on Day {vm.Day}:[/] {Esc(vm.Cause.ToString())}"),
             };
             if (!string.IsNullOrWhiteSpace(vm.Details))
             {
@@ -575,7 +611,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 Header = new PanelHeader("[bold red]DEFEAT[/]"),
                 Border = BoxBorder.Double,
                 BorderStyle = Style.Parse("red"),
-                Padding = new Padding(2, 1)
+                Padding = new Padding(2, 1),
             };
             console.Write(panel);
         }
@@ -601,61 +637,79 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         console.WriteLine();
     }
 
-    static string FormatDelta(int delta) => delta switch
+    static string FormatDelta(int delta)
     {
-        > 0 => $"+{delta}/d",
-        < 0 => $"{delta}/d",
-        _ => "0/d"
-    };
+        return delta switch
+        {
+            > 0 => $"+{delta}/d",
+            < 0 => $"{delta}/d",
+            _ => "0/d",
+        };
+    }
 
-    static string MoraleMarkup(int morale) => morale switch
+    static string MoraleMarkup(int morale)
     {
-        < 25 => $"[bold red]{morale}[/]",
-        < 50 => $"[yellow]{morale}[/]",
-        _ => $"[green]{morale}[/]"
-    };
+        return morale switch
+        {
+            < 25 => $"[bold red]{morale}[/]",
+            < 50 => $"[yellow]{morale}[/]",
+            _ => $"[green]{morale}[/]",
+        };
+    }
 
-    static string UnrestMarkup(int unrest) => unrest switch
+    static string UnrestMarkup(int unrest)
     {
-        > 70 => $"[bold red]{unrest}[/]",
-        > 50 => $"[yellow]{unrest}[/]",
-        _ => $"[green]{unrest}[/]"
-    };
+        return unrest switch
+        {
+            > 70 => $"[bold red]{unrest}[/]",
+            > 50 => $"[yellow]{unrest}[/]",
+            _ => $"[green]{unrest}[/]",
+        };
+    }
 
-    static string SicknessMarkup(int sickness) => sickness switch
+    static string SicknessMarkup(int sickness)
     {
-        > 70 => $"[bold red]{sickness}[/]",
-        >= 50 => $"[yellow]{sickness}[/]",
-        _ => $"[green]{sickness}[/]"
-    };
+        return sickness switch
+        {
+            > 70 => $"[bold red]{sickness}[/]",
+            >= 50 => $"[yellow]{sickness}[/]",
+            _ => $"[green]{sickness}[/]",
+        };
+    }
 
-    static string SicknessStatusNote(int sickness) => sickness switch
+    static string SicknessStatusNote(int sickness)
     {
-        > 70 => "[bold red][[recovery LOCKED | deaths each day]][/]",
-        >= 50 => "[yellow][[recovery LOCKED at ≥50]][/]",
-        _ => "[green][[recovery enabled]][/]"
-    };
+        return sickness switch
+        {
+            > 70 => "[bold red][[recovery LOCKED | deaths each day]][/]",
+            >= 50 => "[yellow][[recovery LOCKED at ≥50]][/]",
+            _ => "[green][[recovery enabled]][/]",
+        };
+    }
 
-    static string GetTagColor(string tag) => tag switch
+    static string GetTagColor(string tag)
     {
-        ReasonTags.LawPassive => "cyan",
-        ReasonTags.LawEnact => "bold cyan",
-        ReasonTags.OrderEffect => "bold orange1",
-        ReasonTags.Production => "green",
-        ReasonTags.Consumption => "grey",
-        ReasonTags.Deficit => "bold red",
-        ReasonTags.Overcrowding => "yellow",
-        ReasonTags.Sickness => "red",
-        ReasonTags.RecoveryProgress => "green",
-        ReasonTags.RecoveryComplete => "bold green",
-        ReasonTags.RecoveryBlockedThreshold => "yellow",
-        ReasonTags.RecoveryBlockedMedicine => "yellow",
-        ReasonTags.Unrest => "red",
-        ReasonTags.Siege => "bold red",
-        ReasonTags.Repairs => "blue",
-        ReasonTags.Event => "bold orange1",
-        ReasonTags.Mission => "dodgerblue1",
-        ReasonTags.ZoneLoss => "bold red",
-        _ => "white"
-    };
+        return tag switch
+        {
+            ReasonTags.LawPassive => "cyan",
+            ReasonTags.LawEnact => "bold cyan",
+            ReasonTags.OrderEffect => "bold orange1",
+            ReasonTags.Production => "green",
+            ReasonTags.Consumption => "grey",
+            ReasonTags.Deficit => "bold red",
+            ReasonTags.Overcrowding => "yellow",
+            ReasonTags.Sickness => "red",
+            ReasonTags.RecoveryProgress => "green",
+            ReasonTags.RecoveryComplete => "bold green",
+            ReasonTags.RecoveryBlockedThreshold => "yellow",
+            ReasonTags.RecoveryBlockedMedicine => "yellow",
+            ReasonTags.Unrest => "red",
+            ReasonTags.Siege => "bold red",
+            ReasonTags.Repairs => "blue",
+            ReasonTags.Event => "bold orange1",
+            ReasonTags.Mission => "dodgerblue1",
+            ReasonTags.ZoneLoss => "bold red",
+            _ => "white",
+        };
+    }
 }

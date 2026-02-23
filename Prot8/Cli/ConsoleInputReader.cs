@@ -63,16 +63,6 @@ public sealed class ConsoleInputReader(GameState state, GameViewModelFactory vmF
 
             switch (command)
             {
-                case "help":
-                    if (parts.Length != 1)
-                    {
-                        PrintInvalidAndHelp(renderer, currentVm, "help takes no parameters.");
-                        break;
-                    }
-
-                    renderer.RenderActionReference(currentVm);
-                    break;
-
                 case "view":
                     if (parts.Length != 2)
                     {
@@ -134,7 +124,6 @@ public sealed class ConsoleInputReader(GameState state, GameViewModelFactory vmF
     static void PrintInvalidAndHelp(ConsoleRenderer renderer, DayStartViewModel vm, string message)
     {
         Console.WriteLine($"Invalid command: {message}");
-        renderer.RenderActionReference(vm);
     }
 
     public List<EventResponseChoice> ReadEventResponses(IReadOnlyList<PendingEventResponse> pendingResponses,
