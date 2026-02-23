@@ -50,7 +50,7 @@ public class OperatorAnalystRunner
             while (!state.GameOver)
             {
                 Console.WriteLine($"== Day {state.Day} ==");
-                var dayStartVm = viewModelFactory.Create();
+                var dayStartVm = viewModelFactory.CreateDayStartViewModel();
                 var daySnapshot = JsonSerializer.Serialize(dayStartVm, jsonOptions);
 
                 TurnActionChoice action = new();

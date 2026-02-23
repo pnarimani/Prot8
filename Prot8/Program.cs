@@ -10,16 +10,16 @@ var seed = TryParseSeed(args);
 var state = new GameState(seed);
 var engine = new GameSimulationEngine(state);
 var renderer = new ConsoleRenderer(AnsiConsole.Console);
-var input = new ConsoleInputReader(new CommandParser());
+var vmFactory = new GameViewModelFactory(state);
+var input = new ConsoleInputReader(state, vmFactory, new CommandParser());
 
 using var telemetry = new RunTelemetryWriter(state, seed);
 
 while (!state.GameOver)
 {
     engine.RollDailyDisruption();
-    var dayStartVm = new GameViewModelFactory(state).Create();
-    renderer.RenderDayStart(dayStartVm);
-    var dayPlan = input.ReadDayPlan(state, renderer);
+    renderer.RenderDayStart(vmFactory.CreateDayStartViewModel());
+    var dayPlan = input.ReadDayPlan(renderer);
     state.Allocation = dayPlan.Allocation;
     var action = dayPlan.Action;
 

@@ -2,35 +2,15 @@ using Prot8.Cli.Commands;
 using Prot8.Cli.Output;
 using Prot8.Cli.ViewModels;
 using Prot8.Events;
-using Prot8.Jobs;
 using Prot8.Simulation;
 
 namespace Prot8.Cli.Input;
 
-public sealed class ConsoleInputReader(CommandParser parser)
+public sealed class ConsoleInputReader(GameState state, GameViewModelFactory vmFactory, CommandParser parser)
 {
     ActionTab _activeTab = ActionTab.Laws;
 
-    public bool TryExecuteCommand(GameState state, ref TurnActionChoice action, string rawCommand, out string message, out bool endDayRequested)
-    {
-        message = string.Empty;
-        endDayRequested = false;
-
-        if (!parser.TryParse(rawCommand, out var command, out var parseError))
-        {
-            message = parseError;
-            return false;
-        }
-
-        var context = new CommandContext(state, action);
-        var result = command!.Execute(context);
-        action = context.Action;
-        message = result.Message;
-        endDayRequested = result.EndDayRequested;
-        return result.Success;
-    }
-
-    public DayCommandPlan ReadDayPlan(GameState state, ConsoleRenderer renderer)
+    public DayCommandPlan ReadDayPlan(ConsoleRenderer renderer)
     {
         var allocation = state.Allocation;
 
@@ -47,7 +27,7 @@ public sealed class ConsoleInputReader(CommandParser parser)
         var pendingPlanVm = GameViewModelFactory.ToPendingPlanViewModel(action);
         renderer.RenderPendingDayAction(pendingPlanVm);
 
-        var currentVm = new GameViewModelFactory(state).Create();
+        var currentVm = vmFactory.CreateDayStartViewModel();
 
         while (true)
         {
@@ -55,7 +35,7 @@ public sealed class ConsoleInputReader(CommandParser parser)
 
             if (resized)
             {
-                currentVm = ReRender(state, renderer, action);
+                currentVm = ReRender(renderer, action);
                 continue;
             }
 
@@ -63,16 +43,20 @@ public sealed class ConsoleInputReader(CommandParser parser)
             if (tabSwitch.HasValue)
             {
                 _activeTab = tabSwitch.Value;
-                currentVm = ReRender(state, renderer, action);
+                currentVm = ReRender(renderer, action);
                 continue;
             }
 
             if (raw is null)
+            {
                 return new DayCommandPlan(allocation, action);
+            }
 
             var trimmed = raw.Trim();
             if (trimmed.Length == 0)
+            {
                 continue;
+            }
 
             var parts = trimmed.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var command = parts[0].ToLowerInvariant();
@@ -103,7 +87,7 @@ public sealed class ConsoleInputReader(CommandParser parser)
                     }
 
                     _activeTab = tab;
-                    currentVm = ReRender(state, renderer, action);
+                    currentVm = ReRender(renderer, action);
                     break;
 
                 default:
@@ -124,7 +108,7 @@ public sealed class ConsoleInputReader(CommandParser parser)
                             return new DayCommandPlan(allocation, action);
                         }
 
-                        currentVm = ReRender(state, renderer, action);
+                        currentVm = ReRender(renderer, action);
                         Console.WriteLine(result.Message);
                     }
                     else
@@ -137,10 +121,10 @@ public sealed class ConsoleInputReader(CommandParser parser)
         }
     }
 
-    DayStartViewModel ReRender(GameState state, ConsoleRenderer renderer, TurnActionChoice action)
+    DayStartViewModel ReRender(ConsoleRenderer renderer, TurnActionChoice action)
     {
         renderer.Clear();
-        var vm = new GameViewModelFactory(state).Create();
+        var vm = new GameViewModelFactory(state).CreateDayStartViewModel();
         renderer.RenderDayStart(vm, _activeTab);
         var pendingVm = GameViewModelFactory.ToPendingPlanViewModel(action);
         renderer.RenderPendingDayAction(pendingVm);
@@ -153,7 +137,8 @@ public sealed class ConsoleInputReader(CommandParser parser)
         renderer.RenderActionReference(vm);
     }
 
-    public List<EventResponseChoice> ReadEventResponses(IReadOnlyList<PendingEventResponse> pendingResponses, ConsoleRenderer renderer)
+    public List<EventResponseChoice> ReadEventResponses(IReadOnlyList<PendingEventResponse> pendingResponses,
+        ConsoleRenderer renderer)
     {
         var choices = new List<EventResponseChoice>();
 

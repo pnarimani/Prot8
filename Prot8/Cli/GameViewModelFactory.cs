@@ -13,7 +13,7 @@ namespace Prot8.Cli;
 
 public class GameViewModelFactory(GameState state)
 {
-    public DayStartViewModel Create()
+    public DayStartViewModel CreateDayStartViewModel()
     {
         return new DayStartViewModel
         {

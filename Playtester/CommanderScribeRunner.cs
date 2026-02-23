@@ -42,7 +42,7 @@ public class CommanderScribeRunner
             while (!state.GameOver)
             {
                 // Capture day snapshot
-                var dayStartVm = new GameViewModelFactory(state).Create();
+                var dayStartVm = new GameViewModelFactory(state).CreateDayStartViewModel();
                 var daySnapshot = JsonSerializer.Serialize(dayStartVm, jsonSerializationOptions);
                 Console.Write(daySnapshot);
 
