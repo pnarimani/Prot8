@@ -8,6 +8,7 @@ using Prot8.Cli.Output;
 using Prot8.Cli.ViewModels;
 using Prot8.Simulation;
 using Prot8.Telemetry;
+using Spectre.Console;
 
 namespace Playtester;
 
@@ -148,7 +149,7 @@ public class CommanderScribeRunner
 
 // Render final
             var gameOverVm = GameViewModelFactory.ToGameOverViewModel(state);
-            var finalSummary = RenderToString(w => new ConsoleRenderer(w).RenderFinal(gameOverVm));
+            var finalSummary = RenderToString(c => new ConsoleRenderer(c).RenderFinal(gameOverVm));
             Console.Write(finalSummary);
             telemetry.LogFinal(state);
 
@@ -172,10 +173,16 @@ public class CommanderScribeRunner
         }
 
 
-        static string RenderToString(Action<TextWriter> render)
+        static string RenderToString(Action<IAnsiConsole> render)
         {
             using var sw = new StringWriter();
-            render(sw);
+            var console = AnsiConsole.Create(new AnsiConsoleSettings
+            {
+                Out = new AnsiConsoleOutput(sw),
+                ColorSystem = ColorSystemSupport.NoColors,
+                Interactive = InteractionSupport.No
+            });
+            render(console);
             return sw.ToString();
         }
 

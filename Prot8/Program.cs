@@ -4,11 +4,12 @@ using Prot8.Cli.Output;
 using Prot8.Cli.ViewModels;
 using Prot8.Simulation;
 using Prot8.Telemetry;
+using Spectre.Console;
 
 var seed = TryParseSeed(args);
 var state = new GameState(seed);
 var engine = new GameSimulationEngine(state);
-var renderer = new ConsoleRenderer(Console.Out);
+var renderer = new ConsoleRenderer(AnsiConsole.Console);
 var input = new ConsoleInputReader(new CommandParser());
 
 using var telemetry = new RunTelemetryWriter(state, seed);
