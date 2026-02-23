@@ -13,10 +13,10 @@ public static class TabCompletingReadLine
 
     static readonly string[] ViewTabNames = ["laws", "orders", "missions"];
 
-    public static (string? line, ActionTab? tabSwitch) ReadLine(DayStartViewModel vm)
+    public static (string? line, ActionTab? tabSwitch, bool resized) ReadLine(DayStartViewModel vm, ActionTab activeTab = ActionTab.Laws)
     {
         if (Console.IsInputRedirected)
-            return (Console.ReadLine(), null);
+            return (Console.ReadLine(), null, false);
 
         var buffer = new List<char>();
         var cursorPos = 0;
@@ -25,6 +25,8 @@ public static class TabCompletingReadLine
         string? completionSnapshot = null;
         var lineStartLeft = Console.CursorLeft;
         var lineStartTop = Console.CursorTop;
+        var lastWidth = Console.WindowWidth;
+        var lastHeight = Console.WindowHeight;
 
         void Redraw()
         {
@@ -51,6 +53,16 @@ public static class TabCompletingReadLine
 
         while (true)
         {
+            // Poll for resize while waiting for a keypress
+            while (!Console.KeyAvailable)
+            {
+                var w = Console.WindowWidth;
+                var h = Console.WindowHeight;
+                if (w != lastWidth || h != lastHeight)
+                    return (null, null, true);
+                Thread.Sleep(50);
+            }
+
             var key = Console.ReadKey(intercept: true);
 
             switch (key.Key)
@@ -58,7 +70,7 @@ public static class TabCompletingReadLine
                 case ConsoleKey.Enter:
                     Redraw(); // clear ghost text
                     Console.WriteLine();
-                    return (new string(buffer.ToArray()), null);
+                    return (new string(buffer.ToArray()), null, false);
 
                 case ConsoleKey.Escape:
                     buffer.Clear();
@@ -87,6 +99,11 @@ public static class TabCompletingReadLine
                     break;
 
                 case ConsoleKey.LeftArrow:
+                    if (buffer.Count == 0)
+                    {
+                        var prevTab = (ActionTab)(((int)activeTab - 1 + 3) % 3);
+                        return (null, prevTab, false);
+                    }
                     if (cursorPos > 0)
                     {
                         cursorPos--;
@@ -95,6 +112,11 @@ public static class TabCompletingReadLine
                     break;
 
                 case ConsoleKey.RightArrow:
+                    if (buffer.Count == 0)
+                    {
+                        var nextTab = (ActionTab)(((int)activeTab + 1) % 3);
+                        return (null, nextTab, false);
+                    }
                     if (cursorPos < buffer.Count)
                     {
                         cursorPos++;
@@ -143,7 +165,7 @@ public static class TabCompletingReadLine
                     // Tab auto-switch: if user is typing a command prefix, switch the active tab
                     var tabSwitch = DetectTabSwitch(buffer);
                     if (tabSwitch.HasValue)
-                        return (null, tabSwitch);
+                        return (null, tabSwitch, false);
 
                     break;
 

@@ -15,106 +15,290 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     public void RenderDayStart(DayStartViewModel vm, ActionTab activeTab = ActionTab.Laws)
     {
-        console.WriteLine();
-        console.Write(new Rule($"[bold yellow]DAY {vm.Day}/{vm.TargetSurvivalDay}  Siege:{vm.SiegeIntensity}  Perimeter:{Esc(vm.ActivePerimeterName)}[/]")
+        var tablesRow = new Grid();
+        tablesRow.AddColumn(new GridColumn().NoWrap());
+        tablesRow.AddColumn(new GridColumn().Width(1));
+        tablesRow.AddColumn(new GridColumn().NoWrap());
+        tablesRow.AddRow(BuildJobsTable(vm), new Text(""), BuildZonesTable(vm));
+
+        console.Write(new Rows(
+            BuildHeader(vm),
+            new Columns(BuildResourcesTable(vm), BuildPopulationTable(vm)),
+            BuildStatusWarnings(vm),
+            tablesRow,
+            new Rule { Style = Style.Parse("grey") },
+            BuildStateSection(vm),
+            new Text(""),
+            BuildActionsSection(vm, activeTab),
+            BuildCommandPanel()));
+    }
+
+    static IRenderable BuildHeader(DayStartViewModel vm)
+    {
+        var items = new List<IRenderable>
         {
-            Style = Style.Parse("yellow")
-        });
-        console.WriteLine();
+            new Rule(
+                    $"[bold yellow]DAY {vm.Day}/{vm.TargetSurvivalDay}  Siege:{vm.SiegeIntensity}  Perimeter:{Esc(vm.ActivePerimeterName)}[/]")
+                { Style = Style.Parse("yellow") }
+        };
 
         if (vm.SituationAlerts.Count > 0)
         {
             foreach (var alert in vm.SituationAlerts)
             {
                 var color = alert.StartsWith("CRITICAL") ? "bold red" : "bold yellow";
-                console.MarkupLine($"[{color}]  {Esc(alert)}[/]");
+                items.Add(new Markup($"[{color}]  {Esc(alert)}[/]"));
             }
-            console.WriteLine();
         }
 
         if (vm.MoodLine is not null)
-        {
-            console.MarkupLine($"  [italic]\"{Esc(vm.MoodLine)}\"[/]");
-            console.WriteLine();
-        }
+            items.Add(new Markup($"  [italic]\"{Esc(vm.MoodLine)}\"[/]"));
 
         if (vm.DisruptionText is not null)
-        {
-            console.MarkupLine($"[bold red]*** {Esc(vm.DisruptionText)} ***[/]");
-            console.WriteLine();
-        }
+            items.Add(new Markup($"[bold red]*** {Esc(vm.DisruptionText)} ***[/]"));
 
-        RenderResources(vm);
-        RenderPopulation(vm);
-
-        if (vm.GlobalProductionMultiplier < 1.0)
-            console.MarkupLine($"  [yellow]Production multiplier: {vm.GlobalProductionMultiplier:F2}x[/]");
-        else if (vm.GlobalProductionMultiplier > 1.0)
-            console.MarkupLine($"  [green]Production multiplier: {vm.GlobalProductionMultiplier:F2}x[/]");
-
-        if (vm.ConsecutiveFoodDeficitDays > 0)
-            console.MarkupLine($"  [red]Food deficit: {vm.ConsecutiveFoodDeficitDays} consecutive day(s)[/]");
-        if (vm.ConsecutiveWaterDeficitDays > 0)
-            console.MarkupLine($"  [red]Water deficit: {vm.ConsecutiveWaterDeficitDays} consecutive day(s)[/]");
-        if (vm.ConsecutiveBothZeroDays > 0)
-            console.MarkupLine($"  [bold red]Both food & water zero: {vm.ConsecutiveBothZeroDays} day(s)[/]");
-        if (vm.OvercrowdingStacks > 0)
-            console.MarkupLine($"  [yellow]Overcrowding: {vm.OvercrowdingStacks} stack(s) (+{vm.OvercrowdingStacks * 3} unrest/sickness per day)[/]");
-        if (vm.SiegeEscalationDelayDays > 0)
-            console.MarkupLine($"  [cyan]Siege escalation delayed: {vm.SiegeEscalationDelayDays} day(s)[/]");
-
-        console.WriteLine();
-
-        if (vm.ThreatProjection is not null)
-        {
-            console.MarkupLine(Esc(vm.ThreatProjection));
-            console.WriteLine();
-        }
-
-        if (vm.ProductionForecast is not null)
-        {
-            console.MarkupLine(Esc(vm.ProductionForecast));
-            console.WriteLine();
-        }
-
-        RenderJobs(vm);
-        RenderZones(vm);
-
-        if (vm.ZoneWarnings is not null)
-        {
-            console.MarkupLine($"[bold yellow]{Esc(vm.ZoneWarnings)}[/]");
-            console.WriteLine();
-        }
-
-        RenderMissions(vm);
-        RenderLaws(vm);
-
-        RenderTabBar(vm, activeTab);
-        RenderSelectedTab(vm, activeTab);
-        RenderCommandPanel();
+        return new Rows(items);
     }
 
-    public void RenderPendingDayAction(PendingPlanViewModel vm)
+    static IRenderable BuildStatusWarnings(DayStartViewModel vm)
     {
-        if (vm.QueuedActionType is null)
+        var items = new List<IRenderable>();
+
+        if (vm.GlobalProductionMultiplier < 1.0)
+            items.Add(new Markup($"  [yellow]Production multiplier: {vm.GlobalProductionMultiplier:F2}x[/]"));
+        else if (vm.GlobalProductionMultiplier > 1.0)
+            items.Add(new Markup($"  [green]Production multiplier: {vm.GlobalProductionMultiplier:F2}x[/]"));
+
+        if (vm.ConsecutiveFoodDeficitDays > 0)
+            items.Add(new Markup($"  [red]Food deficit: {vm.ConsecutiveFoodDeficitDays} consecutive day(s)[/]"));
+        if (vm.ConsecutiveWaterDeficitDays > 0)
+            items.Add(new Markup($"  [red]Water deficit: {vm.ConsecutiveWaterDeficitDays} consecutive day(s)[/]"));
+        if (vm.ConsecutiveBothZeroDays > 0)
+            items.Add(new Markup($"  [bold red]Both food & water zero: {vm.ConsecutiveBothZeroDays} day(s)[/]"));
+        if (vm.OvercrowdingStacks > 0)
+            items.Add(new Markup(
+                $"  [yellow]Overcrowding: {vm.OvercrowdingStacks} stack(s) (+{vm.OvercrowdingStacks * 3} unrest/sickness per day)[/]"));
+        if (vm.SiegeEscalationDelayDays > 0)
+            items.Add(new Markup($"  [cyan]Siege escalation delayed: {vm.SiegeEscalationDelayDays} day(s)[/]"));
+
+        if (vm.ThreatProjection is not null)
+            items.Add(new Text(vm.ThreatProjection));
+        if (vm.ProductionForecast is not null)
+            items.Add(new Text(vm.ProductionForecast));
+
+        return items.Count > 0 ? new Rows(items) : new Text("");
+    }
+
+    static Table BuildResourcesTable(DayStartViewModel vm)
+    {
+        var res = vm.Resources;
+        var pop = vm.Population.TotalPopulation;
+        var foodNeed = (int)Math.Ceiling(pop * GameBalance.FoodPerPersonPerDay * vm.FoodConsumptionMultiplier);
+        var waterNeed = (int)Math.Ceiling(pop * GameBalance.WaterPerPersonPerDay * vm.WaterConsumptionMultiplier);
+        var fuelNeed = (int)Math.Ceiling(pop * GameBalance.FuelPerPersonPerDay);
+
+        var table = new Table { Border = TableBorder.Rounded, Expand = true };
+        table.AddColumn(new TableColumn("[bold]Food[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Water[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Fuel[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Medicine[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Materials[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Morale[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Unrest[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Sickness[/]").Centered());
+
+        var moraleDeltaStr = FormatDelta(vm.MoraleDelta);
+        var unrestDeltaStr = FormatDelta(vm.UnrestDelta);
+        var sicknessDeltaStr = FormatDelta(vm.SicknessDelta);
+
+        table.AddRow(
+            res.Food.ToString(),
+            res.Water.ToString(),
+            res.Fuel.ToString(),
+            res.Medicine.ToString(),
+            res.Materials.ToString(),
+            MoraleMarkup(vm.Morale) + $" [grey]({moraleDeltaStr})[/]",
+            UnrestMarkup(vm.Unrest) + $" [grey]({unrestDeltaStr})[/]",
+            SicknessMarkup(vm.Sickness) + " " + SicknessStatusNote(vm.Sickness) + $" [grey]({sicknessDeltaStr})[/]");
+
+        table.AddRow(
+            $"[grey]~{foodNeed}/d[/]",
+            $"[grey]~{waterNeed}/d[/]",
+            $"[grey]~{fuelNeed}/d[/]",
+            "[grey]-[/]",
+            "[grey]-[/]",
+            "[grey]-[/]",
+            "[grey]-[/]",
+            $"[grey]({pop} pop)[/]");
+
+        table.Title = new TableTitle("[bold]Resources[/]");
+        return table;
+    }
+
+    static IRenderable BuildPopulationTable(DayStartViewModel vm)
+    {
+        var pop = vm.Population;
+        var onMissions = vm.ActiveMissions.Sum(m => m.WorkerCost);
+        var available = pop.HealthyWorkers - onMissions;
+
+        var table = new Table { Border = TableBorder.Rounded, Expand = true };
+        table.AddColumn(new TableColumn("[bold]Healthy[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Guards[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Sick[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Elderly[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Total[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]On missions[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Available[/]").Centered());
+
+        table.AddRow(
+            pop.HealthyWorkers.ToString(),
+            pop.Guards.ToString(),
+            pop.SickWorkers.ToString(),
+            pop.Elderly.ToString(),
+            pop.TotalPopulation.ToString(),
+            onMissions.ToString(),
+            $"[bold]{available}[/]");
+
+        if (vm.Population.SickWorkers > 0)
         {
-            console.MarkupLine("Action: [grey]none[/]");
+            var recoveryInfo = vm.Population.RecoveryDaysAtCurrentSickness >= 999
+                ? "[red]No Rec (sickness >= 50)[/]"
+                : $"Rec: ~{vm.Population.RecoveryDaysAtCurrentSickness}d";
+            var readyStr = vm.Population.SickReadyToRecover > 0
+                ? $"  [green]{vm.Population.SickReadyToRecover} to Rec[/]"
+                : "";
+            table.AddRow(
+                new Markup($"{recoveryInfo}{readyStr}"),
+                new Text(""), new Text(""), new Text(""),
+                new Text(""), new Text(""), new Text(""));
+        }
+
+        table.Title = new TableTitle("[bold]Population[/]");
+        return table;
+    }
+
+    static IRenderable BuildJobsTable(DayStartViewModel vm)
+    {
+        var table = new Table { Border = TableBorder.Simple, Expand = true };
+        table.Title = new TableTitle("[bold]Jobs[/]");
+        table.AddColumn("Job");
+        table.AddColumn(new TableColumn("Workers").RightAligned());
+        table.AddColumn("Input → Output");
+        table.AddColumn("+Per Worker");
+
+        foreach (var (jobType, jvm) in vm.Jobs)
+        {
+            var inputs = string.Join(", ", jvm.CurrentInput.Select(x => x.ToString()));
+            var outputs = string.Join(", ", jvm.CurrentOutput.Select(x => x.ToString()));
+            var perWorker = string.Join(", ", jvm.OutputPerWorker.Select(x => x.ToString()));
+            var inputStr = inputs.Length > 0 ? $"{Esc(inputs)} → " : "";
+            table.AddRow(
+                Esc(jobType.ToString()),
+                jvm.AssignedWorkers.ToString(),
+                $"{inputStr}{Esc(outputs)}",
+                $"+{Esc(perWorker)}");
+        }
+
+        return table;
+    }
+
+    static IRenderable BuildZonesTable(DayStartViewModel vm)
+    {
+        var table = new Table { Border = TableBorder.Simple, Expand = true };
+        table.Title = new TableTitle("[bold]Zones[/]");
+        table.AddColumn("#");
+        table.AddColumn("Name");
+        table.AddColumn("Status");
+        table.AddColumn(new TableColumn("Integrity").RightAligned());
+        table.AddColumn(new TableColumn("Capacity").RightAligned());
+        table.AddColumn(new TableColumn("Population").RightAligned());
+
+        foreach (var zone in vm.Zones)
+        {
+            var status = zone.IsLost ? "[red]LOST[/]" : "[green]active[/]";
+            var integrityColor = zone.Integrity switch
+            {
+                <= 25 => "bold red",
+                <= 50 => "yellow",
+                _ => "green"
+            };
+            var over = zone.Population - zone.Capacity;
+            var overText = over > 0 ? $" [red]OVER+{over}[/]" : "";
+            var nameMarkup = zone.IsLost ? $"[red]{Esc(zone.Name)}[/]" : Esc(zone.Name);
+
+            table.AddRow(
+                ((int)zone.Id).ToString(),
+                nameMarkup,
+                status,
+                $"[{integrityColor}]{zone.Integrity}[/]",
+                zone.Capacity.ToString(),
+                $"{zone.Population}{overText}");
+        }
+
+        return table;
+    }
+
+    static IRenderable BuildStateSection(DayStartViewModel vm)
+    {
+        var items = new List<IRenderable>();
+
+        // Active missions
+        if (vm.ActiveMissions.Count == 0)
+        {
+            items.Add(new Markup("[bold]Active Missions[/]  [grey]None[/]"));
         }
         else
         {
-            console.MarkupLine($"Action: [cyan]{Esc(vm.QueuedActionType)}[/] -> [bold]{Esc(vm.QueuedActionName ?? "")}[/]");
+            var list = string.Join("  [grey]|[/]  ",
+                vm.ActiveMissions.Select(m =>
+                    $"[dodgerblue1]{Esc(m.MissionName)}[/]: {m.DaysRemaining}d, {m.WorkerCost} wkrs"));
+            items.Add(new Markup($"[bold]Active Missions[/]  {list}"));
         }
+
+        // Mission cooldowns
+        if (vm.MissionCooldowns.Count > 0)
+        {
+            var cdList = string.Join(", ",
+                vm.MissionCooldowns.Select(c => $"{Esc(c.MissionName)} ({c.DaysRemaining}d)"));
+            items.Add(new Markup($"  [yellow]Mission cooldowns: {cdList}[/]"));
+        }
+
+        // Enacted laws
+        var active = vm.AvailableLaws.Where(l => l.IsActive).Select(l => l.Name).ToList();
+        if (active.Count == 0)
+        {
+            items.Add(new Markup("[bold]Enacted Laws[/]  [grey]None[/]"));
+        }
+        else
+        {
+            var list = string.Join(", ", active.Select(n => $"[green]{Esc(n)}[/]"));
+            items.Add(new Markup($"[bold]Enacted Laws[/]  {list}"));
+        }
+
+        // Zone warnings
+        if (vm.ZoneWarnings is not null)
+            items.Add(new Markup($"[bold yellow]{Esc(vm.ZoneWarnings)}[/]"));
+
+        return new Rows(items);
     }
 
-    public void RenderActionReference(DayStartViewModel vm)
+    static IRenderable BuildActionsSection(DayStartViewModel vm, ActionTab activeTab)
     {
-        RenderAvailableLaws(vm);
-        RenderAvailableOrders(vm);
-        RenderAvailableMissions(vm);
-        RenderCommandPanel();
+        var items = new List<IRenderable> { BuildTabBar(vm, activeTab) };
+
+        var tabContent = activeTab switch
+        {
+            ActionTab.Laws => BuildAvailableLaws(vm),
+            ActionTab.Orders => BuildAvailableOrders(vm),
+            ActionTab.Missions => BuildAvailableMissions(vm),
+            _ => new Text("")
+        };
+
+        items.Add(tabContent);
+        return new Rows(items);
     }
 
-    void RenderTabBar(DayStartViewModel vm, ActionTab activeTab)
+    static IRenderable BuildTabBar(DayStartViewModel vm, ActionTab activeTab)
     {
         var lawCount = vm.AvailableLaws.Count(l => !l.IsActive);
         var orderCount = vm.AvailableOrders.Count;
@@ -129,32 +313,94 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         }
 
         var bar = TabLabel("Laws", lawCount, lawCd, ActionTab.Laws)
-                + " " + TabLabel("Orders", orderCount, "", ActionTab.Orders)
-                + " " + TabLabel("Missions", missionCount, "", ActionTab.Missions);
+                  + " " + TabLabel("Orders", orderCount, "", ActionTab.Orders)
+                  + " " + TabLabel("Missions", missionCount, "", ActionTab.Missions);
 
-        console.MarkupLine(bar);
-        console.WriteLine();
+        return new Markup(bar);
     }
 
-    void RenderSelectedTab(DayStartViewModel vm, ActionTab activeTab)
+    static IRenderable BuildAvailableLaws(DayStartViewModel vm)
     {
-        switch (activeTab)
+        if (vm.LawCooldownDaysRemaining > 0)
+            return new Markup(
+                $"[bold]Available Laws[/]  [yellow]On cooldown ({vm.LawCooldownDaysRemaining}d remaining)[/]");
+
+        var available = vm.AvailableLaws.Where(l => !l.IsActive).ToList();
+        if (available.Count == 0)
+            return new Markup("[bold]Available Laws[/]  [grey]None[/]");
+
+        var table = new Table { Border = TableBorder.Simple, Expand = true };
+        table.Title = new TableTitle("[bold]Available Laws[/]");
+        table.AddColumn(new TableColumn("[green]ID[/]"));
+        table.AddColumn("Name");
+        table.AddColumn("Effect");
+
+        foreach (var law in available)
+            table.AddRow($"[green]{Esc(law.Id)}[/]", Esc(law.Name), Esc(law.Tooltip));
+
+        return table;
+    }
+
+    static IRenderable BuildAvailableOrders(DayStartViewModel vm)
+    {
+        if (vm.AvailableOrders.Count == 0 && vm.OrderCooldowns.Count == 0)
+            return new Markup("[bold]Available Orders[/]  [grey]None[/]");
+
+        var items = new List<IRenderable>();
+
+        if (vm.AvailableOrders.Count > 0)
         {
-            case ActionTab.Laws:
-                RenderAvailableLaws(vm);
-                break;
-            case ActionTab.Orders:
-                RenderAvailableOrders(vm);
-                break;
-            case ActionTab.Missions:
-                RenderAvailableMissions(vm);
-                break;
+            var table = new Table { Border = TableBorder.Simple, Expand = true };
+            table.Title = new TableTitle("[bold]Available Orders[/] [grey](per-order cooldowns)[/]");
+            table.AddColumn(new TableColumn("[orange1]ID[/]"));
+            table.AddColumn("Name");
+            table.AddColumn("Effect");
+            table.AddColumn("CD");
+
+            foreach (var order in vm.AvailableOrders)
+                table.AddRow($"[orange1]{Esc(order.Id)}[/]", Esc(order.Name), Esc(order.Tooltip),
+                    $"{order.CooldownDays}d");
+
+            items.Add(table);
         }
+
+        if (vm.OrderCooldowns.Count > 0)
+        {
+            var cdList = string.Join(", ",
+                vm.OrderCooldowns.Select(c => $"{Esc(c.OrderName)} ({c.DaysRemaining}d)"));
+            items.Add(new Markup($"  [yellow]Order cooldowns: {cdList}[/]"));
+        }
+
+        return new Rows(items);
     }
 
-    void RenderCommandPanel()
+    static IRenderable BuildAvailableMissions(DayStartViewModel vm)
     {
-        var panel = new Panel(
+        if (vm.AvailableMissions.Count == 0)
+            return new Markup("[bold]Available Missions[/]  [grey]None[/]");
+
+        var table = new Table { Border = TableBorder.Simple, Expand = true };
+        table.Title = new TableTitle("[bold]Available Missions[/]");
+        table.AddColumn(new TableColumn("[dodgerblue1]ID[/]"));
+        table.AddColumn("Name");
+        table.AddColumn("Duration");
+        table.AddColumn("Workers");
+        table.AddColumn("Effect");
+
+        foreach (var mission in vm.AvailableMissions)
+            table.AddRow(
+                $"[dodgerblue1]{Esc(mission.Id)}[/]",
+                Esc(mission.Name),
+                $"{mission.DurationDays}d",
+                $"{mission.RequiredIdleWorkers} wkrs",
+                Esc(mission.Tooltip));
+
+        return table;
+    }
+
+    static IRenderable BuildCommandPanel()
+    {
+        return new Panel(
             new Markup(
                 "[bold]assign[/] [grey]<Job> <N>[/]  [grey]|[/]  " +
                 "[bold]enact[/] [grey]<LawId>[/]  [grey]|[/]  " +
@@ -170,8 +416,27 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             Border = BoxBorder.Rounded,
             Padding = new Padding(1, 0)
         };
-        console.Write(panel);
-        console.WriteLine();
+    }
+
+    public void RenderPendingDayAction(PendingPlanViewModel vm)
+    {
+        if (vm.QueuedActionType is null)
+        {
+            console.MarkupLine("Action: [grey]none[/]");
+        }
+        else
+        {
+            console.MarkupLine(
+                $"Action: [cyan]{Esc(vm.QueuedActionType)}[/] -> [bold]{Esc(vm.QueuedActionName ?? "")}[/]");
+        }
+    }
+
+    public void RenderActionReference(DayStartViewModel vm)
+    {
+        console.Write(BuildAvailableLaws(vm));
+        console.Write(BuildAvailableOrders(vm));
+        console.Write(BuildAvailableMissions(vm));
+        console.Write(BuildCommandPanel());
     }
 
     public void RenderDayReport(DayReportViewModel vm)
@@ -213,7 +478,8 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
         if (vm.RecoveryEnabledToday)
         {
-            TypewriteLine($"[green]Recovery:[/] recovered {vm.RecoveredWorkersToday} workers (medicine -{vm.RecoveryMedicineSpentToday})");
+            TypewriteLine(
+                $"[green]Recovery:[/] recovered {vm.RecoveredWorkersToday} workers (medicine -{vm.RecoveryMedicineSpentToday})");
         }
         else
         {
@@ -253,8 +519,10 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         if (vm.Survived)
         {
             var content = new Rows(
-                new Markup($"You endured to Day {GameBalance.TargetSurvivalDay}. The city survives, but at great cost."),
-                new Markup($"Total deaths: [red]{vm.TotalDeaths}[/], total desertions: [yellow]{vm.TotalDesertions}[/]"),
+                new Markup(
+                    $"You endured to Day {GameBalance.TargetSurvivalDay}. The city survives, but at great cost."),
+                new Markup(
+                    $"Total deaths: [red]{vm.TotalDeaths}[/], total desertions: [yellow]{vm.TotalDesertions}[/]"),
                 new Markup("Final Morale, Unrest, Sickness shown on next screen.")
             );
             var panel = new Panel(content)
@@ -276,7 +544,9 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             {
                 lines.Add(new Markup(Esc(vm.Details)));
             }
-            lines.Add(new Markup($"Total deaths: [red]{vm.TotalDeaths}[/], total desertions: [yellow]{vm.TotalDesertions}[/]"));
+
+            lines.Add(new Markup(
+                $"Total deaths: [red]{vm.TotalDeaths}[/], total desertions: [yellow]{vm.TotalDesertions}[/]"));
             lines.Add(new Markup("Final Morale, Unrest, Sickness shown on next screen."));
 
             var panel = new Panel(new Rows(lines.Cast<IRenderable>()))
@@ -292,280 +562,21 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         console.WriteLine();
     }
 
-    void RenderResources(DayStartViewModel vm)
+    public void RenderEventPrompt(PendingEventResponse pending)
     {
-        var res = vm.Resources;
-        var pop = vm.Population.TotalPopulation;
-        var foodNeed = (int)Math.Ceiling(pop * GameBalance.FoodPerPersonPerDay * vm.FoodConsumptionMultiplier);
-        var waterNeed = (int)Math.Ceiling(pop * GameBalance.WaterPerPersonPerDay * vm.WaterConsumptionMultiplier);
-        var fuelNeed = (int)Math.Ceiling(pop * GameBalance.FuelPerPersonPerDay);
-
-        var table = new Table { Border = TableBorder.Rounded };
-        table.AddColumn(new TableColumn("[bold]Food[/]").Centered());
-        table.AddColumn(new TableColumn("[bold]Water[/]").Centered());
-        table.AddColumn(new TableColumn("[bold]Fuel[/]").Centered());
-        table.AddColumn(new TableColumn("[bold]Medicine[/]").Centered());
-        table.AddColumn(new TableColumn("[bold]Materials[/]").Centered());
-        table.AddColumn(new TableColumn("[bold]Morale[/]").Centered());
-        table.AddColumn(new TableColumn("[bold]Unrest[/]").Centered());
-        table.AddColumn(new TableColumn("[bold]Sickness[/]").Centered());
-
-        var moraleDeltaStr = FormatDelta(vm.MoraleDelta);
-        var unrestDeltaStr = FormatDelta(vm.UnrestDelta);
-        var sicknessDeltaStr = FormatDelta(vm.SicknessDelta);
-
-        table.AddRow(
-            res.Food.ToString(),
-            res.Water.ToString(),
-            res.Fuel.ToString(),
-            res.Medicine.ToString(),
-            res.Materials.ToString(),
-            MoraleMarkup(vm.Morale) + $" [grey]({moraleDeltaStr})[/]",
-            UnrestMarkup(vm.Unrest) + $" [grey]({unrestDeltaStr})[/]",
-            SicknessMarkup(vm.Sickness) + " " + SicknessStatusNote(vm.Sickness) + $" [grey]({sicknessDeltaStr})[/]");
-
-        table.AddRow(
-            $"[grey]~{foodNeed}/d[/]",
-            $"[grey]~{waterNeed}/d[/]",
-            $"[grey]~{fuelNeed}/d[/]",
-            "[grey]-[/]",
-            "[grey]-[/]",
-            "[grey]-[/]",
-            "[grey]-[/]",
-            $"[grey]({pop} pop)[/]");
-
-        table.Title = new TableTitle("[bold]Resources[/]");
-        console.Write(table);
         console.WriteLine();
-    }
-
-    void RenderPopulation(DayStartViewModel vm)
-    {
-        var pop = vm.Population;
-        var onMissions = vm.ActiveMissions.Sum(m => m.WorkerCost);
-        var available = pop.HealthyWorkers - onMissions;
-
-        var grid = new Grid();
-        grid.AddColumn(); grid.AddColumn(); grid.AddColumn(); grid.AddColumn();
-        grid.AddColumn(); grid.AddColumn(); grid.AddColumn();
-
-        grid.AddRow(
-            "[bold]Healthy[/]", "[bold]Guards[/]", "[bold]Sick[/]", "[bold]Elderly[/]",
-            "[bold]Total[/]", "[bold]On missions[/]", "[bold]Available[/]");
-        grid.AddRow(
-            pop.HealthyWorkers.ToString(),
-            pop.Guards.ToString(),
-            pop.SickWorkers.ToString(),
-            pop.Elderly.ToString(),
-            pop.TotalPopulation.ToString(),
-            onMissions.ToString(),
-            $"[bold]{available}[/]");
-
-        console.MarkupLine("[bold]Population[/]");
-        console.Write(grid);
-
-        if (vm.Population.SickWorkers > 0)
-        {
-            var recoveryInfo = vm.Population.RecoveryDaysAtCurrentSickness >= 999
-                ? "[red]Recovery locked (sickness >= 50)[/]"
-                : $"Recovery: ~{vm.Population.RecoveryDaysAtCurrentSickness}d at current sickness";
-            var readyStr = vm.Population.SickReadyToRecover > 0
-                ? $"  [green]{vm.Population.SickReadyToRecover} ready to recover[/]"
-                : "";
-            console.MarkupLine($"  {recoveryInfo}{readyStr}");
-        }
-
+        console.Write(new Rule($"[bold orange1]EVENT: {Esc(pending.Event.Name)}[/]")
+            { Style = Style.Parse("orange1") });
+        console.MarkupLine($"  {Esc(pending.Event.Description)}");
         console.WriteLine();
-    }
 
-    void RenderJobs(DayStartViewModel vm)
-    {
-        var table = new Table { Border = TableBorder.Simple };
-        table.Title = new TableTitle("[bold]Jobs[/]");
-        table.AddColumn("Job");
-        table.AddColumn(new TableColumn("Workers").RightAligned());
-        table.AddColumn("Input → Output");
-        table.AddColumn("+Per Worker");
-
-        foreach (var (jobType, jvm) in vm.Jobs)
+        for (var i = 0; i < pending.Responses.Count; i++)
         {
-            var inputs = string.Join(", ", jvm.CurrentInput.Select(x => x.ToString()));
-            var outputs = string.Join(", ", jvm.CurrentOutput.Select(x => x.ToString()));
-            var perWorker = string.Join(", ", jvm.OutputPerWorker.Select(x => x.ToString()));
-            var inputStr = inputs.Length > 0 ? $"{Esc(inputs)} → " : "";
-            table.AddRow(
-                Esc(jobType.ToString()),
-                jvm.AssignedWorkers.ToString(),
-                $"{inputStr}{Esc(outputs)}",
-                $"+{Esc(perWorker)}");
+            var r = pending.Responses[i];
+            var tooltip = r.Tooltip is not null ? $" [grey]({Esc(r.Tooltip)})[/]" : "";
+            console.MarkupLine($"  [bold]{i + 1}.[/] {Esc(r.Label)}{tooltip}");
         }
 
-        console.Write(table);
-        console.WriteLine();
-    }
-
-    void RenderZones(DayStartViewModel vm)
-    {
-        var table = new Table { Border = TableBorder.Simple };
-        table.Title = new TableTitle("[bold]Zones[/]");
-        table.AddColumn("#");
-        table.AddColumn("Name");
-        table.AddColumn("Status");
-        table.AddColumn(new TableColumn("Integrity").RightAligned());
-        table.AddColumn(new TableColumn("Capacity").RightAligned());
-        table.AddColumn(new TableColumn("Population").RightAligned());
-
-        foreach (var zone in vm.Zones)
-        {
-            var status = zone.IsLost ? "[red]LOST[/]" : "[green]active[/]";
-            var integrityColor = zone.Integrity switch
-            {
-                <= 25 => "bold red",
-                <= 50 => "yellow",
-                _ => "green"
-            };
-            var over = zone.Population - zone.Capacity;
-            var overText = over > 0 ? $" [red]OVER+{over}[/]" : "";
-            var nameMarkup = zone.IsLost ? $"[red]{Esc(zone.Name)}[/]" : Esc(zone.Name);
-
-            table.AddRow(
-                ((int)zone.Id).ToString(),
-                nameMarkup,
-                status,
-                $"[{integrityColor}]{zone.Integrity}[/]",
-                zone.Capacity.ToString(),
-                $"{zone.Population}{overText}");
-        }
-
-        console.Write(table);
-        console.WriteLine();
-    }
-
-    void RenderMissions(DayStartViewModel vm)
-    {
-        if (vm.ActiveMissions.Count == 0)
-        {
-            console.MarkupLine("[bold]Active Missions[/]  [grey]None[/]");
-        }
-        else
-        {
-            var list = string.Join("  [grey]|[/]  ",
-                vm.ActiveMissions.Select(m => $"[dodgerblue1]{Esc(m.MissionName)}[/]: {m.DaysRemaining}d, {m.WorkerCost} wkrs"));
-            console.MarkupLine($"[bold]Active Missions[/]  {list}");
-        }
-
-        if (vm.MissionCooldowns.Count > 0)
-        {
-            var cdList = string.Join(", ",
-                vm.MissionCooldowns.Select(c => $"{Esc(c.MissionName)} ({c.DaysRemaining}d)"));
-            console.MarkupLine($"  [yellow]Mission cooldowns: {cdList}[/]");
-        }
-
-        console.WriteLine();
-    }
-
-    void RenderLaws(DayStartViewModel vm)
-    {
-        var active = vm.AvailableLaws.Where(l => l.IsActive).Select(l => l.Name).ToList();
-        if (active.Count == 0)
-        {
-            console.MarkupLine("[bold]Enacted Laws[/]  [grey]None[/]");
-        }
-        else
-        {
-            var list = string.Join(", ", active.Select(n => $"[green]{Esc(n)}[/]"));
-            console.MarkupLine($"[bold]Enacted Laws[/]  {list}");
-        }
-
-        console.WriteLine();
-    }
-
-    void RenderAvailableLaws(DayStartViewModel vm)
-    {
-        if (vm.LawCooldownDaysRemaining > 0)
-        {
-            console.MarkupLine($"[bold]Available Laws[/]  [yellow]On cooldown ({vm.LawCooldownDaysRemaining}d remaining)[/]");
-            return;
-        }
-
-        var available = vm.AvailableLaws.Where(l => !l.IsActive).ToList();
-        if (available.Count == 0)
-        {
-            console.MarkupLine("[bold]Available Laws[/]  [grey]None[/]");
-            return;
-        }
-
-        var table = new Table { Border = TableBorder.Simple };
-        table.Title = new TableTitle("[bold]Available Laws[/]");
-        table.AddColumn(new TableColumn("[green]ID[/]"));
-        table.AddColumn("Name");
-        table.AddColumn("Effect");
-
-        foreach (var law in available)
-            table.AddRow($"[green]{Esc(law.Id)}[/]", Esc(law.Name), Esc(law.Tooltip));
-
-        console.Write(table);
-        console.WriteLine();
-    }
-
-    void RenderAvailableOrders(DayStartViewModel vm)
-    {
-        if (vm.AvailableOrders.Count == 0 && vm.OrderCooldowns.Count == 0)
-        {
-            console.MarkupLine("[bold]Available Orders[/]  [grey]None[/]");
-            return;
-        }
-
-        if (vm.AvailableOrders.Count > 0)
-        {
-            var table = new Table { Border = TableBorder.Simple };
-            table.Title = new TableTitle("[bold]Available Orders[/] [grey](per-order cooldowns)[/]");
-            table.AddColumn(new TableColumn("[orange1]ID[/]"));
-            table.AddColumn("Name");
-            table.AddColumn("Effect");
-            table.AddColumn("CD");
-
-            foreach (var order in vm.AvailableOrders)
-                table.AddRow($"[orange1]{Esc(order.Id)}[/]", Esc(order.Name), Esc(order.Tooltip), $"{order.CooldownDays}d");
-
-            console.Write(table);
-        }
-
-        if (vm.OrderCooldowns.Count > 0)
-        {
-            var cdList = string.Join(", ",
-                vm.OrderCooldowns.Select(c => $"{Esc(c.OrderName)} ({c.DaysRemaining}d)"));
-            console.MarkupLine($"  [yellow]Order cooldowns: {cdList}[/]");
-        }
-
-        console.WriteLine();
-    }
-
-    void RenderAvailableMissions(DayStartViewModel vm)
-    {
-        if (vm.AvailableMissions.Count == 0)
-        {
-            console.MarkupLine("[bold]Available Missions[/]  [grey]None[/]");
-            return;
-        }
-
-        var table = new Table { Border = TableBorder.Simple };
-        table.Title = new TableTitle("[bold]Available Missions[/]");
-        table.AddColumn(new TableColumn("[dodgerblue1]ID[/]"));
-        table.AddColumn("Name");
-        table.AddColumn("Duration");
-        table.AddColumn("Workers");
-        table.AddColumn("Effect");
-
-        foreach (var mission in vm.AvailableMissions)
-            table.AddRow(
-                $"[dodgerblue1]{Esc(mission.Id)}[/]",
-                Esc(mission.Name),
-                $"{mission.DurationDays}d",
-                $"{mission.RequiredIdleWorkers} wkrs",
-                Esc(mission.Tooltip));
-
-        console.Write(table);
         console.WriteLine();
     }
 
@@ -603,23 +614,6 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         >= 50 => "[yellow][[recovery LOCKED at ≥50]][/]",
         _ => "[green][[recovery enabled]][/]"
     };
-
-    public void RenderEventPrompt(PendingEventResponse pending)
-    {
-        console.WriteLine();
-        console.Write(new Rule($"[bold orange1]EVENT: {Esc(pending.Event.Name)}[/]") { Style = Style.Parse("orange1") });
-        console.MarkupLine($"  {Esc(pending.Event.Description)}");
-        console.WriteLine();
-
-        for (var i = 0; i < pending.Responses.Count; i++)
-        {
-            var r = pending.Responses[i];
-            var tooltip = r.Tooltip is not null ? $" [grey]({Esc(r.Tooltip)})[/]" : "";
-            console.MarkupLine($"  [bold]{i + 1}.[/] {Esc(r.Label)}{tooltip}");
-        }
-
-        console.WriteLine();
-    }
 
     static string GetTagColor(string tag) => tag switch
     {

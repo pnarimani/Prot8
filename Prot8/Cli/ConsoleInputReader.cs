@@ -50,7 +50,13 @@ public sealed class ConsoleInputReader(CommandParser parser)
         while (true)
         {
             var currentVm = new GameViewModelFactory(state).Create();
-            var (raw, tabSwitch) = TabCompletingReadLine.ReadLine(currentVm);
+            var (raw, tabSwitch, resized) = TabCompletingReadLine.ReadLine(currentVm, _activeTab);
+
+            if (resized)
+            {
+                ReRender(state, renderer, action);
+                continue;
+            }
 
             // Tab auto-switch: user pressed Tab after a command prefix like "enact "
             if (tabSwitch.HasValue)
