@@ -20,7 +20,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 BuildHeader(vm),
                 new Columns(BuildResourcesTable(vm), BuildPopulationTable(vm)),
                 BuildStatusWarnings(vm),
-                new Columns(BuildJobsTable(vm), new Text(""), BuildZonesTable(vm)),
+                new Columns(BuildJobsTable(vm), BuildZonesTable(vm)),
                 new Rule { Style = Style.Parse("grey") },
                 BuildStateSection(vm),
                 new Rule { Style = Style.Parse("grey") },
@@ -35,7 +35,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         var items = new List<IRenderable>
         {
             new Rule(
-                    $"[bold yellow]DAY {vm.Day}/{vm.TargetSurvivalDay}  Siege:{vm.SiegeIntensity}  Perimeter:{Esc(vm.ActivePerimeterName)}[/]")
+                    $"[bold yellow]DAY {vm.Day}/{vm.TargetSurvivalDay}  Siege Intensity:{vm.SiegeIntensity}  Perimeter:{Esc(vm.ActivePerimeterName)}[/]")
                 { Style = Style.Parse("yellow") }
         };
 
@@ -186,11 +186,15 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     static IRenderable BuildJobsTable(DayStartViewModel vm)
     {
-        var table = new Table { Border = TableBorder.Simple, Expand = true };
-        table.Title = new TableTitle("[bold]Jobs[/]");
+        var table = new Table
+        {
+            Border = TableBorder.Simple, Expand = true,
+            Title = new TableTitle("[bold]Jobs[/]"),
+        };
         table.AddColumn("Job");
         table.AddColumn(new TableColumn("Workers").RightAligned());
-        table.AddColumn("Input → Output");
+        table.AddColumn("Current Input");
+        table.AddColumn("Current Output");
         table.AddColumn("+Per Worker");
 
         foreach (var (jobType, jvm) in vm.Jobs)
@@ -198,11 +202,12 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             var inputs = string.Join(", ", jvm.CurrentInput.Select(x => x.ToString()));
             var outputs = string.Join(", ", jvm.CurrentOutput.Select(x => x.ToString()));
             var perWorker = string.Join(", ", jvm.OutputPerWorker.Select(x => x.ToString()));
-            var inputStr = inputs.Length > 0 ? $"{Esc(inputs)} → " : "";
+            var inputStr = inputs.Length > 0 ? $"{Esc(inputs)}" : " ";
             table.AddRow(
                 Esc(jobType.ToString()),
                 jvm.AssignedWorkers.ToString(),
-                $"{inputStr}{Esc(outputs)}",
+                $"{inputStr}",
+                Esc(outputs),
                 $"+{Esc(perWorker)}");
         }
 
@@ -211,8 +216,11 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     static IRenderable BuildZonesTable(DayStartViewModel vm)
     {
-        var table = new Table { Border = TableBorder.Simple, Expand = true };
-        table.Title = new TableTitle("[bold]Zones[/]");
+        var table = new Table
+        {
+            Border = TableBorder.Simple, Expand = true,
+            Title = new TableTitle("[bold]Zones[/]"),
+        };
         table.AddColumn("#");
         table.AddColumn("Name");
         table.AddColumn("Status");
