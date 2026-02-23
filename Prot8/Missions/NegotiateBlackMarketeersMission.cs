@@ -5,11 +5,24 @@ namespace Prot8.Missions;
 
 public sealed class NegotiateBlackMarketeersMission : IMissionDefinition
 {
+    const int WaterChance = 45;
+    const int FoodChance = 30;
+    const int WaterGain = 60;
+    const int FoodGain = 50;
+    const int SuccessUnrest = 10;
+    const int BetrayalUnrest = 25;
+    const int BetrayalDeaths = 2;
+
     public string Id => "negotiate";
     public string Name => "Negotiate Black Marketeers";
     public int DurationDays => 3;
     public int WorkerCost => 2;
-    public string GetTooltip(GameState state) => "+60 water, +10 unrest (45%) | +50 food, +10 unrest (30%) | +25 unrest, 2 deaths (25%)";
+
+    public string GetTooltip(GameState state)
+    {
+        var failChance = 100 - WaterChance - FoodChance;
+        return $"+{WaterGain} Water, +{SuccessUnrest} Unrest ({WaterChance}%) | +{FoodGain} Food, +{SuccessUnrest} Unrest ({FoodChance}%) | +{BetrayalUnrest} Unrest, {BetrayalDeaths} Deaths ({failChance}%)";
+    }
 
     public bool CanStart(GameState state, out string reason)
     {
@@ -20,24 +33,24 @@ public sealed class NegotiateBlackMarketeersMission : IMissionDefinition
     public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
         var roll = state.RollPercent();
-        if (roll <= 45)
+        if (roll <= WaterChance)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Water, 60, report, ReasonTags.Mission, Name);
-            StateChangeApplier.AddUnrest(state, 10, report, ReasonTags.Mission, $"{Name} corruption");
-            report.AddResolvedMission($"{Name}: acquired +60 water (+10 unrest).");
+            StateChangeApplier.AddResource(state, ResourceKind.Water, WaterGain, report, ReasonTags.Mission, Name);
+            StateChangeApplier.AddUnrest(state, SuccessUnrest, report, ReasonTags.Mission, $"{Name} corruption");
+            report.AddResolvedMission($"{Name}: acquired +{WaterGain} water (+{SuccessUnrest} unrest).");
             return;
         }
 
-        if (roll <= 75)
+        if (roll <= WaterChance + FoodChance)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Food, 50, report, ReasonTags.Mission, Name);
-            StateChangeApplier.AddUnrest(state, 10, report, ReasonTags.Mission, $"{Name} corruption");
-            report.AddResolvedMission($"{Name}: acquired +50 food (+10 unrest).");
+            StateChangeApplier.AddResource(state, ResourceKind.Food, FoodGain, report, ReasonTags.Mission, Name);
+            StateChangeApplier.AddUnrest(state, SuccessUnrest, report, ReasonTags.Mission, $"{Name} corruption");
+            report.AddResolvedMission($"{Name}: acquired +{FoodGain} food (+{SuccessUnrest} unrest).");
             return;
         }
 
-        StateChangeApplier.AddUnrest(state, 25, report, ReasonTags.Mission, Name);
-        StateChangeApplier.ApplyDeaths(state, 2, report, ReasonTags.Mission, $"{Name} betrayal");
-        report.AddResolvedMission($"{Name}: betrayal (+25 unrest, 2 deaths).");
+        StateChangeApplier.AddUnrest(state, BetrayalUnrest, report, ReasonTags.Mission, Name);
+        StateChangeApplier.ApplyDeaths(state, BetrayalDeaths, report, ReasonTags.Mission, $"{Name} betrayal");
+        report.AddResolvedMission($"{Name}: betrayal (+{BetrayalUnrest} unrest, {BetrayalDeaths} deaths).");
     }
 }

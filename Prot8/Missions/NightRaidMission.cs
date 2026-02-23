@@ -6,6 +6,9 @@ public sealed class NightRaidMission : IMissionDefinition
 {
     const int GreatChance = 30;
     const int OkChance = 40;
+    const int GreatSiegeDelay = 3;
+    const int OkSiegeDelay = 2;
+    const int FailUnrest = 15;
 
     public string Id => "night_raid";
     public string Name => "Night Raid";
@@ -13,7 +16,7 @@ public sealed class NightRaidMission : IMissionDefinition
     public int WorkerCost => 6;
 
     public string GetTooltip(GameState state) =>
-        $"Siege Delay +3 days ({GreatChance}%) | Siege Delay +2 ({OkChance}%) | {WorkerCost} Deaths, +15 Unrest ({100 - GreatChance - OkChance}%)";
+        $"Siege Delay +{GreatSiegeDelay} days ({GreatChance}%) | Siege Delay +{OkSiegeDelay} ({OkChance}%) | {WorkerCost} Deaths, +{FailUnrest} Unrest ({100 - GreatChance - OkChance}%)";
 
     public bool CanStart(GameState state, out string reason)
     {
@@ -26,20 +29,20 @@ public sealed class NightRaidMission : IMissionDefinition
         var roll = state.RollPercent();
         if (roll <= GreatChance)
         {
-            state.SiegeEscalationDelayDays += 3;
-            report.AddResolvedMission($"{Name}: major disruption, siege escalation delayed by 3 days.");
+            state.SiegeEscalationDelayDays += GreatSiegeDelay;
+            report.AddResolvedMission($"{Name}: major disruption, siege escalation delayed by {GreatSiegeDelay} days.");
             return;
         }
 
         if (roll <= GreatChance + OkChance)
         {
-            state.SiegeEscalationDelayDays += 2;
-            report.AddResolvedMission($"{Name}: partial success, siege escalation delayed by 2 days.");
+            state.SiegeEscalationDelayDays += OkSiegeDelay;
+            report.AddResolvedMission($"{Name}: partial success, siege escalation delayed by {OkSiegeDelay} days.");
             return;
         }
 
         StateChangeApplier.ApplyDeaths(state, WorkerCost, report, ReasonTags.Mission, Name);
-        StateChangeApplier.AddUnrest(state, 15, report, ReasonTags.Mission, Name);
-        report.AddResolvedMission($"{Name}: operation failed ({WorkerCost} deaths, +15 unrest).");
+        StateChangeApplier.AddUnrest(state, FailUnrest, report, ReasonTags.Mission, Name);
+        report.AddResolvedMission($"{Name}: operation failed ({WorkerCost} deaths, +{FailUnrest} unrest).");
     }
 }

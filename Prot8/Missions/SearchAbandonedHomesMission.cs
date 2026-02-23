@@ -5,6 +5,14 @@ namespace Prot8.Missions;
 
 public sealed class SearchAbandonedHomesMission : IMissionDefinition
 {
+    const int MaterialsChance = 45;
+    const int MedicineChance = 35;
+    const int MaterialsGain = 40;
+    const int MedicineGain = 25;
+    const int SuccessSickness = 5;
+    const int PlagueSickness = 15;
+    const int PlagueDeaths = 2;
+
     public string Id => "search_abandoned_homes";
     public string Name => "Search Abandoned Homes";
     public int DurationDays => 2;
@@ -12,7 +20,8 @@ public sealed class SearchAbandonedHomesMission : IMissionDefinition
 
     public string GetTooltip(GameState state)
     {
-        return "+40 Materials, +5 Sickness (45%) | +25 Medicine, +5 Sickness (35%) | +15 Sickness, 2 Deaths (20%)";
+        var failChance = 100 - MaterialsChance - MedicineChance;
+        return $"+{MaterialsGain} Materials, +{SuccessSickness} Sickness ({MaterialsChance}%) | +{MedicineGain} Medicine, +{SuccessSickness} Sickness ({MedicineChance}%) | +{PlagueSickness} Sickness, {PlagueDeaths} Deaths ({failChance}%)";
     }
 
     public bool CanStart(GameState state, out string reason)
@@ -24,24 +33,24 @@ public sealed class SearchAbandonedHomesMission : IMissionDefinition
     public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
     {
         var roll = state.RollPercent();
-        if (roll <= 45)
+        if (roll <= MaterialsChance)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Materials, 40, report, ReasonTags.Mission, Name);
-            StateChangeApplier.AddSickness(state, 5, report, ReasonTags.Mission, $"{Name} exposure");
-            report.AddResolvedMission($"{Name}: recovered +40 materials (+5 sickness).");
+            StateChangeApplier.AddResource(state, ResourceKind.Materials, MaterialsGain, report, ReasonTags.Mission, Name);
+            StateChangeApplier.AddSickness(state, SuccessSickness, report, ReasonTags.Mission, $"{Name} exposure");
+            report.AddResolvedMission($"{Name}: recovered +{MaterialsGain} materials (+{SuccessSickness} sickness).");
             return;
         }
 
-        if (roll <= 80)
+        if (roll <= MaterialsChance + MedicineChance)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Medicine, 25, report, ReasonTags.Mission, Name);
-            StateChangeApplier.AddSickness(state, 5, report, ReasonTags.Mission, $"{Name} exposure");
-            report.AddResolvedMission($"{Name}: recovered +25 medicine (+5 sickness).");
+            StateChangeApplier.AddResource(state, ResourceKind.Medicine, MedicineGain, report, ReasonTags.Mission, Name);
+            StateChangeApplier.AddSickness(state, SuccessSickness, report, ReasonTags.Mission, $"{Name} exposure");
+            report.AddResolvedMission($"{Name}: recovered +{MedicineGain} medicine (+{SuccessSickness} sickness).");
             return;
         }
 
-        StateChangeApplier.AddSickness(state, 15, report, ReasonTags.Mission, Name);
-        StateChangeApplier.ApplyDeaths(state, 2, report, ReasonTags.Mission, $"{Name} plague");
-        report.AddResolvedMission($"{Name}: plague exposure (+15 sickness, 2 deaths).");
+        StateChangeApplier.AddSickness(state, PlagueSickness, report, ReasonTags.Mission, Name);
+        StateChangeApplier.ApplyDeaths(state, PlagueDeaths, report, ReasonTags.Mission, $"{Name} plague");
+        report.AddResolvedMission($"{Name}: plague exposure (+{PlagueSickness} sickness, {PlagueDeaths} deaths).");
     }
 }
