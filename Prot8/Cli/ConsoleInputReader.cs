@@ -47,14 +47,15 @@ public sealed class ConsoleInputReader(CommandParser parser)
         var pendingPlanVm = GameViewModelFactory.ToPendingPlanViewModel(action);
         renderer.RenderPendingDayAction(pendingPlanVm);
 
+        var currentVm = new GameViewModelFactory(state).Create();
+
         while (true)
         {
-            var currentVm = new GameViewModelFactory(state).Create();
             var (raw, tabSwitch, resized) = TabCompletingReadLine.ReadLine(currentVm, _activeTab);
 
             if (resized)
             {
-                ReRender(state, renderer, action);
+                currentVm = ReRender(state, renderer, action);
                 continue;
             }
 
@@ -62,7 +63,7 @@ public sealed class ConsoleInputReader(CommandParser parser)
             if (tabSwitch.HasValue)
             {
                 _activeTab = tabSwitch.Value;
-                ReRender(state, renderer, action);
+                currentVm = ReRender(state, renderer, action);
                 continue;
             }
 
@@ -81,12 +82,11 @@ public sealed class ConsoleInputReader(CommandParser parser)
                 case "help":
                     if (parts.Length != 1)
                     {
-                        PrintInvalidAndHelp(renderer, state, "help takes no parameters.");
+                        PrintInvalidAndHelp(renderer, currentVm, "help takes no parameters.");
                         break;
                     }
 
-                    var helpVm = new GameViewModelFactory(state).Create();
-                    renderer.RenderActionReference(helpVm);
+                    renderer.RenderActionReference(currentVm);
                     break;
 
                 case "view":
@@ -103,13 +103,13 @@ public sealed class ConsoleInputReader(CommandParser parser)
                     }
 
                     _activeTab = tab;
-                    ReRender(state, renderer, action);
+                    currentVm = ReRender(state, renderer, action);
                     break;
 
                 default:
                     if (!parser.TryParse(trimmed, out var parsed, out var parseError))
                     {
-                        PrintInvalidAndHelp(renderer, state, parseError);
+                        PrintInvalidAndHelp(renderer, currentVm, parseError);
                         break;
                     }
 
@@ -124,12 +124,12 @@ public sealed class ConsoleInputReader(CommandParser parser)
                             return new DayCommandPlan(allocation, action);
                         }
 
-                        ReRender(state, renderer, action);
+                        currentVm = ReRender(state, renderer, action);
                         Console.WriteLine(result.Message);
                     }
                     else
                     {
-                        PrintInvalidAndHelp(renderer, state, result.Message);
+                        PrintInvalidAndHelp(renderer, currentVm, result.Message);
                     }
 
                     break;
@@ -137,20 +137,20 @@ public sealed class ConsoleInputReader(CommandParser parser)
         }
     }
 
-    void ReRender(GameState state, ConsoleRenderer renderer, TurnActionChoice action)
+    DayStartViewModel ReRender(GameState state, ConsoleRenderer renderer, TurnActionChoice action)
     {
         renderer.Clear();
         var vm = new GameViewModelFactory(state).Create();
         renderer.RenderDayStart(vm, _activeTab);
         var pendingVm = GameViewModelFactory.ToPendingPlanViewModel(action);
         renderer.RenderPendingDayAction(pendingVm);
+        return vm;
     }
 
-    void PrintInvalidAndHelp(ConsoleRenderer renderer, GameState state, string message)
+    static void PrintInvalidAndHelp(ConsoleRenderer renderer, DayStartViewModel vm, string message)
     {
         Console.WriteLine($"Invalid command: {message}");
-        var helpVm = new GameViewModelFactory(state).Create();
-        renderer.RenderActionReference(helpVm);
+        renderer.RenderActionReference(vm);
     }
 
     public List<EventResponseChoice> ReadEventResponses(IReadOnlyList<PendingEventResponse> pendingResponses, ConsoleRenderer renderer)
