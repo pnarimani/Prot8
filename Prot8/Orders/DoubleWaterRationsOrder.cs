@@ -1,15 +1,16 @@
 using Prot8.Resources;
 using Prot8.Simulation;
 
-namespace Prot8.Decrees;
+namespace Prot8.Orders;
 
-public sealed class DoubleWaterRationsDecree : IDecree
+public sealed class DoubleWaterRationsOrder : IEmergencyOrder
 {
     private const int MoraleGain = 5;
     private const int WaterCost = 15;
 
     public string Id => "double_water_rations";
     public string Name => "Double Water Rations";
+    public int CooldownDays => 2;
 
     public string GetTooltip(GameState state) =>
         $"+{MoraleGain} morale, -{WaterCost} water.";

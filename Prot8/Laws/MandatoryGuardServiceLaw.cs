@@ -5,8 +5,8 @@ namespace Prot8.Laws;
 
 public sealed class MandatoryGuardServiceLaw : ILaw
 {
-    const int GuardConversion = 10;
-    const int DailyFoodLoss = 8;
+    const int GuardConversion = 5;
+    const int DailyFoodLoss = 4;
     const int MoraleHit = 10;
     const int UnrestThreshold = 40;
 

@@ -1,9 +1,9 @@
 using Prot8.Resources;
 using Prot8.Simulation;
 
-namespace Prot8.Decrees;
+namespace Prot8.Orders;
 
-public sealed class ForcedLaborDetailDecree : IDecree
+public sealed class ForcedLaborOrder : IEmergencyOrder
 {
     private const int MaterialsGain = 8;
     private const int UnrestGain = 5;
@@ -11,6 +11,7 @@ public sealed class ForcedLaborDetailDecree : IDecree
 
     public string Id => "forced_labor";
     public string Name => "Forced Labor Detail";
+    public int CooldownDays => 2;
 
     public string GetTooltip(GameState state) =>
         $"+{MaterialsGain} materials, +{UnrestGain} unrest, {Deaths} death.";

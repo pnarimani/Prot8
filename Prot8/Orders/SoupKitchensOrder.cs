@@ -10,6 +10,7 @@ public sealed class SoupKitchensOrder : IEmergencyOrder
 
     public string Id => "soup_kitchens";
     public string Name => "Soup Kitchens";
+    public int CooldownDays => 3;
     public string GetTooltip(GameState state) => $"-{UnrestReduction} unrest, +{MoraleGain} morale, -{FoodCost} food.";
 
     public bool CanIssue(GameState state, out string reason)

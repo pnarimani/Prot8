@@ -7,11 +7,11 @@ public static class TabCompletingReadLine
 {
     static readonly string[] CommandNames =
     [
-        "assign", "clear_action", "clear_assignments", "decree",
+        "assign", "clear_action", "clear_assignments",
         "enact", "end_day", "help", "mission", "order", "view"
     ];
 
-    static readonly string[] ViewTabNames = ["laws", "orders", "missions", "decrees"];
+    static readonly string[] ViewTabNames = ["laws", "orders", "missions"];
 
     public static (string? line, ActionTab? tabSwitch) ReadLine(DayStartViewModel vm)
     {
@@ -196,11 +196,6 @@ public static class TabCompletingReadLine
                 .Select(m => m.Id)
                 .ToArray(),
 
-            "decree" => vm.AvailableDecrees
-                .Where(d => d.Id.StartsWith(argPartial, StringComparison.OrdinalIgnoreCase))
-                .Select(d => d.Id)
-                .ToArray(),
-
             "assign" => Enum.GetNames<JobType>()
                 .Where(j => j.StartsWith(argPartial, StringComparison.OrdinalIgnoreCase))
                 .ToArray(),
@@ -223,8 +218,6 @@ public static class TabCompletingReadLine
             return ActionTab.Orders;
         if (text.Equals("mission ", StringComparison.OrdinalIgnoreCase))
             return ActionTab.Missions;
-        if (text.Equals("decree ", StringComparison.OrdinalIgnoreCase))
-            return ActionTab.Decrees;
         return null;
     }
 

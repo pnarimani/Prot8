@@ -9,6 +9,7 @@ public sealed class EmergencyWaterRationOrder : IEmergencyOrder
 
     public string Id => "water_ration";
     public string Name => "Emergency Water Ration";
+    public int CooldownDays => 3;
 
     public string GetTooltip(GameState state) =>
         $"-{(1 - WaterConsumptionMultiplier) * 100}% water consumption today, +{SicknessHit} sickness.";

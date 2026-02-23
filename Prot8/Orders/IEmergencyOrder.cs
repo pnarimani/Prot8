@@ -8,6 +8,8 @@ public interface IEmergencyOrder
 
     string Name { get; }
 
+    int CooldownDays { get; }
+
     string GetTooltip(GameState state);
 
     bool CanIssue(GameState state, out string reason);

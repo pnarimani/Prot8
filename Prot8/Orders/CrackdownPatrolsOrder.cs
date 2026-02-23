@@ -10,6 +10,7 @@ public sealed class CrackdownPatrolsOrder : IEmergencyOrder
 
     public string Id => "crackdown_patrols";
     public string Name => "Crackdown Patrols";
+    public int CooldownDays => 3;
 
     public string GetTooltip(GameState state) =>
         $"-{UnrestReduction} unrest today, {Deaths} deaths, -{MoraleHit} morale.";

@@ -6,6 +6,7 @@ public sealed class VoluntaryEvacuationOrder : IEmergencyOrder
 {
     public string Id => "voluntary_evacuation";
     public string Name => "Voluntary Evacuation";
+    public int CooldownDays => 0;
 
     public string GetTooltip(GameState state) => "Evacuate the active perimeter zone if eligible (irreversible).";
 

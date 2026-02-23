@@ -5,12 +5,11 @@ namespace Prot8.Events;
 public sealed class BetrayalFromWithinEvent : TriggeredEventBase
 {
     private const int TriggerDay = 37;
-    private const int GuardsLost = 3;
     private const int LowGuardThreshold = 5;
     private const int LowGuardUnrest = 15;
 
     public BetrayalFromWithinEvent() : base("betrayal_within", "Betrayal from Within",
-        "Day 37: 3 guards defect to workers. If guards < 5 afterward, +15 unrest.")
+        "Day 37: Guards defect (scales with guard count). If guards < 5 afterward, +15 unrest.")
     {
     }
 
@@ -21,7 +20,8 @@ public sealed class BetrayalFromWithinEvent : TriggeredEventBase
 
     public override void Apply(GameState state, DayResolutionReport report)
     {
-        var defected = Math.Min(state.Population.Guards, GuardsLost);
+        var guardsLost = Math.Max(1, state.Population.Guards / 3);
+        var defected = Math.Min(state.Population.Guards, guardsLost);
         state.Population.Guards -= defected;
         state.Population.HealthyWorkers += defected;
 

@@ -11,6 +11,7 @@ public sealed class ScavengeMedicineOrder : IEmergencyOrder
 
     public string Id => "scavenge_medicine";
     public string Name => "Scavenge Medicine";
+    public int CooldownDays => 3;
 
     public string GetTooltip(GameState state) =>
         $"+{MedicineGain} medicine, +{SicknessHit} sickness from exposure, {Deaths} death from scavenging.";

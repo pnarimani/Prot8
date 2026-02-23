@@ -6,6 +6,7 @@ public static class EmergencyOrderCatalog
 {
     private static readonly IReadOnlyList<IEmergencyOrder> AllOrders = new IEmergencyOrder[]
     {
+        // Original orders
         new DivertSuppliesToRepairsOrder(),
         new SoupKitchensOrder(),
         new EmergencyWaterRationOrder(),
@@ -13,7 +14,18 @@ public static class EmergencyOrderCatalog
         new InspireThePeopleOrder(),
         new VoluntaryEvacuationOrder(),
         new ScavengeMedicineOrder(),
-        new QuarantineDistrictOrder()
+        new QuarantineDistrictOrder(),
+        // Former decrees (converted to orders)
+        new BurnSurplusOrder(),
+        new DistributeFuelOrder(),
+        new DoubleWaterRationsOrder(),
+        new ForcedLaborOrder(),
+        new RallyGuardsOrder(),
+        // New orders
+        new SewerCleanupOrder(),
+        new SacrificeTheSickOrder(),
+        new FortifyTheGateOrder(),
+        new RationMedicineOrder(),
     };
 
     public static IReadOnlyList<IEmergencyOrder> GetAll() => AllOrders;

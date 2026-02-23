@@ -21,6 +21,16 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         });
         console.WriteLine();
 
+        if (vm.SituationAlerts.Count > 0)
+        {
+            foreach (var alert in vm.SituationAlerts)
+            {
+                var color = alert.StartsWith("CRITICAL") ? "bold red" : "bold yellow";
+                console.MarkupLine($"[{color}]  {Esc(alert)}[/]");
+            }
+            console.WriteLine();
+        }
+
         if (vm.MoodLine is not null)
         {
             console.MarkupLine($"  [italic]\"{Esc(vm.MoodLine)}\"[/]");
@@ -93,11 +103,6 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         {
             console.MarkupLine($"Action: [cyan]{Esc(vm.QueuedActionType)}[/] -> [bold]{Esc(vm.QueuedActionName ?? "")}[/]");
         }
-
-        if (vm.QueuedDecreeType is not null)
-        {
-            console.MarkupLine($"Decree: [magenta]{Esc(vm.QueuedDecreeType)}[/] -> [bold]{Esc(vm.QueuedDecreeName ?? "")}[/]");
-        }
     }
 
     public void RenderActionReference(DayStartViewModel vm)
@@ -105,7 +110,6 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         RenderAvailableLaws(vm);
         RenderAvailableOrders(vm);
         RenderAvailableMissions(vm);
-        RenderAvailableDecrees(vm);
         RenderCommandPanel();
     }
 
@@ -114,10 +118,8 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         var lawCount = vm.AvailableLaws.Count(l => !l.IsActive);
         var orderCount = vm.AvailableOrders.Count;
         var missionCount = vm.AvailableMissions.Count;
-        var decreeCount = vm.AvailableDecrees.Count;
 
         var lawCd = vm.LawCooldownDaysRemaining > 0 ? $" cd:{vm.LawCooldownDaysRemaining}d" : "";
-        var orderCd = vm.OrderCooldownDaysRemaining > 0 ? $" cd:{vm.OrderCooldownDaysRemaining}d" : "";
 
         string TabLabel(string name, int count, string extra, ActionTab tab)
         {
@@ -126,9 +128,8 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         }
 
         var bar = TabLabel("Laws", lawCount, lawCd, ActionTab.Laws)
-                + " " + TabLabel("Orders", orderCount, orderCd, ActionTab.Orders)
-                + " " + TabLabel("Missions", missionCount, "", ActionTab.Missions)
-                + " " + TabLabel("Decrees", decreeCount, "", ActionTab.Decrees);
+                + " " + TabLabel("Orders", orderCount, "", ActionTab.Orders)
+                + " " + TabLabel("Missions", missionCount, "", ActionTab.Missions);
 
         console.MarkupLine(bar);
         console.WriteLine();
@@ -147,9 +148,6 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             case ActionTab.Missions:
                 RenderAvailableMissions(vm);
                 break;
-            case ActionTab.Decrees:
-                RenderAvailableDecrees(vm);
-                break;
         }
     }
 
@@ -161,7 +159,6 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 "[bold]enact[/] [grey]<LawId>[/]  [grey]|[/]  " +
                 "[bold]order[/] [grey]<OrderId>[/]  [grey]|[/]  " +
                 "[bold]mission[/] [grey]<MissionId>[/]  [grey]|[/]  " +
-                "[bold]decree[/] [grey]<DecreeId>[/]  [grey]|[/]  " +
                 "[bold]clear_assignments[/]  [grey]|[/]  " +
                 "[bold]clear_action[/]  [grey]|[/]  " +
                 "[bold]end_day[/]  [grey]|[/]  " +
@@ -286,15 +283,19 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         table.AddColumn(new TableColumn("[bold]Unrest[/]").Centered());
         table.AddColumn(new TableColumn("[bold]Sickness[/]").Centered());
 
+        var moraleDeltaStr = FormatDelta(vm.MoraleDelta);
+        var unrestDeltaStr = FormatDelta(vm.UnrestDelta);
+        var sicknessDeltaStr = FormatDelta(vm.SicknessDelta);
+
         table.AddRow(
             res.Food.ToString(),
             res.Water.ToString(),
             res.Fuel.ToString(),
             res.Medicine.ToString(),
             res.Materials.ToString(),
-            MoraleMarkup(vm.Morale),
-            UnrestMarkup(vm.Unrest),
-            SicknessMarkup(vm.Sickness) + " " + SicknessStatusNote(vm.Sickness));
+            MoraleMarkup(vm.Morale) + $" [grey]({moraleDeltaStr})[/]",
+            UnrestMarkup(vm.Unrest) + $" [grey]({unrestDeltaStr})[/]",
+            SicknessMarkup(vm.Sickness) + " " + SicknessStatusNote(vm.Sickness) + $" [grey]({sicknessDeltaStr})[/]");
 
         table.AddRow(
             $"[grey]~{foodNeed}/d[/]",
@@ -482,49 +483,34 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     void RenderAvailableOrders(DayStartViewModel vm)
     {
-        if (vm.OrderCooldownDaysRemaining > 0)
-        {
-            console.MarkupLine($"[bold]Available Orders[/]  [yellow]On cooldown ({vm.OrderCooldownDaysRemaining}d remaining)[/]");
-            return;
-        }
-
-        if (vm.AvailableOrders.Count == 0)
+        if (vm.AvailableOrders.Count == 0 && vm.OrderCooldowns.Count == 0)
         {
             console.MarkupLine("[bold]Available Orders[/]  [grey]None[/]");
             return;
         }
 
-        var table = new Table { Border = TableBorder.Simple };
-        table.Title = new TableTitle("[bold]Available Orders[/]");
-        table.AddColumn(new TableColumn("[orange1]ID[/]"));
-        table.AddColumn("Name");
-        table.AddColumn("Effect");
-
-        foreach (var order in vm.AvailableOrders)
-            table.AddRow($"[orange1]{Esc(order.Id)}[/]", Esc(order.Name), Esc(order.Tooltip));
-
-        console.Write(table);
-        console.WriteLine();
-    }
-
-    void RenderAvailableDecrees(DayStartViewModel vm)
-    {
-        if (vm.AvailableDecrees.Count == 0)
+        if (vm.AvailableOrders.Count > 0)
         {
-            console.MarkupLine("[bold]Available Decrees[/]  [grey]None[/]");
-            return;
+            var table = new Table { Border = TableBorder.Simple };
+            table.Title = new TableTitle("[bold]Available Orders[/] [grey](per-order cooldowns)[/]");
+            table.AddColumn(new TableColumn("[orange1]ID[/]"));
+            table.AddColumn("Name");
+            table.AddColumn("Effect");
+            table.AddColumn("CD");
+
+            foreach (var order in vm.AvailableOrders)
+                table.AddRow($"[orange1]{Esc(order.Id)}[/]", Esc(order.Name), Esc(order.Tooltip), $"{order.CooldownDays}d");
+
+            console.Write(table);
         }
 
-        var table = new Table { Border = TableBorder.Simple };
-        table.Title = new TableTitle("[bold]Available Decrees[/] [grey](1 per day, no cooldown, in addition to law/order/mission)[/]");
-        table.AddColumn(new TableColumn("[magenta]ID[/]"));
-        table.AddColumn("Name");
-        table.AddColumn("Effect");
+        if (vm.OrderCooldowns.Count > 0)
+        {
+            var cdList = string.Join(", ",
+                vm.OrderCooldowns.Select(c => $"{Esc(c.OrderName)} ({c.DaysRemaining}d)"));
+            console.MarkupLine($"  [yellow]Order cooldowns: {cdList}[/]");
+        }
 
-        foreach (var decree in vm.AvailableDecrees)
-            table.AddRow($"[magenta]{Esc(decree.Id)}[/]", Esc(decree.Name), Esc(decree.Tooltip));
-
-        console.Write(table);
         console.WriteLine();
     }
 
@@ -555,6 +541,13 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         console.Write(table);
         console.WriteLine();
     }
+
+    static string FormatDelta(int delta) => delta switch
+    {
+        > 0 => $"+{delta}/d",
+        < 0 => $"{delta}/d",
+        _ => "0/d"
+    };
 
     static string MoraleMarkup(int morale) => morale switch
     {

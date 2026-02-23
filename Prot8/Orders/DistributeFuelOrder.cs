@@ -1,9 +1,9 @@
 using Prot8.Resources;
 using Prot8.Simulation;
 
-namespace Prot8.Decrees;
+namespace Prot8.Orders;
 
-public sealed class DistributeFuelReservesDecree : IDecree
+public sealed class DistributeFuelOrder : IEmergencyOrder
 {
     private const int FuelCost = 5;
     private const int MoraleGain = 3;
@@ -11,6 +11,7 @@ public sealed class DistributeFuelReservesDecree : IDecree
 
     public string Id => "distribute_fuel";
     public string Name => "Distribute Fuel Reserves";
+    public int CooldownDays => 2;
 
     public string GetTooltip(GameState state) =>
         $"-{FuelCost} fuel, +{MoraleGain} morale, -{SicknessReduction} sickness.";

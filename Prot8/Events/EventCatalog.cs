@@ -8,6 +8,9 @@ public static class EventCatalog
     {
         new OpeningBombardmentEvent(),
         new SupplyCartsInterceptedEvent(),
+        new SmugglerAtTheGateEvent(),
+        new WellContaminationScareEvent(),
+        new MilitiaVolunteersEvent(),
         new HungerRiotEvent(),
         new FeverOutbreakEvent(),
         new DesertionWaveEvent(),

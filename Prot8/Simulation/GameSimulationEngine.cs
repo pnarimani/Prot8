@@ -1,5 +1,4 @@
 using Prot8.Constants;
-using Prot8.Decrees;
 using Prot8.Events;
 using Prot8.Jobs;
 using Prot8.Laws;
@@ -69,14 +68,13 @@ public sealed class GameSimulationEngine(GameState state)
 
         PrepareDay(state);
         ApplyPlayerAction(state, action, report);
-        ApplyDecree(state, action, report);
 
         ApplyLawPassives(state, report);
         ApplyEmergencyOrderEffects(state, report);
 
+        var production = CalculateProduction(state, report);
         ApplyConsumption(state, report);
         ApplyDeficitPenalties(state, report);
-        var production = CalculateProduction(state, report);
         ApplyOvercrowdingPenalties(state, report);
         ApplySicknessProgression(state, production, report);
         ApplyUnrestProgression(state, report);
@@ -167,12 +165,11 @@ public sealed class GameSimulationEngine(GameState state)
                 return;
             }
 
-            var orderCooldownActive = state.LastOrderDay != int.MinValue
-                                      && state.Day - state.LastOrderDay < GameBalance.OrderCooldownDays;
-            if (orderCooldownActive)
+            if (state.OrderCooldowns.TryGetValue(order.Id, out var lastDay)
+                && state.Day - lastDay < order.CooldownDays)
             {
-                var nextDay = state.LastOrderDay + GameBalance.OrderCooldownDays;
-                report.Add(ReasonTags.OrderEffect, $"Emergency order cooldown active. Next available day: {nextDay}.");
+                var nextDay = lastDay + order.CooldownDays;
+                report.Add(ReasonTags.OrderEffect, $"Emergency order cooldown active for {order.Name}. Next available day: {nextDay}.");
                 return;
             }
 
@@ -183,7 +180,7 @@ public sealed class GameSimulationEngine(GameState state)
             }
 
             state.ActiveOrderId = order.Id;
-            state.LastOrderDay = state.Day;
+            state.OrderCooldowns[order.Id] = state.Day;
             report.Add(ReasonTags.OrderEffect, $"Emergency order prepared: {order.Name}.");
             return;
         }
@@ -226,30 +223,6 @@ public sealed class GameSimulationEngine(GameState state)
             report.Add(ReasonTags.Mission,
                 $"Mission started: {mission.Name} ({mission.DurationDays} day(s), {mission.WorkerCost} workers committed).");
         }
-    }
-
-    static void ApplyDecree(GameState state, TurnActionChoice action, DayResolutionReport report)
-    {
-        if (string.IsNullOrWhiteSpace(action.DecreeId))
-        {
-            return;
-        }
-
-        var decree = DecreeCatalog.Find(action.DecreeId);
-        if (decree is null)
-        {
-            report.Add(ReasonTags.OrderEffect, "Decree not found.");
-            return;
-        }
-
-        if (!decree.CanIssue(state, out var reason))
-        {
-            report.Add(ReasonTags.OrderEffect, $"Cannot issue decree {decree.Name}: {reason}");
-            return;
-        }
-
-        decree.Apply(state, report);
-        report.Add(ReasonTags.OrderEffect, $"Decree issued: {decree.Name}.");
     }
 
     static void ApplyLawPassives(GameState state, DayResolutionReport report)
@@ -507,26 +480,16 @@ public sealed class GameSimulationEngine(GameState state)
 
     static void ApplyOvercrowdingPenalties(GameState state, DayResolutionReport report)
     {
-        var totalStacks = 0;
-
-        var pop = state.GetZonePopulation();
-
+        var totalPop = state.Population.TotalPopulation;
+        var totalCapacity = 0;
         foreach (var zone in state.Zones)
         {
-            if (zone.IsLost)
-            {
-                continue;
-            }
-
-            var over = pop - zone.Capacity;
-            if (over < GameBalance.OvercrowdingThreshold)
-            {
-                continue;
-            }
-
-            var stacks = over / GameBalance.OvercrowdingThreshold;
-            totalStacks += stacks;
+            if (!zone.IsLost)
+                totalCapacity += zone.Capacity;
         }
+
+        var overflow = totalPop - totalCapacity;
+        var totalStacks = overflow > 0 ? overflow / GameBalance.OvercrowdingThreshold : 0;
 
         if (totalStacks <= 0)
         {
@@ -564,7 +527,7 @@ public sealed class GameSimulationEngine(GameState state)
     {
         var sicknessDelta = StatModifiers.ComputeSicknessFromEnvironment(state);
         sicknessDelta -= state.DailyEffects.QuarantineSicknessReduction;
-        sicknessDelta -= production.ClinicCarePoints / 5;
+        sicknessDelta -= production.ClinicCarePoints / 3;
 
         if (state.DailyEffects.FuelConsumptionMultiplier > 1.0)
         {

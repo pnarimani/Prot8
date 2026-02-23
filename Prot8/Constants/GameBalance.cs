@@ -15,7 +15,7 @@ public static class GameBalance
 
     public const int StartingFood = 50;
     public const int StartingWater = 50;
-    public const int StartingFuel = 30;
+    public const int StartingFuel = 45;
     public const int StartingMedicine = 15;
     public const int StartingMaterials = 30;
 
@@ -37,11 +37,9 @@ public static class GameBalance
     public const int EvacIntegrityThreshold = 35;
     public const int EvacSiegeThreshold = 4;
 
-    public const int LawCooldownDays = 4;
+    public const int LawCooldownDays = 3;
 
-    public const int OrderCooldownDays = 5;
-
-    public const int MissionCooldownDays = 6;
+    public const int MissionCooldownDays = 4;
 
     public const double FoodPerPersonPerDay = 0.45;
     public const double WaterPerPersonPerDay = 0.55;
@@ -77,7 +75,7 @@ public static class GameBalance
 
     public static readonly Dictionary<JobType, List<ResourceQuantity>> JobInputs = new()
     {
-        [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Fuel, 2)],
+        [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Fuel, 1)],
         [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Fuel, 1)],
         [JobType.MaterialsCrafting] = [],
         [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Materials, 3)],
@@ -87,8 +85,8 @@ public static class GameBalance
 
     public static readonly Dictionary<JobType, List<ResourceQuantity>> JobOutputs = new()
     {
-        [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Food, 2)],
-        [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Water, 2)],
+        [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Food, 3)],
+        [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Water, 3)],
         [JobType.MaterialsCrafting] = [new ResourceQuantity(ResourceKind.Materials, 2)],
         [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Integrity, 1d )],
         [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Care, 1)],
@@ -188,6 +186,9 @@ public static class GameBalance
         ["tainted_well"] = 0,
         ["final_assault"] = 0,
         ["betrayal_within"] = 0,
+        ["smuggler_gate"] = 0,
+        ["well_contamination"] = 0,
+        ["militia_volunteers"] = 0,
         ["narrative_messenger"] = 0,
         ["narrative_towers"] = 0,
         ["narrative_letter"] = 0,

@@ -10,6 +10,7 @@ public sealed class QuarantineDistrictOrder : IEmergencyOrder
 
     public string Id => "quarantine_district";
     public string Name => "Quarantine District";
+    public int CooldownDays => 3;
 
     public string GetTooltip(GameState state) =>
         $"Quarantine the active perimeter zone: -50% production in that zone today, -{SicknessReduction} sickness. Requires sickness > {SicknessThreshold}.";

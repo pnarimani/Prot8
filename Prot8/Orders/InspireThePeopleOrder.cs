@@ -9,6 +9,7 @@ public sealed class InspireThePeopleOrder : IEmergencyOrder
 
     public string Id => "inspire_people";
     public string Name => "Inspire the People";
+    public int CooldownDays => 3;
     public string GetTooltip(GameState state) => $"+{MoraleGain} morale today, -{MaterialsCost} materials.";
 
     public bool CanIssue(GameState state, out string reason)

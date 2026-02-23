@@ -56,13 +56,12 @@ public static class ActionAvailability
     {
         var available = new List<IEmergencyOrder>();
 
-        var cooldownActive = state.LastOrderDay != int.MinValue
-                             && state.Day - state.LastOrderDay < GameBalance.OrderCooldownDays;
-        if (cooldownActive)
-            return available;
-
         foreach (var order in EmergencyOrderCatalog.GetAll())
         {
+            if (state.OrderCooldowns.TryGetValue(order.Id, out var lastDay)
+                && state.Day - lastDay < order.CooldownDays)
+                continue;
+
             if (order.CanIssue(state, out _))
                 available.Add(order);
         }

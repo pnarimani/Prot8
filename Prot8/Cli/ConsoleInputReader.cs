@@ -32,6 +32,15 @@ public sealed class ConsoleInputReader(CommandParser parser)
     public DayCommandPlan ReadDayPlan(GameState state, ConsoleRenderer renderer)
     {
         var allocation = state.Allocation;
+
+        // Auto-adjust allocation if workers were lost
+        var totalAssigned = allocation.TotalAssigned();
+        var available = state.AvailableHealthyWorkersForAllocation;
+        if (totalAssigned > available)
+        {
+            allocation.RemoveWorkersProportionally(totalAssigned - available);
+        }
+
         var action = new TurnActionChoice();
 
         var pendingPlanVm = GameViewModelFactory.ToPendingPlanViewModel(action);
@@ -76,13 +85,13 @@ public sealed class ConsoleInputReader(CommandParser parser)
                 case "view":
                     if (parts.Length != 2)
                     {
-                        Console.WriteLine("Usage: view <laws|orders|missions|decrees>");
+                        Console.WriteLine("Usage: view <laws|orders|missions>");
                         break;
                     }
 
                     if (!TryParseTab(parts[1], out var tab))
                     {
-                        Console.WriteLine($"Unknown tab: {parts[1]}. Use: laws, orders, missions, decrees");
+                        Console.WriteLine($"Unknown tab: {parts[1]}. Use: laws, orders, missions");
                         break;
                     }
 
@@ -144,7 +153,6 @@ public sealed class ConsoleInputReader(CommandParser parser)
             "laws" => ActionTab.Laws,
             "orders" => ActionTab.Orders,
             "missions" => ActionTab.Missions,
-            "decrees" => ActionTab.Decrees,
             _ => (ActionTab)(-1),
         };
         return (int)tab >= 0;

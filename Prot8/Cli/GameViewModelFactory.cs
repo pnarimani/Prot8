@@ -1,6 +1,5 @@
 using Prot8.Cli.ViewModels;
 using Prot8.Constants;
-using Prot8.Decrees;
 using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
@@ -60,14 +59,13 @@ public class GameViewModelFactory(GameState state)
             }).ToList(),
             AvailableLaws = ToLawViewModels(state),
             AvailableOrders = ToOrderViewModels(state),
-            OrderCooldownDaysRemaining = ComputeOrderCooldown(state),
+            OrderCooldowns = ComputeOrderCooldowns(state),
             AvailableMissions = ToMissionViewModels(state),
             Jobs = CreateJobViewModel(state),
             ThreatProjection = ComputeThreatProjection(state),
             ProductionForecast = ComputeProductionForecast(state),
             ZoneWarnings = ComputeZoneWarnings(state),
             MoodLine = ComputeMoodLine(state),
-            AvailableDecrees = ToDecreeViewModels(state),
             DisruptionText = state.ActiveDisruption,
             LawCooldownDaysRemaining = ComputeLawCooldown(state),
             MissionCooldowns = ComputeMissionCooldowns(state),
@@ -77,6 +75,10 @@ public class GameViewModelFactory(GameState state)
             ConsecutiveWaterDeficitDays = state.ConsecutiveWaterDeficitDays,
             ConsecutiveBothZeroDays = state.ConsecutiveBothFoodWaterZeroDays,
             OvercrowdingStacks = ComputeOvercrowdingStacks(state),
+            SituationAlerts = ComputeSituationAlerts(state),
+            MoraleDelta = StatModifiers.ComputeMoraleDrift(state),
+            UnrestDelta = StatModifiers.ComputeUnrestProgression(state),
+            SicknessDelta = StatModifiers.ComputeSicknessFromEnvironment(state),
         };
     }
 
@@ -107,21 +109,10 @@ public class GameViewModelFactory(GameState state)
             }
         }
 
-        string? decreeType = null;
-        string? decreeName = null;
-        if (!string.IsNullOrWhiteSpace(action.DecreeId))
-        {
-            decreeType = "Decree";
-            var decree = DecreeCatalog.Find(action.DecreeId);
-            decreeName = decree?.Name ?? action.DecreeId;
-        }
-
         return new PendingPlanViewModel
         {
             QueuedActionType = actionType,
             QueuedActionName = actionName,
-            QueuedDecreeType = decreeType,
-            QueuedDecreeName = decreeName,
         };
     }
 
@@ -199,7 +190,6 @@ public class GameViewModelFactory(GameState state)
     {
         var result = new List<LawViewModel>();
 
-        // First add all enacted (active) laws
         foreach (var lawId in state.ActiveLawIds)
         {
             var law = LawCatalog.Find(lawId);
@@ -213,7 +203,6 @@ public class GameViewModelFactory(GameState state)
             });
         }
 
-        // Then add available (enactable) laws
         var available = ActionAvailability.GetAvailableLaws(state);
         foreach (var law in available)
         {
@@ -259,43 +248,68 @@ public class GameViewModelFactory(GameState state)
 
     static int ComputeOvercrowdingStacks(GameState state)
     {
-        var totalStacks = 0;
-        var pop = state.GetZonePopulation();
-
+        var totalPop = state.Population.TotalPopulation;
+        var totalCapacity = 0;
         foreach (var zone in state.Zones)
         {
-            if (zone.IsLost) continue;
-            var over = pop - zone.Capacity;
-            if (over < GameBalance.OvercrowdingThreshold) continue;
-            totalStacks += over / GameBalance.OvercrowdingThreshold;
+            if (!zone.IsLost)
+                totalCapacity += zone.Capacity;
         }
 
-        return totalStacks;
+        var overflow = totalPop - totalCapacity;
+        return overflow > 0 ? overflow / GameBalance.OvercrowdingThreshold : 0;
     }
 
-    static int ComputeOrderCooldown(GameState state)
+    static IReadOnlyList<OrderCooldownViewModel> ComputeOrderCooldowns(GameState state)
     {
-        if (state.LastOrderDay == int.MinValue)
+        var result = new List<OrderCooldownViewModel>();
+        foreach (var order in EmergencyOrderCatalog.GetAll())
         {
-            return 0;
+            if (state.OrderCooldowns.TryGetValue(order.Id, out var lastDay))
+            {
+                var remaining = order.CooldownDays - (state.Day - lastDay);
+                if (remaining > 0)
+                {
+                    result.Add(new OrderCooldownViewModel
+                    {
+                        OrderName = order.Name,
+                        DaysRemaining = remaining,
+                    });
+                }
+            }
         }
-
-        var remaining = GameBalance.OrderCooldownDays - (state.Day - state.LastOrderDay);
-        return remaining > 0 ? remaining : 0;
+        return result;
     }
 
     static IReadOnlyList<OrderViewModel> ToOrderViewModels(GameState state)
     {
-        var available = ActionAvailability.GetAvailableOrders(state);
         var result = new List<OrderViewModel>();
 
-        foreach (var order in available)
+        foreach (var order in EmergencyOrderCatalog.GetAll())
         {
+            var onCooldown = false;
+            var cooldownRemaining = 0;
+            if (state.OrderCooldowns.TryGetValue(order.Id, out var lastDay))
+            {
+                var remaining = order.CooldownDays - (state.Day - lastDay);
+                if (remaining > 0)
+                {
+                    onCooldown = true;
+                    cooldownRemaining = remaining;
+                }
+            }
+
+            if (onCooldown || !order.CanIssue(state, out _))
+                continue;
+
             result.Add(new OrderViewModel
             {
                 Id = order.Id,
                 Name = order.Name,
                 Tooltip = order.GetTooltip(state),
+                CooldownDays = order.CooldownDays,
+                CooldownRemaining = cooldownRemaining,
+                IsOnCooldown = onCooldown,
             });
         }
 
@@ -405,8 +419,10 @@ public class GameViewModelFactory(GameState state)
 
         var foodWorkers = state.Allocation.Workers[Jobs.JobType.FoodProduction];
         var waterWorkers = state.Allocation.Workers[Jobs.JobType.WaterDrawing];
-        var foodProd = foodWorkers * 2;
-        var waterProd = waterWorkers * 2;
+        var foodOutput = GameBalance.JobOutputs[Jobs.JobType.FoodProduction].FirstOrDefault();
+        var waterOutput = GameBalance.JobOutputs[Jobs.JobType.WaterDrawing].FirstOrDefault();
+        var foodProd = (int)(foodWorkers * (foodOutput.Quantity));
+        var waterProd = (int)(waterWorkers * (waterOutput.Quantity));
 
         var parts = new List<string>();
         if (foodWorkers > 0 || foodNeed > 0)
@@ -462,23 +478,54 @@ public class GameViewModelFactory(GameState state)
         return "Another dawn behind the walls. The city holds.";
     }
 
-    static IReadOnlyList<DecreeViewModel> ToDecreeViewModels(GameState state)
+    static IReadOnlyList<string> ComputeSituationAlerts(GameState state)
     {
-        var result = new List<DecreeViewModel>();
-        foreach (var decree in DecreeCatalog.GetAll())
+        var alerts = new List<string>();
+        var pop = state.Population.TotalPopulation;
+
+        var foodNeed = (int)Math.Ceiling(pop * GameBalance.FoodPerPersonPerDay);
+        if (foodNeed > 0 && state.Resources[ResourceKind.Food] > 0)
         {
-            if (decree.CanIssue(state, out _))
-            {
-                result.Add(new DecreeViewModel
-                {
-                    Id = decree.Id,
-                    Name = decree.Name,
-                    Tooltip = decree.GetTooltip(state),
-                });
-            }
+            var foodDays = state.Resources[ResourceKind.Food] / foodNeed;
+            if (foodDays <= 1)
+                alerts.Add("CRITICAL: Food runs out tomorrow");
+            else if (foodDays <= 2)
+                alerts.Add("WARNING: Food runs out in 2 days");
+        }
+        else if (state.Resources[ResourceKind.Food] == 0)
+        {
+            alerts.Add("CRITICAL: No food remaining");
         }
 
-        return result;
+        var waterNeed = (int)Math.Ceiling(pop * GameBalance.WaterPerPersonPerDay);
+        if (waterNeed > 0 && state.Resources[ResourceKind.Water] > 0)
+        {
+            var waterDays = state.Resources[ResourceKind.Water] / waterNeed;
+            if (waterDays <= 1)
+                alerts.Add("CRITICAL: Water runs out tomorrow");
+            else if (waterDays <= 2)
+                alerts.Add("WARNING: Water runs out in 2 days");
+        }
+        else if (state.Resources[ResourceKind.Water] == 0)
+        {
+            alerts.Add("CRITICAL: No water remaining");
+        }
+
+        if (state.Unrest >= 80)
+            alerts.Add("CRITICAL: Revolt imminent");
+        else if (state.Unrest >= 70)
+            alerts.Add("WARNING: Unrest dangerously high");
+
+        if (state.Sickness >= 80)
+            alerts.Add("CRITICAL: Pandemic collapse approaching");
+        else if (state.Sickness >= 60)
+            alerts.Add("WARNING: Sickness epidemic spreading");
+
+        var perimeter = state.ActivePerimeterZone;
+        if (!perimeter.IsLost && perimeter.Integrity <= 15 && perimeter.Integrity > 0)
+            alerts.Add($"CRITICAL: {perimeter.Name} about to fall");
+
+        return alerts;
     }
 
     static double ComputeFoodConsumptionMultiplier(GameState state)

@@ -11,6 +11,7 @@ public sealed class DivertSuppliesToRepairsOrder : IEmergencyOrder
 
     public string Id => "divert_supplies";
     public string Name => "Divert Supplies to Repairs";
+    public int CooldownDays => 3;
 
     public string GetTooltip(GameState state) =>
         $"+{(RepairBoost - 1) * 100}% repair output today, -{MaterialsCost} materials, -{FuelCost} fuel.";

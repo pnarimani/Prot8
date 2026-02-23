@@ -1,9 +1,9 @@
 using Prot8.Resources;
 using Prot8.Simulation;
 
-namespace Prot8.Decrees;
+namespace Prot8.Orders;
 
-public sealed class RallyTheGuardsDecree : IDecree
+public sealed class RallyGuardsOrder : IEmergencyOrder
 {
     private const int FoodCost = 3;
     private const int UnrestReduction = 5;
@@ -11,6 +11,7 @@ public sealed class RallyTheGuardsDecree : IDecree
 
     public string Id => "rally_guards";
     public string Name => "Rally the Guards";
+    public int CooldownDays => 2;
 
     public string GetTooltip(GameState state) =>
         $"-{FoodCost} food, -{UnrestReduction} unrest. Requires guards >= {GuardThreshold}.";

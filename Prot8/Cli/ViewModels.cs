@@ -15,7 +15,7 @@ public sealed class DayStartViewModel
     public int Morale { get; init; }
     public int Unrest { get; init; }
     public int Sickness { get; init; }
-    
+
     public int IdleWorkersForAssignment { get; init; }
 
     public double FoodConsumptionMultiplier { get; init; } = 1.0;
@@ -27,7 +27,7 @@ public sealed class DayStartViewModel
     public IReadOnlyList<ActiveMissionViewModel> ActiveMissions { get; init; } = [];
     public IReadOnlyList<LawViewModel> AvailableLaws { get; init; } = [];
     public IReadOnlyList<OrderViewModel> AvailableOrders { get; init; } = [];
-    public int OrderCooldownDaysRemaining { get; init; }
+    public IReadOnlyList<OrderCooldownViewModel> OrderCooldowns { get; init; } = [];
     public IReadOnlyList<MissionViewModel> AvailableMissions { get; init; } = [];
     public Dictionary<JobType, JobViewModel> Jobs { get; init; } = [];
 
@@ -36,7 +36,6 @@ public sealed class DayStartViewModel
     public string? ZoneWarnings { get; init; }
     public string? MoodLine { get; init; }
     public string? DisruptionText { get; init; }
-    public IReadOnlyList<DecreeViewModel> AvailableDecrees { get; init; } = [];
 
     public int LawCooldownDaysRemaining { get; init; }
     public IReadOnlyList<MissionCooldownViewModel> MissionCooldowns { get; init; } = [];
@@ -46,6 +45,11 @@ public sealed class DayStartViewModel
     public int ConsecutiveWaterDeficitDays { get; init; }
     public int ConsecutiveBothZeroDays { get; init; }
     public int OvercrowdingStacks { get; init; }
+
+    public IReadOnlyList<string> SituationAlerts { get; init; } = [];
+    public int MoraleDelta { get; init; }
+    public int UnrestDelta { get; init; }
+    public int SicknessDelta { get; init; }
 }
 
 public sealed class ResourceViewModel
@@ -98,6 +102,15 @@ public sealed class OrderViewModel
     public string Id { get; init; } = "";
     public string Name { get; init; } = "";
     public string Tooltip { get; init; } = "";
+    public int CooldownDays { get; init; }
+    public int CooldownRemaining { get; init; }
+    public bool IsOnCooldown { get; init; }
+}
+
+public sealed class OrderCooldownViewModel
+{
+    public string OrderName { get; init; } = "";
+    public int DaysRemaining { get; init; }
 }
 
 public sealed class MissionViewModel
@@ -122,21 +135,12 @@ public sealed class PendingPlanViewModel
 {
     public string? QueuedActionType { get; init; }
     public string? QueuedActionName { get; init; }
-    public string? QueuedDecreeType { get; init; }
-    public string? QueuedDecreeName { get; init; }
 }
 
 public sealed class MissionCooldownViewModel
 {
     public string MissionName { get; init; } = "";
     public int DaysRemaining { get; init; }
-}
-
-public sealed class DecreeViewModel
-{
-    public string Id { get; init; } = "";
-    public string Name { get; init; } = "";
-    public string Tooltip { get; init; } = "";
 }
 
 public sealed class DayReportViewModel

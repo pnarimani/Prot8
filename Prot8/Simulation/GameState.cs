@@ -54,7 +54,7 @@ public sealed class GameState
 
     public int LastLawDay { get; set; } = int.MinValue;
 
-    public int LastOrderDay { get; set; } = int.MinValue;
+    public Dictionary<string, int> OrderCooldowns { get; } = new();
 
     public string? FirstLawName { get; set; }
 

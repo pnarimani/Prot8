@@ -5,14 +5,14 @@ namespace Prot8.Laws;
 
 public sealed class EmergencySheltersLaw : ILaw
 {
-    private const int CapacityGain = 20;
-    private const int DailySickness = 3;
-    private const int DailyUnrest = 3;
-    private const int UnrestHit = 10;
+    private const int CapacityGainPerZone = 4;
+    private const int DailySickness = 2;
+    private const int DailyUnrest = 2;
+    private const int UnrestHit = 8;
 
     public string Id => "emergency_shelters";
     public string Name => "Emergency Shelters";
-    public string GetTooltip(GameState state) => $"+{CapacityGain} capacity in Inner District, +{DailySickness} sickness/day, +{DailyUnrest} unrest/day, +{UnrestHit} unrest on enact. Requires first zone loss.";
+    public string GetTooltip(GameState state) => $"+{CapacityGainPerZone} capacity to all non-lost zones, +{DailySickness} sickness/day, +{DailyUnrest} unrest/day, +{UnrestHit} unrest on enact. Requires first zone loss.";
 
     public bool CanEnact(GameState state, out string reason)
     {
@@ -28,9 +28,14 @@ public sealed class EmergencySheltersLaw : ILaw
 
     public void OnEnact(GameState state, DayResolutionReport report)
     {
-        var inner = state.GetZone(ZoneId.InnerDistrict);
-        inner.Capacity += CapacityGain;
-        report.Add(ReasonTags.LawEnact, $"{Name}: Inner District capacity +{CapacityGain}.");
+        foreach (var zone in state.Zones)
+        {
+            if (!zone.IsLost)
+            {
+                zone.Capacity += CapacityGainPerZone;
+                report.Add(ReasonTags.LawEnact, $"{Name}: {zone.Name} capacity +{CapacityGainPerZone}.");
+            }
+        }
         StateChangeApplier.AddUnrest(state, UnrestHit, report, ReasonTags.LawEnact, Name);
     }
 

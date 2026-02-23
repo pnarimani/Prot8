@@ -1,19 +1,19 @@
 using Prot8.Resources;
 using Prot8.Simulation;
 
-namespace Prot8.Decrees;
+namespace Prot8.Orders;
 
-public sealed class BurnSurplusForWarmthDecree : IDecree
+public sealed class FortifyTheGateOrder : IEmergencyOrder
 {
     private const int MaterialsCost = 5;
-    private const int SicknessReduction = 3;
-    private const int MoraleGain = 3;
+    private const int IntegrityGain = 3;
 
-    public string Id => "burn_surplus";
-    public string Name => "Burn Surplus for Warmth";
+    public string Id => "fortify_gate";
+    public string Name => "Fortify the Gate";
+    public int CooldownDays => 2;
 
     public string GetTooltip(GameState state) =>
-        $"-{MaterialsCost} materials, -{SicknessReduction} sickness, +{MoraleGain} morale.";
+        $"-{MaterialsCost} materials, +{IntegrityGain} integrity to perimeter zone.";
 
     public bool CanIssue(GameState state, out string reason)
     {
@@ -30,7 +30,10 @@ public sealed class BurnSurplusForWarmthDecree : IDecree
     public void Apply(GameState state, DayResolutionReport report)
     {
         StateChangeApplier.AddResource(state, ResourceKind.Materials, -MaterialsCost, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddSickness(state, -SicknessReduction, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddMorale(state, MoraleGain, report, ReasonTags.OrderEffect, Name);
+        var perimeter = state.ActivePerimeterZone;
+        var before = perimeter.Integrity;
+        perimeter.Integrity = Math.Min(100, perimeter.Integrity + IntegrityGain);
+        var applied = perimeter.Integrity - before;
+        report.Add(ReasonTags.OrderEffect, $"{Name}: +{applied} integrity to {perimeter.Name}.");
     }
 }
