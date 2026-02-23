@@ -22,7 +22,7 @@ public static class GameBalance
     public const int StartingMorale = 50;
     public const int StartingUnrest = 30;
     public const int StartingSickness = 20;
-    public const int StartingSiegeIntensity = 2;
+    public const int StartingSiegeIntensity = 1;
 
     public const int MaxSiegeIntensity = 6;
 
@@ -45,9 +45,9 @@ public static class GameBalance
     public const double WaterPerPersonPerDay = 0.55;
     public const double FuelPerPersonPerDay = 0.08;
 
-    public const double PerimeterScalingBase = 4.0;
+    public const double PerimeterScalingBase = 5.0;
 
-    public const int SiegeEscalationIntervalDays = 5;
+    public const int SiegeEscalationIntervalDays = 4;
 
     public const int RecoveryThresholdSickness = 50;
     public const int BaseRecoveryTimeDays = 4;
