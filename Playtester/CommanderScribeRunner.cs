@@ -4,8 +4,6 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Prot8.Cli;
 using Prot8.Cli.Commands;
-using Prot8.Cli.Output;
-using Prot8.Cli.ViewModels;
 using Prot8.Simulation;
 using Prot8.Telemetry;
 using Spectre.Console;
@@ -149,7 +147,7 @@ public class CommanderScribeRunner
 
 // Render final
             var gameOverVm = GameViewModelFactory.ToGameOverViewModel(state);
-            var finalSummary = RenderToString(c => new ConsoleRenderer(c).RenderFinal(gameOverVm));
+            var finalSummary = JsonSerializer.Serialize(gameOverVm, jsonSerializationOptions);
             Console.Write(finalSummary);
             telemetry.LogFinal(state);
 
