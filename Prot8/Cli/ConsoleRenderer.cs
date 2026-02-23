@@ -176,6 +176,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     public void RenderDayReport(DayReportViewModel vm)
     {
+        Clear();
         console.WriteLine();
         console.Write(new Rule($"[bold]Day {vm.Day} Resolution[/]") { Style = Style.Parse("blue") });
 
@@ -189,34 +190,34 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         foreach (var entry in vm.Entries)
         {
             var color = GetTagColor(entry.Tag);
-            console.MarkupLine($"[{color}][[{Esc(entry.Tag)}]][/] {Esc(entry.Message)}");
+            TypewriteLine($"[{color}][[{Esc(entry.Tag)}]][/] {Esc(entry.Message)}");
         }
 
         if (vm.TriggeredEvents.Count > 0)
         {
-            console.MarkupLine($"[bold orange1]Events:[/] {Esc(string.Join(", ", vm.TriggeredEvents))}");
+            TypewriteLine($"[bold orange1]Events:[/] {Esc(string.Join(", ", vm.TriggeredEvents))}");
         }
 
         if (vm.EventResponses.Count > 0)
         {
             foreach (var resp in vm.EventResponses)
             {
-                console.MarkupLine($"[bold orange1]Response:[/] {Esc(resp.EventName)} -> {Esc(resp.ChosenResponse)}");
+                TypewriteLine($"[bold orange1]Response:[/] {Esc(resp.EventName)} -> {Esc(resp.ChosenResponse)}");
             }
         }
 
         if (vm.ResolvedMissions.Count > 0)
         {
-            console.MarkupLine($"[bold dodgerblue1]Missions:[/] {Esc(string.Join(", ", vm.ResolvedMissions))}");
+            TypewriteLine($"[bold dodgerblue1]Missions:[/] {Esc(string.Join(", ", vm.ResolvedMissions))}");
         }
 
         if (vm.RecoveryEnabledToday)
         {
-            console.MarkupLine($"[green]Recovery:[/] recovered {vm.RecoveredWorkersToday} workers (medicine -{vm.RecoveryMedicineSpentToday})");
+            TypewriteLine($"[green]Recovery:[/] recovered {vm.RecoveredWorkersToday} workers (medicine -{vm.RecoveryMedicineSpentToday})");
         }
         else
         {
-            console.MarkupLine($"[yellow]Recovery:[/] blocked — {Esc(vm.RecoveryBlockedReason ?? "unknown")}");
+            TypewriteLine($"[yellow]Recovery:[/] blocked — {Esc(vm.RecoveryBlockedReason ?? "unknown")}");
         }
 
         if (vm.AllocationAlert is not null)
@@ -226,6 +227,23 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         }
 
         console.WriteLine();
+        console.MarkupLine("[grey]Press any key to continue...[/]");
+        Console.ReadKey(intercept: true);
+    }
+
+    void TypewriteLine(string markup)
+    {
+        // Strip Spectre markup to get plain text length for pacing
+        var plain = Markup.Remove(markup);
+        foreach (var ch in plain)
+        {
+            Console.Write(ch);
+            Thread.Sleep(ch == ' ' ? 10 : 20);
+        }
+
+        // Overwrite the plain-text line with the fully styled markup version
+        Console.Write('\r');
+        console.MarkupLine(markup);
     }
 
     public void RenderFinal(GameOverViewModel vm)
