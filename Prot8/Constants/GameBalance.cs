@@ -8,19 +8,19 @@ public static class GameBalance
 {
     public const int TargetSurvivalDay = 40;
 
-    public const int StartingHealthyWorkers = 35;
-    public const int StartingGuards = 5;
-    public const int StartingSickWorkers = 5;
-    public const int StartingElderly = 5;
+    public const int StartingHealthyWorkers = 60;
+    public const int StartingGuards = 15;
+    public const int StartingSickWorkers = 15;
+    public const int StartingElderly = 15;
 
-    public const int StartingFood = 50;
-    public const int StartingWater = 50;
-    public const int StartingFuel = 45;
-    public const int StartingMedicine = 15;
-    public const int StartingMaterials = 30;
+    public const int StartingFood = 150;
+    public const int StartingWater = 150;
+    public const int StartingFuel = 145;
+    public const int StartingMedicine = 30;
+    public const int StartingMaterials = 100;
 
-    public const int StartingMorale = 50;
-    public const int StartingUnrest = 30;
+    public const int StartingMorale = 60;
+    public const int StartingUnrest = 25;
     public const int StartingSickness = 20;
     public const int StartingSiegeIntensity = 1;
 
@@ -37,7 +37,7 @@ public static class GameBalance
     public const int EvacIntegrityThreshold = 35;
     public const int EvacSiegeThreshold = 4;
 
-    public const int LawCooldownDays = 3;
+    public const int LawCooldownDays = 0;
 
     public const int MissionCooldownDays = 4;
 

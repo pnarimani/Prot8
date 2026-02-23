@@ -4,9 +4,8 @@ namespace Prot8.Orders;
 
 public static class EmergencyOrderCatalog
 {
-    private static readonly IReadOnlyList<IEmergencyOrder> AllOrders = new IEmergencyOrder[]
-    {
-        // Original orders
+    private static readonly IReadOnlyList<IEmergencyOrder> _allOrders =
+    [
         new DivertSuppliesToRepairsOrder(),
         new SoupKitchensOrder(),
         new EmergencyWaterRationOrder(),
@@ -15,24 +14,22 @@ public static class EmergencyOrderCatalog
         new VoluntaryEvacuationOrder(),
         new ScavengeMedicineOrder(),
         new QuarantineDistrictOrder(),
-        // Former decrees (converted to orders)
         new BurnSurplusOrder(),
         new DistributeFuelOrder(),
         new DoubleWaterRationsOrder(),
         new ForcedLaborOrder(),
         new RallyGuardsOrder(),
-        // New orders
         new SewerCleanupOrder(),
         new SacrificeTheSickOrder(),
         new FortifyTheGateOrder(),
         new RationMedicineOrder(),
-    };
+    ];
 
-    public static IReadOnlyList<IEmergencyOrder> GetAll() => AllOrders;
+    public static IReadOnlyList<IEmergencyOrder> GetAll() => _allOrders;
 
     public static IEmergencyOrder? Find(string orderId)
     {
-        foreach (var order in AllOrders)
+        foreach (var order in _allOrders)
         {
             if (order.Id == orderId)
             {

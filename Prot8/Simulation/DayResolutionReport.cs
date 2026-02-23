@@ -36,13 +36,13 @@ public sealed class DayResolutionReport(int day)
 
     public string? RecoveryBlockedReason { get; set; }
 
-    public int StartFood { get; set; }
-    public int StartWater { get; set; }
-    public int StartFuel { get; set; }
-    public int StartMorale { get; set; }
-    public int StartUnrest { get; set; }
-    public int StartSickness { get; set; }
-    public int StartHealthyWorkers { get; set; }
+    public int StartFood { get; init; }
+    public int StartWater { get; init; }
+    public int StartFuel { get; init; }
+    public int StartMorale { get; init; }
+    public int StartUnrest { get; init; }
+    public int StartSickness { get; init; }
+    public int StartHealthyWorkers { get; init; }
 
     public void Add(string tag, string message)
     {

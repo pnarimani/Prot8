@@ -5,22 +5,30 @@ namespace Prot8.Orders;
 
 public sealed class BurnSurplusOrder : IEmergencyOrder
 {
-    private const int MaterialsCost = 5;
-    private const int SicknessReduction = 3;
-    private const int MoraleGain = 3;
+    const int MaterialsCost = 5;
+    const int SicknessReduction = 5;
+    const int MoraleGain = 10;
 
     public string Id => "burn_surplus";
     public string Name => "Burn Surplus for Warmth";
     public int CooldownDays => 2;
 
-    public string GetTooltip(GameState state) =>
-        $"-{MaterialsCost} materials, -{SicknessReduction} sickness, +{MoraleGain} morale.";
+    public string GetTooltip(GameState state)
+    {
+        return $"-{MaterialsCost} materials, -{SicknessReduction} sickness, +{MoraleGain} morale.";
+    }
 
     public bool CanIssue(GameState state, out string reason)
     {
         if (!state.Resources.Has(ResourceKind.Materials, MaterialsCost))
         {
             reason = $"Requires at least {MaterialsCost} materials.";
+            return false;
+        }
+
+        if (state.Day < 10)
+        {
+            reason = "";
             return false;
         }
 
