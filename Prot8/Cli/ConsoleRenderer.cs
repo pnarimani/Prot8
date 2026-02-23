@@ -1,6 +1,5 @@
 using Prot8.Cli.ViewModels;
 using Prot8.Constants;
-using Prot8.Events;
 
 namespace Prot8.Cli.Output;
 
@@ -9,8 +8,7 @@ public sealed class ConsoleRenderer(TextWriter output)
     public void RenderDayStart(DayStartViewModel vm)
     {
         output.WriteLine();
-        output.WriteLine(
-            $"Day {vm.Day} / {vm.TargetSurvivalDay}  |  Siege Intensity: {vm.SiegeIntensity}  |  Active Perimeter: {vm.ActivePerimeterName}");
+        output.WriteLine($"=== DAY {vm.Day}/{vm.TargetSurvivalDay}  Siege:{vm.SiegeIntensity}  Perimeter:{vm.ActivePerimeterName} ===");
         output.WriteLine();
 
         RenderResources(vm);
@@ -19,15 +17,12 @@ public sealed class ConsoleRenderer(TextWriter output)
         RenderZones(vm);
         RenderMissions(vm);
         RenderLaws(vm);
-        RenderEvents();
         RenderActionReference(vm);
     }
 
     public void RenderPendingDayAction(PendingPlanViewModel vm)
     {
-        output.Write("Pending Day Action: ");
-        output.Write(vm.QueuedActionType is null ? "none" : $"{vm.QueuedActionType} -> {vm.QueuedActionName}");
-        output.WriteLine();
+        output.WriteLine($"Action: {(vm.QueuedActionType is null ? "none" : $"{vm.QueuedActionType} -> {vm.QueuedActionName}")}");
     }
 
     public void RenderActionReference(DayStartViewModel vm)
@@ -36,60 +31,28 @@ public sealed class ConsoleRenderer(TextWriter output)
         RenderAvailableOrders(vm);
         RenderAvailableMissions(vm);
 
-        output.WriteLine();
-        output.WriteLine("Available Commands (sections with < > are mandatory)");
-        output.WriteLine(
-            "  assign <JobType> <Workers>          Set workers for one production slot (absolute value, steps of 5).");
-        output.WriteLine("  enact <LawId>                       Queue one available law for today.");
-        output.WriteLine("  order <OrderId> [ZoneId]            Queue one available emergency order for today.");
-        output.WriteLine("  mission <MissionId>                 Queue one available mission for today.");
-        output.WriteLine("  clear_assignments                   Reset all job assignments to 0.");
-        output.WriteLine("  clear_action                        Clear queued law/order/mission action.");
-        output.WriteLine("  help                                Print this available-actions list.");
-        output.WriteLine("  end_day                             Resolve simulation using current plan.");
+        output.WriteLine("Commands (<> required): assign <Job> <N>  |  enact <LawId>  |  order <OrderId> [ZoneId]  |  mission <MissionId>  |  clear_assignments  |  clear_action  |  end_day  |  help");
         output.WriteLine();
     }
 
     public void RenderDayReport(DayReportViewModel vm)
     {
         output.WriteLine();
-        output.WriteLine($"Day {vm.Day} Resolution");
-        output.WriteLine(new string('-', 76));
+        output.WriteLine($"--- Day {vm.Day} Resolution ---");
 
         foreach (var entry in vm.Entries)
-        {
             output.WriteLine($"[{entry.Tag}] {entry.Message}");
-        }
 
         if (vm.TriggeredEvents.Count > 0)
-        {
-            output.WriteLine();
-            output.WriteLine("Triggered Events");
-            foreach (var evt in vm.TriggeredEvents)
-            {
-                output.WriteLine($"  - {evt}");
-            }
-        }
+            output.WriteLine($"Events: {string.Join(", ", vm.TriggeredEvents)}");
 
         if (vm.ResolvedMissions.Count > 0)
-        {
-            output.WriteLine();
-            output.WriteLine("Mission Outcomes");
-            foreach (var mission in vm.ResolvedMissions)
-            {
-                output.WriteLine($"  - {mission}");
-            }
-        }
+            output.WriteLine($"Missions: {string.Join(", ", vm.ResolvedMissions)}");
 
-        output.WriteLine();
-        output.WriteLine("Recovery Status");
-        output.WriteLine($"  Recovery enabled: {(vm.RecoveryEnabledToday ? "Yes" : "No")}");
-        output.WriteLine($"  Recovered today: {vm.RecoveredWorkersToday}");
-        output.WriteLine($"  Medicine spent on recovery: {vm.RecoveryMedicineSpentToday}");
-        if (!string.IsNullOrWhiteSpace(vm.RecoveryBlockedReason))
-        {
-            output.WriteLine($"  Blocked reason: {vm.RecoveryBlockedReason}");
-        }
+        var recoveryStatus = vm.RecoveryEnabledToday
+            ? $"recovered {vm.RecoveredWorkersToday} workers (medicine -{vm.RecoveryMedicineSpentToday})"
+            : $"blocked — {vm.RecoveryBlockedReason}";
+        output.WriteLine($"Recovery: {recoveryStatus}");
 
         output.WriteLine();
     }
@@ -126,13 +89,8 @@ public sealed class ConsoleRenderer(TextWriter output)
         var waterNeed = (int)Math.Ceiling(pop * GameBalance.WaterPerPersonPerDay);
         var fuelNeed = (int)Math.Ceiling(pop * GameBalance.FuelPerPersonPerDay);
 
-        output.WriteLine("Resources");
-        output.WriteLine(
-            $"  Food: {res.Food,4}  Water: {res.Water,4}  Fuel: {res.Fuel,4}  Medicine: {res.Medicine,4}  Materials: {res.Materials,4}");
-        output.WriteLine(
-            $"  Daily need ({pop} pop):  Food ~{foodNeed}  Water ~{waterNeed}  Fuel ~{fuelNeed}  [shortfall each day → +Unrest  −Morale  +Sickness]");
-        output.WriteLine(
-            $"  Morale: {vm.Morale,3}/100  Unrest: {vm.Unrest,3}/100  Sickness: {vm.Sickness,3}/100  {SicknessStatusNote(vm.Sickness)}");
+        output.WriteLine($"Resources  Food:{res.Food,4}  Water:{res.Water,4}  Fuel:{res.Fuel,4}  Medicine:{res.Medicine,4}  Materials:{res.Materials,4}");
+        output.WriteLine($"           Need/day ({pop} pop): Food~{foodNeed} Water~{waterNeed} Fuel~{fuelNeed}  |  Morale:{vm.Morale,3}  Unrest:{vm.Unrest,3}  Sickness:{vm.Sickness,3}  {SicknessStatusNote(vm.Sickness)}");
         output.WriteLine();
     }
 
@@ -154,32 +112,22 @@ public sealed class ConsoleRenderer(TextWriter output)
     void RenderPopulation(DayStartViewModel vm)
     {
         var pop = vm.Population;
-        output.WriteLine("Population");
-        output.WriteLine($"  Healthy Workers: {pop.HealthyWorkers}");
-        output.WriteLine($"  Guards:          {pop.Guards}");
-        output.WriteLine($"  Sick Workers:    {pop.SickWorkers}");
-        output.WriteLine($"  Elderly:         {pop.Elderly}");
-        output.WriteLine($"  Total:           {pop.TotalPopulation}");
-        output.WriteLine($"  Workers reserved on missions: {vm.ActiveMissions.Sum(m => m.WorkerCost)}");
-        output.WriteLine(
-            $"  Available for assignment today: {vm.Population.HealthyWorkers - vm.ActiveMissions.Sum(m => m.WorkerCost)}");
+        var onMissions = vm.ActiveMissions.Sum(m => m.WorkerCost);
+        output.WriteLine($"Population  Healthy:{pop.HealthyWorkers}  Guards:{pop.Guards}  Sick:{pop.SickWorkers}  Elderly:{pop.Elderly}  (Total:{pop.TotalPopulation})  |  On missions:{onMissions}  |  Available:{pop.HealthyWorkers - onMissions}");
         output.WriteLine();
     }
 
     void RenderJobs(DayStartViewModel vm)
     {
         output.WriteLine("Jobs");
-
         foreach (var (jobType, jvm) in vm.Jobs)
         {
-            var workers = jvm.AssignedWorkers;
-            var inputsPerWorker = string.Join(", ", jvm.InputPerWorker.Select(x => x.ToString()));
-            var outputsPerWorker = string.Join(", ", jvm.OutputPerWorker.Select(x => x.ToString()));
-            var currentInputs = string.Join(", ", jvm.CurrentInput.Select(x => x.ToString()));
-            var currentOutputs = string.Join(", ", jvm.CurrentOutput.Select(x => x.ToString()));
-            output.WriteLine($" {jobType,-18} | {workers,3} workers | {currentInputs,-12} -> {currentOutputs,-12} | {inputsPerWorker,-12} / per worker -> {outputsPerWorker,-12}");
+            var inputs = string.Join(", ", jvm.CurrentInput.Select(x => x.ToString()));
+            var outputs = string.Join(", ", jvm.CurrentOutput.Select(x => x.ToString()));
+            var perWorker = string.Join(", ", jvm.OutputPerWorker.Select(x => x.ToString()));
+            var inputStr = inputs.Length > 0 ? $"{inputs} -> " : "";
+            output.WriteLine($"  {jobType,-18}  {jvm.AssignedWorkers,3} wkrs  |  {inputStr}{outputs}  (+{perWorker}/wkr)");
         }
-
         output.WriteLine();
     }
 
@@ -188,125 +136,77 @@ public sealed class ConsoleRenderer(TextWriter output)
         output.WriteLine("Zones");
         foreach (var zone in vm.Zones)
         {
-            var status = zone.IsLost ? "LOST" : "ACTIVE";
+            var status = zone.IsLost ? "LOST  " : "active";
             var over = zone.Population - zone.Capacity;
-            var overText = over > 0 ? $" (Over by {over})" : string.Empty;
-            output.WriteLine(
-                $"  {(int)zone.Id}. {zone.Name,-18} Integrity: {zone.Integrity,3}  Capacity: {zone.Capacity,3}  Housed: {zone.Population,3}  {status}{overText}");
+            var overText = over > 0 ? $" OVER+{over}" : string.Empty;
+            output.WriteLine($"  {(int)zone.Id}. {zone.Name,-18}  [{status}]  Int:{zone.Integrity,3}  Cap:{zone.Capacity,3}  Pop:{zone.Population,3}{overText}");
         }
-
         output.WriteLine();
     }
 
     void RenderMissions(DayStartViewModel vm)
     {
-        output.WriteLine("Active Missions");
         if (vm.ActiveMissions.Count == 0)
         {
-            output.WriteLine("  None");
+            output.WriteLine("Active Missions  None");
         }
         else
         {
-            foreach (var mission in vm.ActiveMissions)
-            {
-                output.WriteLine(
-                    $"  {mission.MissionName}: {mission.DaysRemaining} day(s) remaining, {mission.WorkerCost} workers committed");
-            }
+            var list = string.Join("  |  ", vm.ActiveMissions.Select(m => $"{m.MissionName}: {m.DaysRemaining}d, {m.WorkerCost} wkrs"));
+            output.WriteLine($"Active Missions  {list}");
         }
-
         output.WriteLine();
     }
 
     void RenderLaws(DayStartViewModel vm)
     {
-        output.WriteLine("Enacted Laws");
-        if (vm.AvailableLaws.Count == 0 || !vm.AvailableLaws.Any(l => l.IsActive))
-        {
-            output.WriteLine("  None");
-        }
-        else
-        {
-            foreach (var law in vm.AvailableLaws.Where(l => l.IsActive))
-            {
-                output.WriteLine($"  {law.Name}");
-            }
-        }
-
-        output.WriteLine();
-    }
-
-    void RenderEvents()
-    {
-        output.WriteLine("Possible Events");
-        foreach (var evt in EventCatalog.GetAll())
-        {
-            output.WriteLine($"  {evt.Name}: {evt.Description}");
-        }
-
+        var active = vm.AvailableLaws.Where(l => l.IsActive).Select(l => l.Name).ToList();
+        output.WriteLine($"Enacted Laws  {(active.Count == 0 ? "None" : string.Join(", ", active))}");
         output.WriteLine();
     }
 
     void RenderAvailableLaws(DayStartViewModel vm)
     {
-        output.WriteLine("Available Laws");
         var available = vm.AvailableLaws.Where(l => !l.IsActive).ToList();
         if (available.Count == 0)
         {
-            output.WriteLine("  None currently available.");
-            output.WriteLine();
+            output.WriteLine("Available Laws  None");
             return;
         }
-
+        output.WriteLine("Available Laws");
         foreach (var law in available)
-        {
-            output.WriteLine($"  {law.Name} ({law.Id}) | {law.Tooltip}");
-        }
-
+            output.WriteLine($"  {law.Id,-20} {law.Name} | {law.Tooltip}");
         output.WriteLine();
     }
 
     void RenderAvailableOrders(DayStartViewModel vm)
     {
-        output.WriteLine("Available Emergency Orders");
         if (vm.OrderCooldownDaysRemaining > 0)
         {
-            output.WriteLine($"  On cooldown ({vm.OrderCooldownDaysRemaining} day(s) remaining).");
-            output.WriteLine();
+            output.WriteLine($"Available Orders  On cooldown ({vm.OrderCooldownDaysRemaining}d remaining)");
             return;
         }
-
-        var available = vm.AvailableOrders;
-        if (available.Count == 0)
+        if (vm.AvailableOrders.Count == 0)
         {
-            output.WriteLine("  None currently available.");
-            output.WriteLine();
+            output.WriteLine("Available Orders  None");
             return;
         }
-
-        foreach (var order in available)
-        {
-            output.WriteLine($"  {order.Name} ({order.Id}) | {order.Tooltip}");
-        }
-
+        output.WriteLine("Available Orders");
+        foreach (var order in vm.AvailableOrders)
+            output.WriteLine($"  {order.Id,-20} {order.Name} | {order.Tooltip}");
         output.WriteLine();
     }
 
     void RenderAvailableMissions(DayStartViewModel vm)
     {
-        output.WriteLine("Available Missions");
-        var available = vm.AvailableMissions;
-        if (available.Count == 0)
+        if (vm.AvailableMissions.Count == 0)
         {
-            output.WriteLine("  None currently available.");
-            output.WriteLine();
+            output.WriteLine("Available Missions  None");
             return;
         }
-
-        foreach (var mission in available)
-        {
-            output.WriteLine($"  {mission.Name} ({mission.Id}) | {mission.Tooltip}");
-        }
-
+        output.WriteLine("Available Missions");
+        foreach (var mission in vm.AvailableMissions)
+            output.WriteLine($"  {mission.Id,-20} {mission.Name} ({mission.DurationDays}d, {mission.RequiredIdleWorkers} wkrs) | {mission.Tooltip}");
         output.WriteLine();
     }
 }
