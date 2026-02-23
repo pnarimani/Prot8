@@ -30,7 +30,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         );
     }
 
-    static IRenderable BuildHeader(DayStartViewModel vm)
+    static Rows BuildHeader(DayStartViewModel vm)
     {
         var items = new List<IRenderable>
         {
@@ -47,12 +47,12 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             foreach (var alert in vm.SituationAlerts)
             {
                 var color = alert.StartsWith("CRITICAL") ? "bold red" : "bold yellow";
-                items.Add(new Markup($"[{color}]  {Esc(alert)}[/]"));
+                items.Add(Align.Center(new Markup($"[{color}]  {Esc(alert)}[/]")));
             }
         }
 
         if (vm.DisruptionText is not null)
-            items.Add(new Markup($"[bold red]*** {Esc(vm.DisruptionText)} ***[/]"));
+            items.Add(Align.Center(new Markup($"[bold red]*** {Esc(vm.DisruptionText)} ***[/]")));
 
         return new Rows(items);
     }
@@ -188,7 +188,8 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
     {
         var table = new Table
         {
-            Border = TableBorder.Simple, Expand = true,
+            Border = TableBorder.Horizontal,
+            Expand = true,
             Title = new TableTitle("[bold]Jobs[/]"),
         };
         table.AddColumn("Job");
@@ -214,11 +215,12 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         return table;
     }
 
-    static IRenderable BuildZonesTable(DayStartViewModel vm)
+    static Table BuildZonesTable(DayStartViewModel vm)
     {
         var table = new Table
         {
-            Border = TableBorder.Simple, Expand = true,
+            Border = TableBorder.Horizontal,
+            Expand = true,
             Title = new TableTitle("[bold]Zones[/]"),
         };
         table.AddColumn("#");
@@ -344,8 +346,12 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         if (available.Count == 0)
             return new Markup("[bold]Available Laws[/]  [grey]None[/]");
 
-        var table = new Table { Border = TableBorder.Simple, Expand = true };
-        table.Title = new TableTitle("[bold]Available Laws[/]");
+        var table = new Table
+        {
+            Border = TableBorder.Simple,
+            Expand = true,
+            Title = new TableTitle("[bold]Available Laws[/]"),
+        };
         table.AddColumn(new TableColumn("[green]ID[/]"));
         table.AddColumn("Name");
         table.AddColumn("Effect");
@@ -365,7 +371,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
         if (vm.AvailableOrders.Count > 0)
         {
-            var table = new Table { Border = TableBorder.Simple, Expand = true };
+            var table = new Table { Border = TableBorder.Simple, Expand = false };
             table.Title = new TableTitle("[bold]Available Orders[/] [grey](per-order cooldowns)[/]");
             table.AddColumn(new TableColumn("[orange1]ID[/]"));
             table.AddColumn("Name");
@@ -394,7 +400,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         if (vm.AvailableMissions.Count == 0)
             return new Markup("[bold]Available Missions[/]  [grey]None[/]");
 
-        var table = new Table { Border = TableBorder.Simple, Expand = true };
+        var table = new Table { Border = TableBorder.Simple, Expand = false };
         table.Title = new TableTitle("[bold]Available Missions[/]");
         table.AddColumn(new TableColumn("[dodgerblue1]ID[/]"));
         table.AddColumn("Name");
@@ -564,7 +570,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 $"Total deaths: [red]{vm.TotalDeaths}[/], total desertions: [yellow]{vm.TotalDesertions}[/]"));
             lines.Add(new Markup("Final Morale, Unrest, Sickness shown on next screen."));
 
-            var panel = new Panel(new Rows(lines.Cast<IRenderable>()))
+            var panel = new Panel(new Rows(lines))
             {
                 Header = new PanelHeader("[bold red]DEFEAT[/]"),
                 Border = BoxBorder.Double,

@@ -153,8 +153,8 @@ public sealed class GameSimulationEngine(GameState state)
                 state.FirstLawName = law.Name;
             }
 
-            law.OnEnact(state, report);
             report.Add(ReasonTags.LawEnact, $"Law enacted: {law.Name}.");
+            law.OnEnact(state, report);
             return;
         }
 
