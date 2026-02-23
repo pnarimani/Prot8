@@ -169,10 +169,10 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         if (vm.Population.SickWorkers > 0)
         {
             var recoveryInfo = vm.Population.RecoveryDaysAtCurrentSickness >= 999
-                ? "[red]No Rec (sickness >= 50)[/]"
-                : $"Rec: ~{vm.Population.RecoveryDaysAtCurrentSickness}d";
+                ? "[red]No Recovery (sickness >= 50)[/]"
+                : $"Recovery Days: ~{vm.Population.RecoveryDaysAtCurrentSickness}d";
             var readyStr = vm.Population.SickReadyToRecover > 0
-                ? $"  [green]{vm.Population.SickReadyToRecover} to Rec[/]"
+                ? $"  [green]{vm.Population.SickReadyToRecover} to Recover[/]"
                 : "";
             table.AddRow(
                 new Markup($"{recoveryInfo}{readyStr}"),
