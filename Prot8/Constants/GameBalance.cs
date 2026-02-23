@@ -168,13 +168,6 @@ public static class GameBalance
         [ZoneId.Keep] = 0,
     };
 
-    public static readonly IReadOnlyDictionary<int, int> RecoveryDelayBySicknessBand = new Dictionary<int, int>
-    {
-        [19] = 0,
-        [29] = 1,
-        [39] = 2,
-    };
-
     public static readonly IReadOnlyDictionary<string, int> EventCooldownDays = new Dictionary<string, int>
     {
         ["hunger_riot"] = 3,
@@ -207,7 +200,7 @@ public static class GameBalance
             return BaseRecoveryTimeDays + 2;
         }
 
-        return int.MaxValue;
+        return 999;
     }
 
     public static int ClampStat(int value)

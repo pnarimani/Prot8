@@ -14,7 +14,7 @@ public sealed class MedicalTriageLaw : ILaw
     public string Name => "Medical Triage";
 
     public string GetTooltip(GameState state) =>
-        $"-{MedicineUsageMultiplier * 100}% medicine usage, {DailySickDeaths} sick deaths/day, -{DailyMoraleHit} morale/day. Requires medicine < {MedicineThreshold}.";
+        $"-{(1 - MedicineUsageMultiplier) * 100}% medicine usage, {DailySickDeaths} sick deaths/day, -{DailyMoraleHit} morale/day. Requires medicine < {MedicineThreshold}.";
 
     public bool CanEnact(GameState state, out string reason)
     {
@@ -35,11 +35,16 @@ public sealed class MedicalTriageLaw : ILaw
     public void ApplyDaily(GameState state, DayResolutionReport report)
     {
         state.DailyEffects.MedicineUsageMultiplier *= MedicineUsageMultiplier;
-        var deaths = state.Population.RemoveSickWorkers(DailySickDeaths);
-        if (deaths > 0)
+        var sickToKill = Math.Min(DailySickDeaths, state.Population.SickWorkers);
+        if (sickToKill > 0)
         {
-            state.TotalDeaths += deaths;
-            report.Add(ReasonTags.LawPassive, $"{Name}: {deaths} sick workers died due to triage limits.");
+            var removed = state.Population.RemoveSickWorkers(sickToKill);
+            if (removed > 0)
+            {
+                state.TotalDeaths += removed;
+                state.Allocation.RemoveWorkersProportionally(removed);
+                report.Add(ReasonTags.LawPassive, $"{Name}: {removed} sick workers died due to triage limits.");
+            }
         }
 
         StateChangeApplier.AddMorale(state, -DailyMoraleHit, report, ReasonTags.LawPassive, Name);

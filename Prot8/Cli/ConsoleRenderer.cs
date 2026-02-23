@@ -85,8 +85,8 @@ public sealed class ConsoleRenderer(TextWriter output)
     {
         var res = vm.Resources;
         var pop = vm.Population.TotalPopulation;
-        var foodNeed = (int)Math.Ceiling(pop * GameBalance.FoodPerPersonPerDay);
-        var waterNeed = (int)Math.Ceiling(pop * GameBalance.WaterPerPersonPerDay);
+        var foodNeed = (int)Math.Ceiling(pop * GameBalance.FoodPerPersonPerDay * vm.FoodConsumptionMultiplier);
+        var waterNeed = (int)Math.Ceiling(pop * GameBalance.WaterPerPersonPerDay * vm.WaterConsumptionMultiplier);
         var fuelNeed = (int)Math.Ceiling(pop * GameBalance.FuelPerPersonPerDay);
 
         output.WriteLine($"Resources  Food:{res.Food,4}  Water:{res.Water,4}  Fuel:{res.Fuel,4}  Medicine:{res.Medicine,4}  Materials:{res.Materials,4}");

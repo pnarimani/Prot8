@@ -23,6 +23,8 @@ public class GameViewModelFactory(GameState state)
             Unrest = state.Unrest,
             Sickness = state.Sickness,
             IdleWorkersForAssignment = state.IdleWorkers,
+            FoodConsumptionMultiplier = ComputeFoodConsumptionMultiplier(state),
+            WaterConsumptionMultiplier = ComputeWaterConsumptionMultiplier(state),
             Resources = new ResourceViewModel
             {
                 Food = state.Resources[ResourceKind.Food],
@@ -44,7 +46,7 @@ public class GameViewModelFactory(GameState state)
                 Name = zone.Name,
                 Integrity = zone.Integrity,
                 Capacity = zone.Capacity,
-                Population = state.GetZonePopulation(),
+                Population = zone.IsLost ? 0 : state.GetZonePopulation(),
                 IsLost = zone.IsLost,
             }).ToList(),
             ActiveMissions = state.ActiveMissions.Select(m => new ActiveMissionViewModel
@@ -150,19 +152,32 @@ public class GameViewModelFactory(GameState state)
 
     static IReadOnlyList<LawViewModel> ToLawViewModels(GameState state)
     {
-        var available = ActionAvailability.GetAvailableLaws(state);
         var result = new List<LawViewModel>();
 
-        for (var index = 0; index < available.Count; index++)
+        // First add all enacted (active) laws
+        foreach (var lawId in state.ActiveLawIds)
         {
-            var law = available[index];
-
+            var law = LawCatalog.Find(lawId);
+            if (law is null) continue;
             result.Add(new LawViewModel
             {
                 Id = law.Id,
                 Name = law.Name,
                 Tooltip = law.GetTooltip(state),
-                IsActive = state.ActiveLawIds.Contains(law.Id),
+                IsActive = true,
+            });
+        }
+
+        // Then add available (enactable) laws
+        var available = ActionAvailability.GetAvailableLaws(state);
+        foreach (var law in available)
+        {
+            result.Add(new LawViewModel
+            {
+                Id = law.Id,
+                Name = law.Name,
+                Tooltip = law.GetTooltip(state),
+                IsActive = false,
             });
         }
 
@@ -246,5 +261,21 @@ public class GameViewModelFactory(GameState state)
         }
 
         return result;
+    }
+
+    static double ComputeFoodConsumptionMultiplier(GameState state)
+    {
+        var multiplier = 1.0;
+        if (state.ActiveLawIds.Contains("strict_rations"))
+            multiplier *= 0.75;
+        return multiplier;
+    }
+
+    static double ComputeWaterConsumptionMultiplier(GameState state)
+    {
+        var multiplier = 1.0;
+        if (state.ActiveLawIds.Contains("diluted_water"))
+            multiplier *= 0.75;
+        return multiplier;
     }
 }

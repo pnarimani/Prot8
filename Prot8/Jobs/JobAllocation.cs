@@ -47,7 +47,7 @@ public sealed class JobAllocation
             }
 
             var proportionalShare = (int)Math.Round((double)jobWorkers / total * count);
-            var toRemove = Math.Min(proportionalShare, jobWorkers);
+            var toRemove = Math.Min(proportionalShare, Math.Min(jobWorkers, count - removed));
             _workers[job] -= toRemove;
             removed += toRemove;
         }

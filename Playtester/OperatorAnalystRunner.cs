@@ -25,7 +25,7 @@ public class OperatorAnalystRunner
     {
         using var llm = new LmStudioClient(config.Endpoint, config.Model);
 
-        var survivalGuide = "No Suvival Guide";
+        var survivalGuide = "No Survival Guide";
 
         var jsonOptions = new JsonSerializerOptions
         {
@@ -142,7 +142,14 @@ public class OperatorAnalystRunner
 
     static string ParseSurvivalGuide(string postmortem)
     {
-        var json = JsonNode.Parse(postmortem);
-        return json["survival_guide"].ToString();
+        try
+        {
+            var json = JsonNode.Parse(postmortem);
+            return json?["survival_guide"]?.ToString() ?? "(failed to parse survival guide)";
+        }
+        catch
+        {
+            return "(failed to parse survival guide)";
+        }
     }
 }

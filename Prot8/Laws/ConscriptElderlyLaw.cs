@@ -11,7 +11,7 @@ public sealed class ConscriptElderlyLaw : ILaw
 
     public string Id => "conscript_elderly";
     public string Name => "Conscript the Elderly";
-    public string GetTooltip(GameState state) => $"Convert all elderly to workers. -{MoraleHit} morale, +{UnrestHit} unrest. {DailyDeaths} elderly death/day from labour. Day {MinimumDay}+.";
+    public string GetTooltip(GameState state) => $"Convert all elderly ({state.Population.Elderly}) to workers. -{MoraleHit} morale, +{UnrestHit} unrest. {DailyDeaths} death/day from exhaustion. Day {MinimumDay}+.";
 
     public bool CanEnact(GameState state, out string reason)
     {

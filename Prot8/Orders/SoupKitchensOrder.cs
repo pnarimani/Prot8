@@ -14,6 +14,12 @@ public sealed class SoupKitchensOrder : IEmergencyOrder
 
     public bool CanIssue(GameState state, out string reason)
     {
+        if (!state.Resources.Has(Resources.ResourceKind.Food, FoodCost))
+        {
+            reason = $"Requires at least {FoodCost} food.";
+            return false;
+        }
+
         reason = string.Empty;
         return true;
     }

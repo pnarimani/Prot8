@@ -15,13 +15,13 @@ public sealed class PublicExecutionsLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
-        if (state.Unrest > 60)
+        if (state.Unrest > UnrestThreshold)
         {
             reason = string.Empty;
             return true;
         }
 
-        reason = "Requires unrest above 60.";
+        reason = $"Requires unrest above {UnrestThreshold}.";
         return false;
     }
 

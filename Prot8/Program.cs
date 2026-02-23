@@ -50,16 +50,3 @@ static int? TryParseSeed(string[] args)
 
     return null;
 }
-
-static bool TryParseNoShortcuts(string[] args)
-{
-    foreach (var arg in args)
-    {
-        if (arg.Equals("--no-shortcuts", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}

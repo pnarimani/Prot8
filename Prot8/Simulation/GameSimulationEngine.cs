@@ -130,6 +130,16 @@ public sealed class GameSimulationEngine(GameState state)
                 return;
             }
 
+            if (state.MissionCooldowns.TryGetValue(mission.Id, out var lastMissionDay))
+            {
+                if (state.Day - lastMissionDay < GameBalance.MissionCooldownDays)
+                {
+                    var nextDay = lastMissionDay + GameBalance.MissionCooldownDays;
+                    report.Add(ReasonTags.Mission, $"Mission cooldown active for {mission.Name}. Next available day: {nextDay}.");
+                    return;
+                }
+            }
+
             if (!mission.CanStart(state, out var reason))
             {
                 report.Add(ReasonTags.Mission, $"Cannot start mission {mission.Name}: {reason}");
@@ -264,7 +274,7 @@ public sealed class GameSimulationEngine(GameState state)
                         perCycle *= state.DailyEffects.MedicineUsageMultiplier;
                     }
 
-                    var spend = (int)Math.Ceiling(effectiveCycles * perCycle);
+                    var spend = Math.Min((int)Math.Ceiling(effectiveCycles * perCycle), state.Resources[pair.Resource]);
                     if (spend > 0)
                     {
                         state.Resources.Consume(pair.Resource, spend);
@@ -289,7 +299,7 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 state.Resources.Add(outputResource.Resource, produced);
                 result.AddResourceProduction(outputResource.Resource, produced);
-                report.Add(ReasonTags.Production, $"{job}: +{produced} {outputResource.Quantity}.");
+                report.Add(ReasonTags.Production, $"{job}: +{produced} {outputResource.Resource}.");
             }
             else if (job == JobType.Repairs)
             {

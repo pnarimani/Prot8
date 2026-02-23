@@ -26,5 +26,6 @@ public sealed class EnemyUltimatumEvent : TriggeredEventBase
         StateChangeApplier.ApplyDesertions(state, Desertions, report, ReasonTags.Event, $"{Name} panic");
 
         report.Add(ReasonTags.Event, $"{Name}: the enemy demands surrender. Civilians question whether resistance is worth the cost.");
+        StartCooldown(state);
     }
 }

@@ -18,6 +18,9 @@ public sealed class DayStartViewModel
     
     public int IdleWorkersForAssignment { get; init; }
 
+    public double FoodConsumptionMultiplier { get; init; } = 1.0;
+    public double WaterConsumptionMultiplier { get; init; } = 1.0;
+
     public ResourceViewModel Resources { get; init; } = new();
     public PopulationViewModel Population { get; init; } = new();
     public IReadOnlyList<ZoneViewModel> Zones { get; init; } = [];

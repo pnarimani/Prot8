@@ -27,5 +27,6 @@ public sealed class PlagueRatsEvent : TriggeredEventBase
 
         state.PlagueRatsActive = true;
         report.Add(ReasonTags.Event, $"{Name}: rats carry disease into the inner city. Sickness will spread faster from now on.");
+        StartCooldown(state);
     }
 }

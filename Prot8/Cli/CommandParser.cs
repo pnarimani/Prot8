@@ -27,10 +27,16 @@ public class CommandParser
                     return false;
                 }
 
+                if (!int.TryParse(parts[2], out var workers))
+                {
+                    error = $"Invalid worker count '{parts[2]}'. Must be an integer.";
+                    return false;
+                }
+
                 command = new AssignCommand
                 {
                     JobId = parts[1],
-                    DeltaWorkers = int.Parse(parts[2]),
+                    DeltaWorkers = workers,
                 };
                 return true;
 
@@ -60,10 +66,9 @@ public class CommandParser
 
             case "order":
             case "issue_order":
-                if (parts.Length < 2 || parts.Length > 3)
+                if (parts.Length != 2)
                 {
-                    var orderRef = "OrderId";
-                    error = $"Usage: order <{orderRef}>";
+                    error = "Usage: order <OrderId>";
                     return false;
                 }
 

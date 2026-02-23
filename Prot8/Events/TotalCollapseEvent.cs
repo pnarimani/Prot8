@@ -21,5 +21,6 @@ public sealed class TotalCollapseEvent : TriggeredEventBase
         state.GameOverCause = GameOverCause.TotalCollapse;
         state.GameOverDetails = "Food and water both reached zero for too long.";
         report.Add(ReasonTags.Event, $"{Name}: full supply collapse. Immediate game over.");
+        StartCooldown(state);
     }
 }

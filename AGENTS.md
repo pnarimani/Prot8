@@ -6,6 +6,25 @@ This file provides guidelines for agentic coding agents working on the Prot8 pro
 
 Prot8 is a CLI-based siege survival city manager game built with C# and .NET 10. The player must survive 40 days while managing declining resources, morale, and zone integrity under siege pressure. The project includes a Playtester component that uses AI agents to playtest the game via LM Studio.
 
+The enemy cannot be defeated; the city cannot be stabilized. The core experience is **managing decline under dual pressure**:
+
+* **External siege pressure** causes **zone contraction** (outer districts fall/evacuate, perimeter shrinks).
+* **Internal collapse** (morale/unrest/sickness) escalates, worsened by **overcrowding** when zones contract.
+
+Most runs should fail before **Day 25**. Survival to Day 40 should be rare and feel costly.
+
+### EMOTIONAL TARGET
+
+The player must feel:
+
+* Constant pressure
+* Moral compromise
+* Shrinking space
+* No clean solution
+* Survival equals sacrifice
+
+Success must feel like endurance, not triumph.
+
 ## Code Style Guidelines
 
 ### General Principles

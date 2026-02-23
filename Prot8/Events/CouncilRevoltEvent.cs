@@ -21,5 +21,6 @@ public sealed class CouncilRevoltEvent : TriggeredEventBase
         state.GameOverCause = GameOverCause.CouncilRevolt;
         state.GameOverDetails = "Council revolt overwhelmed command.";
         report.Add(ReasonTags.Event, $"{Name}: the council revolted. Immediate game over.");
+        StartCooldown(state);
     }
 }

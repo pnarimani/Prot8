@@ -19,6 +19,11 @@ public sealed class FireInArtisanQuarterEvent : TriggeredEventBase
 
     public override bool ShouldTrigger(GameState state)
     {
+        if (state.IsZoneLost(Zones.ZoneId.ArtisanQuarter))
+        {
+            return false;
+        }
+
         if (state.SiegeIntensity < SiegeIntensityThreshold)
         {
             return false;

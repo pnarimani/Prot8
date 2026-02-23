@@ -14,6 +14,12 @@ public sealed class InspireThePeopleOrder : IEmergencyOrder
 
     public bool CanIssue(GameState state, out string reason)
     {
+        if (!state.Resources.Has(Resources.ResourceKind.Materials, MaterialsCost))
+        {
+            reason = $"Requires at least {MaterialsCost} materials.";
+            return false;
+        }
+
         reason = string.Empty;
         return true;
     }

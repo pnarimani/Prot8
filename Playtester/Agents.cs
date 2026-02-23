@@ -1,5 +1,3 @@
-using System.Text.Json.Nodes;
-
 namespace Playtester;
 
 public static class Agents
@@ -128,8 +126,7 @@ public static class Agents
                         "properties": {
                             "survival_guide": {
                                 "type": "string",
-                                "description": "The entire survival guide",
-                                "items": { "type": "string" }
+                                "description": "The entire survival guide"
                             }
                         },
                         "required": ["survival_guide"],
@@ -155,12 +152,11 @@ public static class Agents
         - Do not invent mechanics, rules, commands, or hidden information.
         - Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects.
           Each command object has a "type" discriminator field and the command's own fields:
-            { "type": "assign",            "job_id": "<JobType>", "workers": <int> }
-            { "type": "clear_assignments" }
+            { "type": "add_workers",       "job_id": "<JobType>", "delta_workers": <positive int> }
+            { "type": "remove_workers",    "job_id": "<JobType>", "delta_workers": <positive int> }
             { "type": "enact_law",         "law_id": "<LawId>" }
             { "type": "issue_order",       "order_id": "<OrderId>" }
             { "type": "start_mission",     "mission_id": "<MissionId>" }
-            { "type": "clear_action" }
             { "type": "end_day" }  — must be the last command.
         """;
 
@@ -169,7 +165,7 @@ public static class Agents
     {
         if (!string.IsNullOrEmpty(previousRunLearnings))
         {
-            previousRunLearnings = "<prevoius_learnings>\n" + previousRunLearnings + "</prevoius_learnings>";
+            previousRunLearnings = "<previous_learnings>\n" + previousRunLearnings + "</previous_learnings>";
         }
 
         var errorSection = validationErrors is null
@@ -480,21 +476,10 @@ public static class Agents
                     },
                     "required": ["outcome", "cause", "impactful_decisions", "strategy", "unclear",
                                "fair_vs_unfair", "suggestions", "next_run", "learnings", "better_than_previous"],
-                    additionalProperties: false
+                    "additionalProperties": false
                 }
             }
         }
         """;
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    static JsonObject StringArray(string description)
-    {
-        return new JsonObject
-        {
-            ["type"] = "array",
-            ["description"] = description,
-            ["items"] = new JsonObject { ["type"] = "string" },
-        };
-    }
 }

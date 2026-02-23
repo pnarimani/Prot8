@@ -11,7 +11,7 @@ public sealed class EmergencyWaterRationOrder : IEmergencyOrder
     public string Name => "Emergency Water Ration";
 
     public string GetTooltip(GameState state) =>
-        $"-{WaterConsumptionMultiplier * 100}% water consumption today, +{SicknessHit} sickness.";
+        $"-{(1 - WaterConsumptionMultiplier) * 100}% water consumption today, +{SicknessHit} sickness.";
 
     public bool CanIssue(GameState state, out string reason)
     {

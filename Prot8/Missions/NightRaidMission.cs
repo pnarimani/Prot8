@@ -9,6 +9,7 @@ public sealed class NightRaidMission : IMissionDefinition
     const int GreatSiegeDelay = 3;
     const int OkSiegeDelay = 2;
     const int FailUnrest = 15;
+    const int FailDeaths = 6;
 
     public string Id => "night_raid";
     public string Name => "Night Raid";
@@ -16,7 +17,7 @@ public sealed class NightRaidMission : IMissionDefinition
     public int WorkerCost => 6;
 
     public string GetTooltip(GameState state) =>
-        $"Siege Delay +{GreatSiegeDelay} days ({GreatChance}%) | Siege Delay +{OkSiegeDelay} ({OkChance}%) | {WorkerCost} Deaths, +{FailUnrest} Unrest ({100 - GreatChance - OkChance}%)";
+        $"Siege Delay +{GreatSiegeDelay} days ({GreatChance}%) | Siege Delay +{OkSiegeDelay} ({OkChance}%) | {FailDeaths} Deaths, +{FailUnrest} Unrest ({100 - GreatChance - OkChance}%)";
 
     public bool CanStart(GameState state, out string reason)
     {
@@ -41,8 +42,8 @@ public sealed class NightRaidMission : IMissionDefinition
             return;
         }
 
-        StateChangeApplier.ApplyDeaths(state, WorkerCost, report, ReasonTags.Mission, Name);
+        StateChangeApplier.ApplyDeaths(state, FailDeaths, report, ReasonTags.Mission, Name);
         StateChangeApplier.AddUnrest(state, FailUnrest, report, ReasonTags.Mission, Name);
-        report.AddResolvedMission($"{Name}: operation failed ({WorkerCost} deaths, +{FailUnrest} unrest).");
+        report.AddResolvedMission($"{Name}: operation failed ({FailDeaths} deaths, +{FailUnrest} unrest).");
     }
 }

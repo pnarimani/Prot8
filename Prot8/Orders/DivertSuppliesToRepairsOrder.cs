@@ -17,6 +17,18 @@ public sealed class DivertSuppliesToRepairsOrder : IEmergencyOrder
 
     public bool CanIssue(GameState state, out string reason)
     {
+        if (!state.Resources.Has(ResourceKind.Food, FoodCost))
+        {
+            reason = $"Requires at least {FoodCost} food.";
+            return false;
+        }
+
+        if (!state.Resources.Has(ResourceKind.Water, WaterCost))
+        {
+            reason = $"Requires at least {WaterCost} water.";
+            return false;
+        }
+
         reason = string.Empty;
         return true;
     }

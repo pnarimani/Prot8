@@ -169,7 +169,7 @@ public sealed class GameState
             var allocation = AvailableHealthyWorkersForAllocation - sum;
             return allocation >= 0
                 ? allocation
-                : throw new InvalidOperationException("There are  more workers assigned to jobs than available workers");
+                : throw new InvalidOperationException("There are more workers assigned to jobs than available workers");
         }
     }
 
@@ -207,7 +207,8 @@ public sealed class GameState
 
     public int GetZonePopulation()
     {
-        return Population.TotalPopulation / Zones.Count(x => !x.IsLost);
+        var nonLostCount = Zones.Count(x => !x.IsLost);
+        return nonLostCount == 0 ? 0 : Population.TotalPopulation / nonLostCount;
     }
 
     static IReadOnlyList<ZoneState> CreateZones()
@@ -224,6 +225,6 @@ public sealed class GameState
 
     public int RollPercent()
     {
-        return Random.Next(0, 101);
+        return Random.Next(1, 101);
     }
 }

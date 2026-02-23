@@ -16,13 +16,13 @@ public sealed class ExtendedShiftsLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
-        if (state.Day >= 5)
+        if (state.Day >= MinimumDay)
         {
             reason = string.Empty;
             return true;
         }
 
-        reason = "Available from Day 5.";
+        reason = $"Available from Day {MinimumDay}.";
         return false;
     }
 

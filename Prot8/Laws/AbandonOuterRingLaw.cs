@@ -11,7 +11,7 @@ public sealed class AbandonOuterRingLaw : ILaw
 
     public string Id => "abandon_outer_ring";
     public string Name => "Abandon Outer Ring";
-    public string GetTooltip(GameState state) => $"Immediately lose Outer Farms, -{SiegeDamageMultiplier * 100}% daily siege damage, +{UnrestHit} unrest. Requires Outer Farms integrity < {IntegrityThreshold}.";
+    public string GetTooltip(GameState state) => $"Immediately lose Outer Farms, x{SiegeDamageMultiplier} daily siege damage (-{(1 - SiegeDamageMultiplier) * 100}%), +{UnrestHit} unrest. Requires Outer Farms integrity < {IntegrityThreshold}.";
 
     public bool CanEnact(GameState state, out string reason)
     {
@@ -22,13 +22,13 @@ public sealed class AbandonOuterRingLaw : ILaw
             return false;
         }
 
-        if (outerFarms.Integrity < 40)
+        if (outerFarms.Integrity < IntegrityThreshold)
         {
             reason = string.Empty;
             return true;
         }
 
-        reason = "Requires Outer Farms integrity below 40.";
+        reason = $"Requires Outer Farms integrity below {IntegrityThreshold}.";
         return false;
     }
 

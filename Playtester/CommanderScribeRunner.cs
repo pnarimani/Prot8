@@ -35,6 +35,7 @@ public class CommanderScribeRunner
             var state = new GameState(config.Seed);
             var engine = new GameSimulationEngine(state);
             using var telemetry = new RunTelemetryWriter(state, config.Seed);
+            notebook = "(empty - first day)";
 
             var timeline = new StringBuilder();
 
@@ -54,6 +55,7 @@ public class CommanderScribeRunner
                 for (var attempt = 1; attempt <= maxCommanderRetries; attempt++)
                 {
                     // Reset allocation and action for this attempt
+                    state.Allocation.Clear();
                     action = new TurnActionChoice();
                     executedCommands.Clear();
 
@@ -166,7 +168,7 @@ public class CommanderScribeRunner
             Console.WriteLine($"\nTelemetry:  {telemetry.FilePath}");
             Console.WriteLine($"Postmortem: {postmortemPath}");
 
-            // previousRunLearnings = ExtractLearnings(criticJson);
+            previousRunLearnings = ExtractLearnings(criticJson);
         }
 
 
