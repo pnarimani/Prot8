@@ -13,11 +13,11 @@ public static class GameBalance
     public const int StartingSickWorkers = 5;
     public const int StartingElderly = 5;
 
-    public const int StartingFood = 120;
+    public const int StartingFood = 80;
     public const int StartingWater = 80;
-    public const int StartingFuel = 200;
+    public const int StartingFuel = 40;
     public const int StartingMedicine = 20;
-    public const int StartingMaterials = 100;
+    public const int StartingMaterials = 40;
 
     public const int StartingMorale = 55;
     public const int StartingUnrest = 25;
@@ -56,11 +56,11 @@ public static class GameBalance
 
     public static readonly IReadOnlyList<ZoneTemplate> ZoneTemplates = new List<ZoneTemplate>
     {
-        new(ZoneId.OuterFarms, "Outer Farms", 100, 10, 1.0),
-        new(ZoneId.OuterResidential, "Outer Residential", 95, 5, 0.9),
-        new(ZoneId.ArtisanQuarter, "Artisan Quarter", 90, 5, 0.8),
-        new(ZoneId.InnerDistrict, "Inner District", 85, 5, 0.7),
-        new(ZoneId.Keep, "Keep", 80, 10, 0.6),
+        new(ZoneId.OuterFarms, "Outer Farms", 100, 15, 1.0),
+        new(ZoneId.OuterResidential, "Outer Residential", 95, 15, 0.9),
+        new(ZoneId.ArtisanQuarter, "Artisan Quarter", 90, 15, 0.8),
+        new(ZoneId.InnerDistrict, "Inner District", 85, 15, 0.7),
+        new(ZoneId.Keep, "Keep", 80, 15, 0.6),
     };
 
     public static readonly IReadOnlyDictionary<JobType, ZoneId> JobZoneMap = new Dictionary<JobType, ZoneId>
@@ -79,7 +79,7 @@ public static class GameBalance
         [JobType.WaterDrawing] = [],
         [JobType.MaterialsCrafting] = [],
         [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Materials, 3)],
-        [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Medicine, 2)],
+        [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Medicine, 1)],
         [JobType.FuelScavenging] = [],
     };
 
