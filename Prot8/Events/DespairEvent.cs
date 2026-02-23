@@ -4,31 +4,38 @@ namespace Prot8.Events;
 
 public sealed class DespairEvent : TriggeredEventBase
 {
+    private const int MinimumDay = 10;
+    private const int MoraleThreshold = 45;
+    private const int TriggerChance = 15;
+    private const int MoraleLoss = 10;
+    private const int UnrestGain = 8;
+    private const int Desertions = 3;
+
     public DespairEvent() : base("despair", "Wave of Despair",
-        "After day 10, 15% daily chance when morale < 45. Sudden morale and unrest shock.")
+        $"After day {MinimumDay}, {TriggerChance}% daily chance when morale < {MoraleThreshold}. -{MoraleLoss} morale, +{UnrestGain} unrest, {Desertions} desertions.")
     {
     }
 
     public override bool ShouldTrigger(GameState state)
     {
-        if (state.Day < 10)
+        if (state.Day < MinimumDay)
         {
             return false;
         }
 
-        if (state.Morale >= 45)
+        if (state.Morale >= MoraleThreshold)
         {
             return false;
         }
 
-        return state.Random.Next(1, 101) <= 15;
+        return state.Random.Next(1, 101) <= TriggerChance;
     }
 
     public override void Apply(GameState state, DayResolutionReport report)
     {
-        StateChangeApplier.AddMorale(state, -10, report, ReasonTags.Event, Name);
-        StateChangeApplier.AddUnrest(state, 8, report, ReasonTags.Event, Name);
-        StateChangeApplier.ApplyDesertions(state, 3, report, ReasonTags.Event, $"{Name} desertions");
+        StateChangeApplier.AddMorale(state, -MoraleLoss, report, ReasonTags.Event, Name);
+        StateChangeApplier.AddUnrest(state, UnrestGain, report, ReasonTags.Event, Name);
+        StateChangeApplier.ApplyDesertions(state, Desertions, report, ReasonTags.Event, $"{Name} desertions");
 
         StartCooldown(state);
     }

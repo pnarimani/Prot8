@@ -5,7 +5,8 @@ namespace Prot8.Events;
 
 public sealed class TotalCollapseEvent : TriggeredEventBase
 {
-    public TotalCollapseEvent() : base("total_collapse", "Total Collapse", "Trigger when food and water stay at zero for 2 consecutive days.")
+    public TotalCollapseEvent() : base("total_collapse", "Total Collapse",
+        $"Triggers when food and water stay at zero for {GameBalance.FoodWaterLossThresholdDays} consecutive days. Immediate game over.")
     {
     }
 

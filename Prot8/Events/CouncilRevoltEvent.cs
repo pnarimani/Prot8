@@ -5,7 +5,8 @@ namespace Prot8.Events;
 
 public sealed class CouncilRevoltEvent : TriggeredEventBase
 {
-    public CouncilRevoltEvent() : base("council_revolt", "Council Revolt", "Trigger when unrest exceeds 85.")
+    public CouncilRevoltEvent() : base("council_revolt", "Council Revolt",
+        $"Triggers when unrest > {GameBalance.RevoltThreshold}. Immediate game over.")
     {
     }
 

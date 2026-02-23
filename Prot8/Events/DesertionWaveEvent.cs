@@ -4,18 +4,22 @@ namespace Prot8.Events;
 
 public sealed class DesertionWaveEvent : TriggeredEventBase
 {
-    public DesertionWaveEvent() : base("desertion_wave", "Desertion Wave", "Trigger when morale drops below 30.")
+    private const int MoraleThreshold = 30;
+    private const int Desertions = 10;
+
+    public DesertionWaveEvent() : base("desertion_wave", "Desertion Wave",
+        $"Triggers when morale < {MoraleThreshold}. {Desertions} desertions.")
     {
     }
 
     public override bool ShouldTrigger(GameState state)
     {
-        return state.Morale < 30;
+        return state.Morale < MoraleThreshold;
     }
 
     public override void Apply(GameState state, DayResolutionReport report)
     {
-        StateChangeApplier.ApplyDesertions(state, 10, report, ReasonTags.Event, Name);
+        StateChangeApplier.ApplyDesertions(state, Desertions, report, ReasonTags.Event, Name);
         StartCooldown(state);
     }
 }

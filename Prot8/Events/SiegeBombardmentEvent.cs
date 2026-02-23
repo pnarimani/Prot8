@@ -1,3 +1,4 @@
+using Prot8.Resources;
 using Prot8.Simulation;
 using Prot8.Zones;
 
@@ -5,19 +6,27 @@ namespace Prot8.Events;
 
 public sealed class SiegeBombardmentEvent : TriggeredEventBase
 {
+    private const int MinimumDay = 8;
+    private const int TriggerChance = 20;
+    private const int BaseDamage = 8;
+    private const int DamagePerSiegeLevel = 2;
+    private const int BaseFoodLost = 5;
+    private const int FoodLostPerSiegeLevel = 3;
+    private const int Deaths = 2;
+
     public SiegeBombardmentEvent() : base("siege_bombardment", "Siege Bombardment",
-        "After day 8, 20% daily chance. Damages a random non-lost zone and destroys resources.")
+        $"After day {MinimumDay}, {TriggerChance}% daily chance. -{BaseDamage}+ integrity to random zone, -{BaseFoodLost}+ food (scales with siege), {Deaths} deaths.")
     {
     }
 
     public override bool ShouldTrigger(GameState state)
     {
-        if (state.Day < 8)
+        if (state.Day < MinimumDay)
         {
             return false;
         }
 
-        return state.Random.Next(1, 101) <= 20;
+        return state.Random.Next(1, 101) <= TriggerChance;
     }
 
     public override void Apply(GameState state, DayResolutionReport report)
@@ -34,7 +43,7 @@ public sealed class SiegeBombardmentEvent : TriggeredEventBase
         if (nonLostZones.Count > 0)
         {
             var target = nonLostZones[state.Random.Next(nonLostZones.Count)];
-            var damage = 8 + state.SiegeIntensity * 2;
+            var damage = BaseDamage + state.SiegeIntensity * DamagePerSiegeLevel;
             target.Integrity -= damage;
             report.Add(ReasonTags.Event, $"{Name}: bombardment struck {target.Name} for -{damage} integrity.");
 
@@ -44,9 +53,9 @@ public sealed class SiegeBombardmentEvent : TriggeredEventBase
             }
         }
 
-        var foodLost = 5 + state.SiegeIntensity * 3;
-        StateChangeApplier.AddResource(state, Resources.ResourceKind.Food, -foodLost, report, ReasonTags.Event, $"{Name} supplies destroyed");
-        StateChangeApplier.ApplyDeaths(state, 2, report, ReasonTags.Event, Name);
+        var foodLost = BaseFoodLost + state.SiegeIntensity * FoodLostPerSiegeLevel;
+        StateChangeApplier.AddResource(state, ResourceKind.Food, -foodLost, report, ReasonTags.Event, $"{Name} supplies destroyed");
+        StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.Event, Name);
 
         StartCooldown(state);
     }
