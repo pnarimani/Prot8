@@ -31,26 +31,26 @@ public sealed class GameSimulationEngine(GameState state)
         {
             case 0:
                 state.ActiveDisruption = "Heavy Rains: Food production -30%, water production +30% today.";
-                state.DailyEffects.FoodProductionMultiplier *= 0.7;
-                state.DailyEffects.WaterProductionMultiplier *= 1.3;
+                state.DailyEffects.FoodProductionMultiplier.Apply("Heavy Rains", 0.7);
+                state.DailyEffects.WaterProductionMultiplier.Apply("Heavy Rains", 1.3);
                 break;
             case 1:
                 state.ActiveDisruption = "Cold Snap: Fuel consumption +50% today, +2 sickness.";
-                state.DailyEffects.FuelConsumptionMultiplier = 1.5;
+                state.DailyEffects.FuelConsumptionMultiplier.Apply("Cold Snap", 1.5);
                 break;
             case 2:
                 state.ActiveDisruption = "Dust Storm: Materials crafting -40%, siege damage -20% today.";
-                state.DailyEffects.MaterialsProductionMultiplier *= 0.6;
+                state.DailyEffects.MaterialsProductionMultiplier.Apply("Dust Storm", 0.6);
                 state.DailyEffects.DustStormActive = true;
                 break;
             case 3:
                 state.ActiveDisruption = "Clear Skies: All production +15% today.";
-                state.DailyEffects.ProductionMultiplier *= 1.15;
+                state.DailyEffects.ProductionMultiplier.Apply("Clear Skies", 1.15);
                 break;
             case 4:
                 state.ActiveDisruption = "Fog Cover: Missions +10% success, repairs -30% today.";
                 state.DailyEffects.MissionSuccessBonus = 0.10;
-                state.DailyEffects.RepairProductionMultiplier *= 0.7;
+                state.DailyEffects.RepairProductionMultiplier.Apply("Fog Cover", 0.7);
                 break;
         }
     }
@@ -71,6 +71,12 @@ public sealed class GameSimulationEngine(GameState state)
         };
 
         RollDailyDisruption();
+
+        if (state.TaintedWellDaysRemaining > 0)
+        {
+            state.DailyEffects.WaterProductionMultiplier.Apply("Tainted Well", 0.6);
+        }
+
         TriggerEvents();
 
         return report;
@@ -168,7 +174,6 @@ public sealed class GameSimulationEngine(GameState state)
 
         if (state.TaintedWellDaysRemaining > 0)
         {
-            state.DailyEffects.WaterProductionMultiplier = 0.6;
             state.TaintedWellDaysRemaining -= 1;
         }
     }
@@ -357,8 +362,9 @@ public sealed class GameSimulationEngine(GameState state)
     {
         var result = new DailyProductionResult();
 
-        var globalMultiplier = StatModifiers.ComputeGlobalProductionMultiplier(state) *
-                               state.DailyEffects.ProductionMultiplier;
+        var statMult = StatModifiers.ComputeGlobalProductionMultiplier(state);
+        var globalMultiplier = Math.Clamp(statMult.Value, 0.25, 1.3) *
+                               state.DailyEffects.ProductionMultiplier.Value;
 
         foreach (var job in Enum.GetValues<JobType>())
         {
@@ -385,19 +391,19 @@ public sealed class GameSimulationEngine(GameState state)
 
             if (job == JobType.WaterDrawing)
             {
-                zoneMultiplier *= state.DailyEffects.WaterProductionMultiplier;
+                zoneMultiplier *= state.DailyEffects.WaterProductionMultiplier.Value;
             }
             else if (job == JobType.FoodProduction)
             {
-                zoneMultiplier *= state.DailyEffects.FoodProductionMultiplier;
+                zoneMultiplier *= state.DailyEffects.FoodProductionMultiplier.Value;
             }
             else if (job == JobType.MaterialsCrafting)
             {
-                zoneMultiplier *= state.DailyEffects.MaterialsProductionMultiplier;
+                zoneMultiplier *= state.DailyEffects.MaterialsProductionMultiplier.Value;
             }
             else if (job == JobType.Repairs)
             {
-                zoneMultiplier *= state.DailyEffects.RepairProductionMultiplier;
+                zoneMultiplier *= state.DailyEffects.RepairProductionMultiplier.Value;
             }
 
             var nominalCycles = workers * globalMultiplier * zoneMultiplier;
@@ -416,7 +422,7 @@ public sealed class GameSimulationEngine(GameState state)
                     var perCycle = pair.Quantity;
                     if (job == JobType.ClinicStaff && pair.Resource == ResourceKind.Medicine)
                     {
-                        perCycle *= state.DailyEffects.MedicineUsageMultiplier;
+                        perCycle *= state.DailyEffects.MedicineUsageMultiplier.Value;
                     }
 
                     if (perCycle <= 0)
@@ -455,7 +461,7 @@ public sealed class GameSimulationEngine(GameState state)
                     var perCycle = pair.Quantity;
                     if (job == JobType.ClinicStaff && pair.Resource == ResourceKind.Medicine)
                     {
-                        perCycle *= state.DailyEffects.MedicineUsageMultiplier;
+                        perCycle *= state.DailyEffects.MedicineUsageMultiplier.Value;
                     }
 
                     var spend = Math.Min((int)Math.Ceiling(effectiveCycles * perCycle), state.Resources[pair.Resource]);
@@ -506,11 +512,11 @@ public sealed class GameSimulationEngine(GameState state)
         var population = state.Population.TotalPopulation;
 
         var foodNeed = (int)Math.Ceiling(population * GameBalance.FoodPerPersonPerDay *
-                                         state.DailyEffects.FoodConsumptionMultiplier);
+                                         state.DailyEffects.FoodConsumptionMultiplier.Value);
         var waterNeed = (int)Math.Ceiling(population * GameBalance.WaterPerPersonPerDay *
-                                          state.DailyEffects.WaterConsumptionMultiplier);
+                                          state.DailyEffects.WaterConsumptionMultiplier.Value);
         var fuelNeed = (int)Math.Ceiling(population * GameBalance.FuelPerPersonPerDay *
-                                         state.DailyEffects.FuelConsumptionMultiplier);
+                                         state.DailyEffects.FuelConsumptionMultiplier.Value);
 
         var foodConsumed = state.Resources.Consume(ResourceKind.Food, foodNeed);
         var waterConsumed = state.Resources.Consume(ResourceKind.Water, waterNeed);
@@ -629,11 +635,12 @@ public sealed class GameSimulationEngine(GameState state)
     static void ApplySicknessProgression(GameState state, DailyProductionResult production, DayResolutionReport report,
         ResolutionEntry entry)
     {
-        var sicknessDelta = StatModifiers.ComputeSicknessFromEnvironment(state);
+        var sicknessDeltaTracked = StatModifiers.ComputeSicknessFromEnvironment(state);
+        var sicknessDelta = sicknessDeltaTracked.Value;
         sicknessDelta -= state.DailyEffects.QuarantineSicknessReduction;
         sicknessDelta -= production.ClinicCarePoints / 3;
 
-        if (state.DailyEffects.FuelConsumptionMultiplier > 1.0)
+        if (state.DailyEffects.FuelConsumptionMultiplier.Value > 1.0)
         {
             sicknessDelta += 2;
         }
@@ -674,7 +681,7 @@ public sealed class GameSimulationEngine(GameState state)
 
             var ready = state.Population.ReadyToRecoverCount();
             var clinicCap = production.ClinicSlotsUsed * GameBalance.RecoveryPerClinicSlot;
-            var medicinePerRecovery = GameBalance.MedicinePerRecovery * state.DailyEffects.MedicineUsageMultiplier;
+            var medicinePerRecovery = GameBalance.MedicinePerRecovery * state.DailyEffects.MedicineUsageMultiplier.Value;
             var medicineCap = medicinePerRecovery <= 0
                 ? ready
                 : (int)Math.Floor(state.Resources[ResourceKind.Medicine] / medicinePerRecovery);
@@ -711,7 +718,8 @@ public sealed class GameSimulationEngine(GameState state)
 
     static void ApplyUnrestProgression(GameState state, ResolutionEntry entry)
     {
-        var unrestDelta = StatModifiers.ComputeUnrestProgression(state);
+        var unrestDeltaTracked = StatModifiers.ComputeUnrestProgression(state);
+        var unrestDelta = Math.Max(0, unrestDeltaTracked.Value);
         if (state.FoodDeficitToday)
         {
             unrestDelta += 2;
@@ -727,10 +735,10 @@ public sealed class GameSimulationEngine(GameState state)
             state.AddUnrest(unrestDelta, entry);
         }
 
-        var moraleDelta = StatModifiers.ComputeMoraleDrift(state);
-        if (moraleDelta != 0)
+        var moraleDeltaTracked = StatModifiers.ComputeMoraleDrift(state);
+        if (moraleDeltaTracked.Value != 0)
         {
-            state.AddMorale(moraleDelta, entry);
+            state.AddMorale(moraleDeltaTracked.Value, entry);
         }
     }
 
@@ -821,7 +829,7 @@ public sealed class GameSimulationEngine(GameState state)
 
     static void ApplyRepairs(GameState state, DailyProductionResult production, ResolutionEntry entry)
     {
-        var repairPoints = (int)Math.Round(production.RepairPoints * state.DailyEffects.RepairOutputMultiplier);
+        var repairPoints = (int)Math.Round(production.RepairPoints * state.DailyEffects.RepairOutputMultiplier.Value);
         if (repairPoints <= 0)
         {
             return;

@@ -35,7 +35,7 @@ public sealed class MedicalTriageLaw : ILaw
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
-        state.DailyEffects.MedicineUsageMultiplier *= MedicineUsageMultiplier;
+        state.DailyEffects.MedicineUsageMultiplier.Apply("Medical Triage", MedicineUsageMultiplier);
         var sickToKill = Math.Min(DailySickDeaths, state.Population.SickWorkers);
         if (sickToKill > 0)
         {

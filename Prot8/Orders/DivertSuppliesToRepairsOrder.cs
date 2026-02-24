@@ -36,7 +36,7 @@ public sealed class DivertSuppliesToRepairsOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
-        state.DailyEffects.RepairOutputMultiplier *= RepairBoost;
+        state.DailyEffects.RepairOutputMultiplier.Apply("Divert Supplies", RepairBoost);
         state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
         state.AddResource(ResourceKind.Fuel, -FuelCost, entry);
         entry.Write("All resources flow to the repair crews. The forges burn bright as walls are patched and gates reinforced. Tomorrow's defense is secured.");

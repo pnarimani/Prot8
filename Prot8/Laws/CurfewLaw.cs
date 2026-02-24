@@ -39,6 +39,6 @@ public sealed class CurfewLaw : ILaw
     {
         entry.Write("The curfew holds. The streets are empty, but tension simmers behind closed doors.");
         state.AddUnrest(-DailyUnrestReduction, entry);
-        state.DailyEffects.ProductionMultiplier *= ProductionMultiplier;
+        state.DailyEffects.ProductionMultiplier.Apply("Curfew", ProductionMultiplier);
     }
 }

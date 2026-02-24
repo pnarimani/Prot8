@@ -5,6 +5,7 @@ using Prot8.Simulation;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
+
 namespace Prot8.Cli.Output;
 
 public sealed class ConsoleRenderer(IAnsiConsole console)
@@ -73,19 +74,13 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
     {
         var items = new List<IRenderable>();
 
-        if (vm.GlobalProductionMultiplier < 1.0)
+        if (vm.GlobalProductionMultiplier < 1.0 || vm.GlobalProductionMultiplier > 1.0)
         {
-            var reasons = vm.ProductionMultiplierReasons.Count > 0
-                ? " ← " + string.Join(", ", vm.ProductionMultiplierReasons.Select(Esc))
+            var color = vm.GlobalProductionMultiplier < 1.0 ? "yellow" : "green";
+            var breakdown = vm.ProductionMultiplierBreakdown.Count > 0
+                ? " (" + string.Join(", ", vm.ProductionMultiplierBreakdown.Select(e => $"{Esc(e.Source)}: {e.Value:F2}x")) + ")"
                 : "";
-            items.Add(new Markup($"  [yellow]Production multiplier: {vm.GlobalProductionMultiplier:F2}x{reasons}[/]"));
-        }
-        else if (vm.GlobalProductionMultiplier > 1.0)
-        {
-            var reasons = vm.ProductionMultiplierReasons.Count > 0
-                ? " ← " + string.Join(", ", vm.ProductionMultiplierReasons.Select(Esc))
-                : "";
-            items.Add(new Markup($"  [green]Production multiplier: {vm.GlobalProductionMultiplier:F2}x{reasons}[/]"));
+            items.Add(new Markup($"  [{color}]Production: {vm.GlobalProductionMultiplier:F2}x{breakdown}[/]"));
         }
 
         if (vm.ConsecutiveFoodDeficitDays > 0)
@@ -159,15 +154,22 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             UnrestMarkup(vm.Unrest) + $" [grey]({unrestDeltaStr})[/]",
             SicknessMarkup(vm.Sickness) + " " + SicknessStatusNote(vm.Sickness) + $" [grey]({sicknessDeltaStr})[/]");
 
+        var foodNeedStr = FormatConsumptionWithBreakdown(foodNeed, vm.FoodConsumptionBreakdown);
+        var waterNeedStr = FormatConsumptionWithBreakdown(waterNeed, vm.WaterConsumptionBreakdown);
+
+        var moraleBreakdownStr = FormatDeltaBreakdown(vm.MoraleDeltaBreakdown);
+        var unrestBreakdownStr = FormatDeltaBreakdown(vm.UnrestDeltaBreakdown);
+        var sicknessBreakdownStr = FormatDeltaBreakdown(vm.SicknessDeltaBreakdown);
+
         table.AddRow(
-            $"[grey]~{foodNeed}/d[/]",
-            $"[grey]~{waterNeed}/d[/]",
+            $"[grey]{foodNeedStr}[/]",
+            $"[grey]{waterNeedStr}[/]",
             $"[grey]~{fuelNeed}/d[/]",
             "[grey]-[/]",
             "[grey]-[/]",
-            "[grey]-[/]",
-            "[grey]-[/]",
-            $"[grey]({pop} pop)[/]");
+            $"[grey]{moraleBreakdownStr}[/]",
+            $"[grey]{unrestBreakdownStr}[/]",
+            $"[grey]{sicknessBreakdownStr}[/]");
 
         table.Title = new TableTitle("[bold]Resources[/]");
         return table;
@@ -657,6 +659,31 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
 
         return panel;
+    }
+
+    static string FormatConsumptionWithBreakdown(int need, IReadOnlyList<MultiplierEntry> breakdown)
+    {
+        if (breakdown.Count == 0)
+        {
+            return $"~{need}/d";
+        }
+
+        var parts = string.Join(", ", breakdown.Select(e => $"{Esc(e.Source)}: {e.Value:F2}x"));
+        return $"~{need}/d ({parts})";
+    }
+
+    static string FormatDeltaBreakdown(IReadOnlyList<DeltaEntry> breakdown)
+    {
+        if (breakdown.Count == 0)
+        {
+            return "-";
+        }
+
+        return string.Join(", ", breakdown.Select(e =>
+        {
+            var sign = e.Value >= 0 ? "+" : "";
+            return $"{Esc(e.Source)} {sign}{e.Value}";
+        }));
     }
 
     static string FormatDelta(int delta)

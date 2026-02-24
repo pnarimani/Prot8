@@ -4,6 +4,7 @@ using Prot8.Resources;
 using Prot8.Simulation;
 using Prot8.Zones;
 
+
 namespace Prot8.Cli.ViewModels;
 
 public sealed class DayStartViewModel
@@ -42,7 +43,12 @@ public sealed class DayStartViewModel
     public int LawCooldownDaysRemaining { get; init; }
     public IReadOnlyList<MissionCooldownViewModel> MissionCooldowns { get; init; } = [];
     public double GlobalProductionMultiplier { get; init; } = 1.0;
-    public IReadOnlyList<string> ProductionMultiplierReasons { get; init; } = [];
+    public IReadOnlyList<MultiplierEntry> ProductionMultiplierBreakdown { get; init; } = [];
+    public IReadOnlyList<MultiplierEntry> FoodConsumptionBreakdown { get; init; } = [];
+    public IReadOnlyList<MultiplierEntry> WaterConsumptionBreakdown { get; init; } = [];
+    public IReadOnlyList<DeltaEntry> MoraleDeltaBreakdown { get; init; } = [];
+    public IReadOnlyList<DeltaEntry> UnrestDeltaBreakdown { get; init; } = [];
+    public IReadOnlyList<DeltaEntry> SicknessDeltaBreakdown { get; init; } = [];
     public int SiegeEscalationDelayDays { get; init; }
     public int ConsecutiveFoodDeficitDays { get; init; }
     public int ConsecutiveWaterDeficitDays { get; init; }

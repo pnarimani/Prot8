@@ -28,7 +28,7 @@ public sealed class StrictRationsLaw : ILaw
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
         entry.Write("Ration carts distribute meagre portions. Hunger gnaws at everyone.");
-        state.DailyEffects.FoodConsumptionMultiplier *= FoodConsumptionMultiplier;
+        state.DailyEffects.FoodConsumptionMultiplier.Apply("Strict Rations", FoodConsumptionMultiplier);
         state.AddUnrest(DailyUnrest, entry);
         state.AddSickness(DailySickness, entry);
     }

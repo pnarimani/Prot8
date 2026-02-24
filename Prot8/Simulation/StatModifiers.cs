@@ -9,91 +9,125 @@ namespace Prot8.Simulation;
 
 public static class StatModifiers
 {
-    public static double ComputeGlobalProductionMultiplier(GameState state)
+    public static TrackedMultiplier ComputeGlobalProductionMultiplier(GameState state)
     {
-        var moraleFactor = 1.0;
-        var unrestFactor = 1.0;
-        var sicknessFactor = 1.0;
+        var result = new TrackedMultiplier();
 
-        // Only apply morale penalty if below threshold
         if (state.Morale < GameBalance.MoraleProductionThreshold)
         {
-            moraleFactor = 0.75 + (state.Morale / 200.0);
+            var moraleFactor = 0.75 + (state.Morale / 200.0);
+            result.Apply($"Low morale ({state.Morale})", moraleFactor);
         }
 
-        // Only apply unrest penalty if above threshold
         if (state.Unrest > GameBalance.UnrestProductionThreshold)
         {
-            unrestFactor = 1.0 - (state.Unrest / 200.0);
+            var unrestFactor = 1.0 - (state.Unrest / 200.0);
+            result.Apply($"Unrest ({state.Unrest})", unrestFactor);
         }
 
-        // Only apply sickness penalty if above threshold
         if (state.Sickness > GameBalance.SicknessProductionThreshold)
         {
-            sicknessFactor = 1.0 - (state.Sickness / 200.0);
+            var sicknessFactor = 1.0 - (state.Sickness / 200.0);
+            result.Apply($"Sickness ({state.Sickness})", sicknessFactor);
         }
 
-        var combined = moraleFactor * unrestFactor * sicknessFactor;
-        if (combined < 0.25)
-        {
-            return 0.25;
-        }
-
-        if (combined > 1.3)
-        {
-            return 1.3;
-        }
-
-        return combined;
+        return result;
     }
 
-    public static int ComputeSicknessFromEnvironment(GameState state)
+    public static TrackedDelta ComputeSicknessFromEnvironment(GameState state)
     {
-        var delta = 1;
+        var result = new TrackedDelta();
+        result.Add("Base drift", 1);
 
         if (state.Unrest >= 50)
         {
-            delta += 1;
+            result.Add("High unrest", 1);
         }
 
         if (state.Unrest >= 75)
         {
-            delta += 1;
+            result.Add("Severe unrest", 1);
         }
 
         if (state.Resources[Resources.ResourceKind.Fuel] == 0)
         {
-            delta += 2;
+            result.Add("No fuel", 2);
         }
 
         if (state.PlagueRatsActive)
         {
-            delta += 3;
+            result.Add("Plague rats", 3);
         }
 
-        return delta;
+        return result;
     }
 
-    public static int ComputeUnrestProgression(GameState state)
+    public static TrackedDelta ComputeUnrestProgression(GameState state)
     {
-        var delta = 1;
-        delta += state.Morale < 40 ? 1 : 0;
-        delta += state.Morale < 25 ? 3 : 0;
-        delta += state.Sickness > 50 ? 1 : 0;
-        delta += state.Sickness > 70 ? 1 : 0;
-        delta += state.CountLostZones();
-        delta -= state.Population.Guards / 5;
+        var result = new TrackedDelta();
+        result.Add("Base drift", 1);
 
-        return delta < 0 ? 0 : delta;
+        if (state.Morale < 40)
+        {
+            result.Add("Low morale", 1);
+        }
+
+        if (state.Morale < 25)
+        {
+            result.Add("Very low morale", 3);
+        }
+
+        if (state.Sickness > 50)
+        {
+            result.Add("High sickness", 1);
+        }
+
+        if (state.Sickness > 70)
+        {
+            result.Add("Severe sickness", 1);
+        }
+
+        var lostZones = state.CountLostZones();
+        if (lostZones > 0)
+        {
+            result.Add("Lost zones", lostZones);
+        }
+
+        var guardReduction = state.Population.Guards / 5;
+        if (guardReduction > 0)
+        {
+            result.Add("Guards", -guardReduction);
+        }
+
+        return result;
     }
 
-    public static int ComputeMoraleDrift(GameState state)
+    public static TrackedDelta ComputeMoraleDrift(GameState state)
     {
-        var delta = -1;
-        delta -= state.Unrest > 50 ? 1 : 0;
-        delta -= state.Sickness > 50 ? 1 : 0;
-        delta -= state.CountLostZones();
-        delta -= state.Day > 25 ? 1 : 0;
-        return delta;
+        var result = new TrackedDelta();
+        result.Add("Base drift", -1);
+
+        if (state.Unrest > 50)
+        {
+            result.Add("High unrest", -1);
+        }
+
+        if (state.Sickness > 50)
+        {
+            result.Add("High sickness", -1);
+        }
+
+        var lostZones = state.CountLostZones();
+        if (lostZones > 0)
+        {
+            result.Add("Lost zones", -lostZones);
+        }
+
+        if (state.Day > 25)
+        {
+            result.Add("Siege fatigue", -1);
+        }
+
+        return result;
     }
 }

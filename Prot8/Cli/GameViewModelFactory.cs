@@ -25,8 +25,8 @@ public class GameViewModelFactory(GameState state)
             Unrest = state.Unrest,
             Sickness = state.Sickness,
             IdleWorkersForAssignment = state.IdleWorkers,
-            FoodConsumptionMultiplier = ComputeFoodConsumptionMultiplier(state),
-            WaterConsumptionMultiplier = ComputeWaterConsumptionMultiplier(state),
+            FoodConsumptionMultiplier = state.DailyEffects.FoodConsumptionMultiplier.Value,
+            WaterConsumptionMultiplier = state.DailyEffects.WaterConsumptionMultiplier.Value,
             Resources = new ResourceViewModel
             {
                 Food = state.Resources[ResourceKind.Food],
@@ -71,17 +71,22 @@ public class GameViewModelFactory(GameState state)
             DisruptionText = state.ActiveDisruption,
             LawCooldownDaysRemaining = ComputeLawCooldown(state),
             MissionCooldowns = ComputeMissionCooldowns(state),
-            GlobalProductionMultiplier = StatModifiers.ComputeGlobalProductionMultiplier(state),
-            ProductionMultiplierReasons = ComputeProductionMultiplierReasons(state),
+            GlobalProductionMultiplier = ComputeGlobalProductionMultiplierValue(state),
+            ProductionMultiplierBreakdown = ComputeProductionMultiplierBreakdown(state),
+            FoodConsumptionBreakdown = state.DailyEffects.FoodConsumptionMultiplier.Entries,
+            WaterConsumptionBreakdown = state.DailyEffects.WaterConsumptionMultiplier.Entries,
             SiegeEscalationDelayDays = state.SiegeEscalationDelayDays,
             ConsecutiveFoodDeficitDays = state.ConsecutiveFoodDeficitDays,
             ConsecutiveWaterDeficitDays = state.ConsecutiveWaterDeficitDays,
             ConsecutiveBothZeroDays = state.ConsecutiveBothFoodWaterZeroDays,
             OvercrowdingStacks = ComputeOvercrowdingStacks(state),
             SituationAlerts = ComputeSituationAlerts(state),
-            MoraleDelta = StatModifiers.ComputeMoraleDrift(state),
-            UnrestDelta = StatModifiers.ComputeUnrestProgression(state),
-            SicknessDelta = StatModifiers.ComputeSicknessFromEnvironment(state),
+            MoraleDelta = ComputeMoraleDelta(state, out var moraleDeltaBreakdown),
+            MoraleDeltaBreakdown = moraleDeltaBreakdown,
+            UnrestDelta = ComputeUnrestDelta(state, out var unrestDeltaBreakdown),
+            UnrestDeltaBreakdown = unrestDeltaBreakdown,
+            SicknessDelta = ComputeSicknessDelta(state, out var sicknessDeltaBreakdown),
+            SicknessDeltaBreakdown = sicknessDeltaBreakdown,
             CurrentEvent = GetCurrentEvent(),
         };
     }
@@ -418,7 +423,7 @@ public class GameViewModelFactory(GameState state)
             }
         }
 
-        var unrestRate = StatModifiers.ComputeUnrestProgression(state);
+        var unrestRate = Math.Max(0, StatModifiers.ComputeUnrestProgression(state).Value);
         if (unrestRate > 0 && state.Unrest < GameBalance.RevoltThreshold)
         {
             var revoltDays = (GameBalance.RevoltThreshold - state.Unrest) / unrestRate;
@@ -575,55 +580,39 @@ public class GameViewModelFactory(GameState state)
         return alerts;
     }
 
-    static IReadOnlyList<string> ComputeProductionMultiplierReasons(GameState state)
+    static double ComputeGlobalProductionMultiplierValue(GameState state)
     {
-        var reasons = new List<string>();
-
-        var moraleFactor = 0.75 + state.Morale / 200.0;
-        var unrestFactor = 1.0 - state.Unrest / 200.0;
-        var sicknessFactor = 1.0 - state.Sickness / 200.0;
-
-        if (moraleFactor < 1.0)
-        {
-            reasons.Add($"Low morale ({state.Morale}): {moraleFactor:F2}x");
-        }
-        else if (moraleFactor > 1.0)
-        {
-            reasons.Add($"High morale ({state.Morale}): {moraleFactor:F2}x");
-        }
-
-        if (unrestFactor < 1.0)
-        {
-            reasons.Add($"Unrest ({state.Unrest}): {unrestFactor:F2}x");
-        }
-
-        if (sicknessFactor < 1.0)
-        {
-            reasons.Add($"Sickness ({state.Sickness}): {sicknessFactor:F2}x");
-        }
-
-        return reasons;
+        var statMult = StatModifiers.ComputeGlobalProductionMultiplier(state);
+        return Math.Clamp(statMult.Value, 0.25, 1.3) * state.DailyEffects.ProductionMultiplier.Value;
     }
 
-    static double ComputeFoodConsumptionMultiplier(GameState state)
+    static IReadOnlyList<MultiplierEntry> ComputeProductionMultiplierBreakdown(GameState state)
     {
-        var multiplier = 1.0;
-        if (state.ActiveLawIds.Contains("strict_rations"))
-        {
-            multiplier *= 0.75;
-        }
-
-        return multiplier;
+        var entries = new List<MultiplierEntry>();
+        var statMult = StatModifiers.ComputeGlobalProductionMultiplier(state);
+        entries.AddRange(statMult.Entries);
+        entries.AddRange(state.DailyEffects.ProductionMultiplier.Entries);
+        return entries;
     }
 
-    static double ComputeWaterConsumptionMultiplier(GameState state)
+    static int ComputeMoraleDelta(GameState state, out IReadOnlyList<DeltaEntry> breakdown)
     {
-        var multiplier = 1.0;
-        if (state.ActiveLawIds.Contains("diluted_water"))
-        {
-            multiplier *= 0.75;
-        }
+        var tracked = StatModifiers.ComputeMoraleDrift(state);
+        breakdown = tracked.Entries;
+        return tracked.Value;
+    }
 
-        return multiplier;
+    static int ComputeUnrestDelta(GameState state, out IReadOnlyList<DeltaEntry> breakdown)
+    {
+        var tracked = StatModifiers.ComputeUnrestProgression(state);
+        breakdown = tracked.Entries;
+        return Math.Max(0, tracked.Value);
+    }
+
+    static int ComputeSicknessDelta(GameState state, out IReadOnlyList<DeltaEntry> breakdown)
+    {
+        var tracked = StatModifiers.ComputeSicknessFromEnvironment(state);
+        breakdown = tracked.Entries;
+        return tracked.Value;
     }
 }

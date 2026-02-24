@@ -34,7 +34,7 @@ public sealed class ExtendedShiftsLaw : ILaw
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
-        state.DailyEffects.ProductionMultiplier *= ProductionMultiplier;
+        state.DailyEffects.ProductionMultiplier.Apply("Extended Shifts", ProductionMultiplier);
         state.AddSickness(DailySickness, entry);
         if (state.RollPercent() <= DeathChancePercent)
         {

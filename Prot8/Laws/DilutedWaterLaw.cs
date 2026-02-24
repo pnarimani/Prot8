@@ -33,7 +33,7 @@ public sealed class DilutedWaterLaw : ILaw
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
         entry.Write("Diluted water flows from the pumps. Thirst is sated, but bellies rumble with sickness.");
-        state.DailyEffects.WaterConsumptionMultiplier *= WaterConsumptionMultiplier;
+        state.DailyEffects.WaterConsumptionMultiplier.Apply("Diluted Water", WaterConsumptionMultiplier);
         state.AddSickness(DailySickness, entry);
     }
 }

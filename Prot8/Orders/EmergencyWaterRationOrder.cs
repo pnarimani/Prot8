@@ -22,7 +22,7 @@ public sealed class EmergencyWaterRationOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
-        state.DailyEffects.WaterConsumptionMultiplier *= WaterConsumptionMultiplier;
+        state.DailyEffects.WaterConsumptionMultiplier.Apply("Emergency Water Ration", WaterConsumptionMultiplier);
         state.AddSickness(SicknessHit, entry);
         entry.Write("Water is strictly rationed. Throat are parched, but the reserves hold. The sickness spreads from dehydration and unclean water.");
     }

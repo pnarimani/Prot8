@@ -5,27 +5,27 @@ namespace Prot8.Simulation;
 public sealed class TemporaryDailyEffects
 {
     public List<ITriggeredEvent> TriggeredEvents { get; } = [];
-    public double FoodConsumptionMultiplier { get; set; } = 1.0;
+    public TrackedMultiplier FoodConsumptionMultiplier { get; } = new();
 
-    public double WaterConsumptionMultiplier { get; set; } = 1.0;
+    public TrackedMultiplier WaterConsumptionMultiplier { get; } = new();
 
-    public double ProductionMultiplier { get; set; } = 1.0;
+    public TrackedMultiplier ProductionMultiplier { get; } = new();
 
-    public double WaterProductionMultiplier { get; set; } = 1.0;
+    public TrackedMultiplier WaterProductionMultiplier { get; } = new();
 
-    public double FoodProductionMultiplier { get; set; } = 1.0;
+    public TrackedMultiplier FoodProductionMultiplier { get; } = new();
 
-    public double MaterialsProductionMultiplier { get; set; } = 1.0;
+    public TrackedMultiplier MaterialsProductionMultiplier { get; } = new();
 
-    public double RepairOutputMultiplier { get; set; } = 1.0;
+    public TrackedMultiplier RepairOutputMultiplier { get; } = new();
 
     public double MissionSuccessBonus { get; set; }
 
-    public double RepairProductionMultiplier { get; set; } = 1.0;
+    public TrackedMultiplier RepairProductionMultiplier { get; } = new();
 
-    public double MedicineUsageMultiplier { get; set; } = 1.0;
+    public TrackedMultiplier MedicineUsageMultiplier { get; } = new();
 
-    public double FuelConsumptionMultiplier { get; set; } = 1.0;
+    public TrackedMultiplier FuelConsumptionMultiplier { get; } = new();
 
     public bool DustStormActive { get; set; }
 
