@@ -32,15 +32,17 @@ public sealed class AbandonOuterRingLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.LoseZone(state, ZoneId.OuterFarms, true, report);
+        entry.Write("You order evacuation of the perimiter");
+        entry.Write("The perimiter gets smaller, and smaller perimiter is easier to defend.");
         state.SiegeDamageMultiplier *= SiegeDamageMultiplier;
-        report.Add(ReasonTags.LawEnact, $"{Name}: daily siege damage multiplier x{SiegeDamageMultiplier:0.00}.");
-        StateChangeApplier.AddUnrest(state, UnrestHit, report, ReasonTags.LawEnact, Name);
+        entry.Write($"Daily siege damage multiplier: {SiegeDamageMultiplier.ToPercent()}");
+        state.LoseZone(ZoneId.OuterFarms, true, entry);
+        state.AddUnrest(UnrestHit, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
     }
 }

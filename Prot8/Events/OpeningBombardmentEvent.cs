@@ -20,17 +20,17 @@ public sealed class OpeningBombardmentEvent : TriggeredEventBase
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
         var farms = state.GetZone(ZoneId.OuterFarms);
         farms.Integrity -= IntegrityDamage;
-        report.Add(ReasonTags.Event, $"{Name}: the siege begins. Outer Farms struck for -{IntegrityDamage} integrity.");
+        entry.Write($"{Name}: the siege begins. Outer Farms struck for -{IntegrityDamage} integrity.");
 
-        StateChangeApplier.AddResource(state, ResourceKind.Food, -FoodLost, report, ReasonTags.Event, $"{Name} burning stores");
+        state.AddResource(ResourceKind.Food, -FoodLost, entry);
 
         if (farms.Integrity <= 0)
         {
-            StateChangeApplier.LoseZone(state, farms.Id, false, report);
+            state.LoseZone(farms.Id, false, entry);
         }
 
         StartCooldown(state);

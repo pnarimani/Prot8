@@ -28,13 +28,13 @@ public sealed class SacrificeTheSickOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
         var killed = Math.Min(SickKilled, state.Population.SickWorkers);
         state.Population.RemoveSickWorkers(killed);
         state.TotalDeaths += killed;
-        report.Add(ReasonTags.OrderEffect, $"{Name}: {killed} sick workers put down.");
-        StateChangeApplier.AddSickness(state, -SicknessReduction, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddUnrest(state, UnrestGain, report, ReasonTags.OrderEffect, Name);
+        entry.Write($"{Name}: {killed} sick workers put down.");
+        state.AddSickness(-SicknessReduction, entry);
+        state.AddUnrest(UnrestGain, entry);
     }
 }

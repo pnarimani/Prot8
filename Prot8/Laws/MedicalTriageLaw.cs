@@ -28,11 +28,11 @@ public sealed class MedicalTriageLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
         state.DailyEffects.MedicineUsageMultiplier *= MedicineUsageMultiplier;
         var sickToKill = Math.Min(DailySickDeaths, state.Population.SickWorkers);
@@ -43,10 +43,10 @@ public sealed class MedicalTriageLaw : ILaw
             {
                 state.TotalDeaths += removed;
                 state.Allocation.RemoveWorkersProportionally(removed);
-                report.Add(ReasonTags.LawPassive, $"{Name}: {removed} sick workers died due to triage limits.");
+                entry.Write($"{Name}: {removed} sick workers died due to triage limits.");
             }
         }
 
-        StateChangeApplier.AddMorale(state, -DailyMoraleHit, report, ReasonTags.LawPassive, Name);
+        state.AddMorale(-DailyMoraleHit, entry);
     }
 }

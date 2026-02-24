@@ -27,14 +27,14 @@ public sealed class SabotageEnemySuppliesMission : IMissionDefinition
         return true;
     }
 
-    public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    public void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry)
     {
         var roll = state.RollPercent();
         if (roll <= SuccessChance)
         {
             state.SiegeDamageMultiplier = SuccessDamageReduction;
             state.SiegeDamageReductionDaysRemaining = SuccessDuration;
-            report.AddResolvedMission($"{Name}: major success! Siege damage reduced by 30% for {SuccessDuration} days.");
+            entry.Write($"{Name}: major success! Siege damage reduced by 30% for {SuccessDuration} days.");
             return;
         }
 
@@ -42,12 +42,12 @@ public sealed class SabotageEnemySuppliesMission : IMissionDefinition
         {
             state.SiegeDamageMultiplier = PartialDamageReduction;
             state.SiegeDamageReductionDaysRemaining = PartialDuration;
-            report.AddResolvedMission($"{Name}: partial success. Siege damage reduced by 15% for {PartialDuration} days.");
+            entry.Write($"{Name}: partial success. Siege damage reduced by 15% for {PartialDuration} days.");
             return;
         }
 
-        StateChangeApplier.ApplyDeaths(state, FailDeaths, report, ReasonTags.Mission, Name);
-        StateChangeApplier.AddUnrest(state, FailUnrest, report, ReasonTags.Mission, $"{Name} disaster");
-        report.AddResolvedMission($"{Name}: catastrophic failure ({FailDeaths} deaths, +{FailUnrest} unrest).");
+        state.ApplyDeath(FailDeaths, entry);
+        state.AddUnrest(FailUnrest, entry);
+        entry.Write($"{Name}: catastrophic failure ({FailDeaths} deaths, +{FailUnrest} unrest).");
     }
 }

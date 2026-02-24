@@ -24,14 +24,14 @@ public sealed class DilutedWaterLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddMorale(state, -MoraleHit, report, ReasonTags.LawEnact, Name);
+        state.AddMorale(-MoraleHit, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
         state.DailyEffects.WaterConsumptionMultiplier *= WaterConsumptionMultiplier;
-        StateChangeApplier.AddSickness(state, DailySickness, report, ReasonTags.LawPassive, Name);
+        state.AddSickness(DailySickness, entry);
     }
 }

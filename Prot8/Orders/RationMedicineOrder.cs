@@ -28,10 +28,10 @@ public sealed class RationMedicineOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, ResourceKind.Medicine, -MedicineCost, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddSickness(state, -SicknessReduction, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddUnrest(state, UnrestGain, report, ReasonTags.OrderEffect, Name);
+        state.AddResource(ResourceKind.Medicine, -MedicineCost, entry);
+        state.AddSickness(-SicknessReduction, entry);
+        state.AddUnrest(UnrestGain, entry);
     }
 }

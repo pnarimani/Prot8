@@ -35,28 +35,28 @@ public sealed class ForageBeyondWallsMission() : IMissionDefinition
         return true;
     }
 
-    public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    public void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry)
     {
         var (highChance, mediumChance) = GetChances(state);
 
         var roll = state.RollPercent();
         if (roll <= highChance)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Food, HighFoodGain, report, ReasonTags.Mission, Name);
-            report.AddResolvedMission($"{Name}: great haul (+{HighFoodGain} food).");
+            state.AddResource(ResourceKind.Food, HighFoodGain, entry);
+            entry.Write($"{Name}: great haul (+{HighFoodGain} food).");
             return;
         }
 
         if (roll <= highChance + mediumChance)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Food, MediumFoodGain, report, ReasonTags.Mission, Name);
-            report.AddResolvedMission($"{Name}: modest haul (+{MediumFoodGain} food).");
+            state.AddResource(ResourceKind.Food, MediumFoodGain, entry);
+            entry.Write($"{Name}: modest haul (+{MediumFoodGain} food).");
             return;
         }
 
-        StateChangeApplier.ApplyDeaths(state, AmbushDeaths, report, ReasonTags.Mission, Name);
-        StateChangeApplier.AddUnrest(state, AmbushUnrest, report, ReasonTags.Mission, $"{Name} ambush");
-        report.AddResolvedMission($"{Name}: crew ambushed ({AmbushDeaths} deaths, +{AmbushUnrest} unrest).");
+        state.ApplyDeath(AmbushDeaths, entry);
+        state.AddUnrest(AmbushUnrest, entry);
+        entry.Write($"{Name}: crew ambushed ({AmbushDeaths} deaths, +{AmbushUnrest} unrest).");
     }
 
     (int highChance, int mediumChance) GetChances(GameState state)

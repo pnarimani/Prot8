@@ -12,7 +12,7 @@ public interface ILaw
 
     bool CanEnact(GameState state, out string reason);
 
-    void OnEnact(GameState state, DayResolutionReport report);
+    void OnEnact(GameState state, ResolutionEntry entry);
 
-    void ApplyDaily(GameState state, DayResolutionReport report);
+    void ApplyDaily(GameState state, ResolutionEntry entry);
 }

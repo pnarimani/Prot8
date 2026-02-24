@@ -30,27 +30,27 @@ public sealed class NightRaidMission : IMissionDefinition
         return true;
     }
 
-    public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    public void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry)
     {
         var (greatChance, okChance) = GetChances(state);
         var roll = state.RollPercent();
         if (roll <= greatChance)
         {
             state.SiegeEscalationDelayDays += GreatSiegeDelay;
-            report.AddResolvedMission($"{Name}: major disruption, siege escalation delayed by {GreatSiegeDelay} days.");
+            entry.Write($"{Name}: major disruption, siege escalation delayed by {GreatSiegeDelay} days.");
             return;
         }
 
         if (roll <= greatChance + okChance)
         {
             state.SiegeEscalationDelayDays += OkSiegeDelay;
-            report.AddResolvedMission($"{Name}: partial success, siege escalation delayed by {OkSiegeDelay} days.");
+            entry.Write($"{Name}: partial success, siege escalation delayed by {OkSiegeDelay} days.");
             return;
         }
 
-        StateChangeApplier.ApplyDeaths(state, FailDeaths, report, ReasonTags.Mission, Name);
-        StateChangeApplier.AddUnrest(state, FailUnrest, report, ReasonTags.Mission, Name);
-        report.AddResolvedMission($"{Name}: operation failed ({FailDeaths} deaths, +{FailUnrest} unrest).");
+        state.ApplyDeath(FailDeaths, entry);
+        state.AddUnrest(FailUnrest, entry);
+        entry.Write($"{Name}: operation failed ({FailDeaths} deaths, +{FailUnrest} unrest).");
     }
 
     (int greatChance, int okChance) GetChances(GameState state)

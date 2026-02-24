@@ -20,9 +20,9 @@ public sealed class EmergencyWaterRationOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
         state.DailyEffects.WaterConsumptionMultiplier *= WaterConsumptionMultiplier;
-        StateChangeApplier.AddSickness(state, SicknessHit, report, ReasonTags.OrderEffect, Name);
+        state.AddSickness(SicknessHit, entry);
     }
 }

@@ -27,16 +27,16 @@ public sealed class FaithProcessionsLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddMorale(state, MoraleGain, report, ReasonTags.LawEnact, Name);
-        StateChangeApplier.AddResource(state, Resources.ResourceKind.Materials, -MaterialsCost, report, ReasonTags.LawEnact, Name);
-        StateChangeApplier.AddUnrest(state, UnrestHit, report, ReasonTags.LawEnact, Name);
+        state.AddMorale(MoraleGain, entry);
+        state.AddResource(Resources.ResourceKind.Materials, -MaterialsCost, entry);
+        state.AddUnrest(UnrestHit, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddMorale(state, DailyMorale, report, ReasonTags.LawPassive, $"{Name} hope");
-        StateChangeApplier.AddSickness(state, DailySickness, report, ReasonTags.LawPassive, $"{Name} gatherings");
+        state.AddMorale(DailyMorale, entry);
+        state.AddSickness(DailySickness, entry);
     }
 }

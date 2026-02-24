@@ -25,10 +25,10 @@ public sealed class SoupKitchensOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddUnrest(state, -UnrestReduction, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddMorale(state, MoraleGain, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddResource(state, Resources.ResourceKind.Food, -FoodCost, report, ReasonTags.OrderEffect, Name);
+        state.AddUnrest(-UnrestReduction, entry);
+        state.AddMorale(MoraleGain, entry);
+        state.AddResource(Resources.ResourceKind.Food, -FoodCost, entry);
     }
 }

@@ -26,22 +26,22 @@ public sealed class EmergencySheltersLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
         foreach (var zone in state.Zones)
         {
             if (!zone.IsLost)
             {
                 zone.Capacity += CapacityGainPerZone;
-                report.Add(ReasonTags.LawEnact, $"{Name}: {zone.Name} capacity +{CapacityGainPerZone}.");
+                entry.Write($"{Name}: {zone.Name} capacity +{CapacityGainPerZone}.");
             }
         }
-        StateChangeApplier.AddUnrest(state, UnrestHit, report, ReasonTags.LawEnact, Name);
+        state.AddUnrest(UnrestHit, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddSickness(state, DailySickness, report, ReasonTags.LawPassive, Name);
-        StateChangeApplier.AddUnrest(state, DailyUnrest, report, ReasonTags.LawPassive, Name);
+        state.AddSickness(DailySickness, entry);
+        state.AddUnrest(DailyUnrest, entry);
     }
 }

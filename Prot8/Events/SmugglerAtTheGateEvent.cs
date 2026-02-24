@@ -18,10 +18,10 @@ public sealed class SmugglerAtTheGateEvent : TriggeredEventBase, IRespondableEve
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
         // Default: accept the trade (backward compat for non-interactive callers)
-        ApplyResponse("accept", state, report);
+        ApplyResponse("accept", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -34,25 +34,25 @@ public sealed class SmugglerAtTheGateEvent : TriggeredEventBase, IRespondableEve
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, DayResolutionReport report)
+    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
             case "accept":
-                StateChangeApplier.AddResource(state, ResourceKind.Food, 20, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddResource(state, ResourceKind.Materials, -MaterialsCost, report, ReasonTags.Event, Name);
-                report.Add(ReasonTags.Event, $"{Name}: You accept the smuggler's offer. Food for materials — a fair trade in desperate times.");
+                state.AddResource(ResourceKind.Food, 20, entry);
+                state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
+                entry.Write($"{Name}: You accept the smuggler's offer. Food for materials — a fair trade in desperate times.");
                 break;
 
             case "demand":
-                StateChangeApplier.AddResource(state, ResourceKind.Food, 25, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddResource(state, ResourceKind.Materials, -MaterialsCost, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddUnrest(state, 5, report, ReasonTags.Event, Name);
-                report.Add(ReasonTags.Event, $"{Name}: You press the smuggler for more. He complies, but word of your heavy-handedness spreads.");
+                state.AddResource(ResourceKind.Food, 25, entry);
+                state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
+                state.AddUnrest(5, entry);
+                entry.Write($"{Name}: You press the smuggler for more. He complies, but word of your heavy-handedness spreads.");
                 break;
 
             default: // refuse
-                report.Add(ReasonTags.Event, $"{Name}: You turn the smuggler away. He vanishes back into the night.");
+                entry.Write($"{Name}: You turn the smuggler away. He vanishes back into the night.");
                 break;
         }
 

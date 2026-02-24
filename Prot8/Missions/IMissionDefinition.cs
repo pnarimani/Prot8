@@ -16,5 +16,5 @@ public interface IMissionDefinition
 
     bool CanStart(GameState state, out string reason);
 
-    void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report);
+    void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry);
 }

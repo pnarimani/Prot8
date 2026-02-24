@@ -27,13 +27,13 @@ public sealed class FortifyTheGateOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, ResourceKind.Materials, -MaterialsCost, report, ReasonTags.OrderEffect, Name);
+        state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
         var perimeter = state.ActivePerimeterZone;
         var before = perimeter.Integrity;
         perimeter.Integrity = Math.Min(100, perimeter.Integrity + IntegrityGain);
         var applied = perimeter.Integrity - before;
-        report.Add(ReasonTags.OrderEffect, $"{Name}: +{applied} integrity to {perimeter.Name}.");
+        entry.Write($"{Name}: +{applied} integrity to {perimeter.Name}.");
     }
 }

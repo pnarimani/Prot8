@@ -16,9 +16,9 @@ public sealed class EnemyUltimatumEvent : TriggeredEventBase, IRespondableEvent
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("ignore", state, report);
+        ApplyResponse("ignore", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -31,28 +31,28 @@ public sealed class EnemyUltimatumEvent : TriggeredEventBase, IRespondableEvent
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, DayResolutionReport report)
+    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
             case "defy":
-                StateChangeApplier.AddMorale(state, 10, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddUnrest(state, 15, report, ReasonTags.Event, Name);
-                report.Add(ReasonTags.Event, $"{Name}: You rally the people with fiery words. Spirits lift, but the hotheads grow bolder.");
+                state.AddMorale(10, entry);
+                state.AddUnrest(15, entry);
+                entry.Write($"{Name}: You rally the people with fiery words. Spirits lift, but the hotheads grow bolder.");
                 break;
 
             case "negotiate":
-                StateChangeApplier.AddMorale(state, -5, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddUnrest(state, 5, report, ReasonTags.Event, Name);
-                StateChangeApplier.ApplyDesertions(state, 2, report, ReasonTags.Event, $"{Name} negotiation");
-                report.Add(ReasonTags.Event, $"{Name}: You buy time, but the appearance of weakness emboldens deserters.");
+                state.AddMorale(-5, entry);
+                state.AddUnrest(5, entry);
+                state.ApplyWorkerDesertion(2);
+                entry.Write($"{Name}: You buy time, but the appearance of weakness emboldens deserters.");
                 break;
 
             default: // ignore
-                StateChangeApplier.AddMorale(state, -15, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddUnrest(state, 20, report, ReasonTags.Event, Name);
-                StateChangeApplier.ApplyDesertions(state, 5, report, ReasonTags.Event, $"{Name} panic");
-                report.Add(ReasonTags.Event, $"{Name}: Silence is taken as weakness. Panic spreads through the ranks.");
+                state.AddMorale(-15, entry);
+                state.AddUnrest(20, entry);
+                state.ApplyWorkerDesertion(5);
+                entry.Write($"{Name}: Silence is taken as weakness. Panic spreads through the ranks.");
                 break;
         }
 

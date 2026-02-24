@@ -30,13 +30,13 @@ public sealed class CurfewLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddUnrest(state, -DailyUnrestReduction, report, ReasonTags.LawPassive, Name);
+        state.AddUnrest(-DailyUnrestReduction, entry);
         state.DailyEffects.ProductionMultiplier *= ProductionMultiplier;
     }
 }

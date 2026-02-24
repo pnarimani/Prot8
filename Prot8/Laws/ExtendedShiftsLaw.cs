@@ -26,18 +26,18 @@ public sealed class ExtendedShiftsLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddMorale(state, -MoraleHit, report, ReasonTags.LawEnact, Name);
+        state.AddMorale(-MoraleHit, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
         state.DailyEffects.ProductionMultiplier *= ProductionMultiplier;
-        StateChangeApplier.AddSickness(state, DailySickness, report, ReasonTags.LawPassive, Name);
+        state.AddSickness(DailySickness, entry);
         if (state.RollPercent() <= DeathChancePercent)
         {
-            StateChangeApplier.ApplyDeaths(state, 1, report, ReasonTags.LawPassive, $"{Name} exhaustion");
+            state.ApplyDeath(1, entry);
         }
     }
 }

@@ -25,18 +25,18 @@ public sealed class SupplyCartsInterceptedEvent : TriggeredEventBase
         return state.Random.Next(1, 101) <= TriggerChance;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
         var targetFood = state.RollPercent() <= 50;
         if (targetFood)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Food, -SupplyLoss, report, ReasonTags.Event, $"{Name} food lost");
-            report.Add(ReasonTags.Event, $"{Name}: enemy raiders intercepted a food supply cart.");
+            state.AddResource(ResourceKind.Food, -SupplyLoss, entry);
+            entry.Write($"{Name}: enemy raiders intercepted a food supply cart.");
         }
         else
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Water, -SupplyLoss, report, ReasonTags.Event, $"{Name} water lost");
-            report.Add(ReasonTags.Event, $"{Name}: enemy raiders intercepted a water supply cart.");
+            state.AddResource(ResourceKind.Water, -SupplyLoss, entry);
+            entry.Write($"{Name}: enemy raiders intercepted a water supply cart.");
         }
 
         StartCooldown(state);

@@ -24,9 +24,9 @@ public sealed class InspireThePeopleOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddMorale(state, MoraleGain, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddResource(state, Resources.ResourceKind.Materials, -MaterialsCost, report, ReasonTags.OrderEffect, Name);
+        state.AddMorale(MoraleGain, entry);
+        state.AddResource(Resources.ResourceKind.Materials, -MaterialsCost, entry);
     }
 }

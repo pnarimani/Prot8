@@ -36,10 +36,10 @@ public sealed class BurnSurplusOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, ResourceKind.Materials, -MaterialsCost, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddSickness(state, -SicknessReduction, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddMorale(state, MoraleGain, report, ReasonTags.OrderEffect, Name);
+        state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
+        state.AddSickness(-SicknessReduction, entry);
+        state.AddMorale(MoraleGain, entry);
     }
 }

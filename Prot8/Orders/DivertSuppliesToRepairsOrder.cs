@@ -34,10 +34,10 @@ public sealed class DivertSuppliesToRepairsOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
         state.DailyEffects.RepairOutputMultiplier *= RepairBoost;
-        StateChangeApplier.AddResource(state, ResourceKind.Materials, -MaterialsCost, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddResource(state, ResourceKind.Fuel, -FuelCost, report, ReasonTags.OrderEffect, Name);
+        state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
+        state.AddResource(ResourceKind.Fuel, -FuelCost, entry);
     }
 }

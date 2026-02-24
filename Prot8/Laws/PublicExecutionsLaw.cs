@@ -25,15 +25,14 @@ public sealed class PublicExecutionsLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddUnrest(state, -UnrestReduction, report, ReasonTags.LawEnact, Name);
-        StateChangeApplier.AddMorale(state, -MoraleHit, report, ReasonTags.LawEnact, Name);
-        StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.LawEnact, Name);
+        state.AddUnrest(-UnrestReduction, entry);
+        state.AddMorale(-MoraleHit, entry);
+        state.ApplyDeath(Deaths, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
-        
     }
 }

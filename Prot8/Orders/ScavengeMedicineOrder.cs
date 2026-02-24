@@ -22,10 +22,10 @@ public sealed class ScavengeMedicineOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, ResourceKind.Medicine, MedicineGain, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddSickness(state, SicknessHit, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.OrderEffect, $"{Name} exposure");
+        state.AddResource(ResourceKind.Medicine, MedicineGain, entry);
+        state.AddSickness(SicknessHit, entry);
+        state.ApplyDeath(Deaths, entry);
     }
 }

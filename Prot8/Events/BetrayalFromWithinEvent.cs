@@ -2,24 +2,21 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class BetrayalFromWithinEvent : TriggeredEventBase, IRespondableEvent
+public sealed class BetrayalFromWithinEvent() : TriggeredEventBase("betrayal_within", "Betrayal from Within",
+        "A conspiracy among the guards is uncovered. A third of your guards have been plotting to defect."),
+    IRespondableEvent
 {
-    private const int TriggerDay = 37;
-    private const int LowGuardThreshold = 5;
-
-    public BetrayalFromWithinEvent() : base("betrayal_within", "Betrayal from Within",
-        "A conspiracy among the guards is uncovered. A third of your guards have been plotting to defect.")
-    {
-    }
+    const int TriggerDay = 37;
+    const int LowGuardThreshold = 5;
 
     public override bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("let_go", state, report);
+        ApplyResponse("let_go", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -27,12 +24,12 @@ public sealed class BetrayalFromWithinEvent : TriggeredEventBase, IRespondableEv
         return
         [
             new EventResponse("amnesty", "Offer amnesty"),
-            new EventResponse("example", "Make an example"),
+            new EventResponse("example", "Make an example", "Kill the 2 ringleaders"),
             new EventResponse("let_go", "Let them go"),
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, DayResolutionReport report)
+    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         var defectors = Math.Max(1, state.Population.Guards / 3);
 
@@ -43,8 +40,8 @@ public sealed class BetrayalFromWithinEvent : TriggeredEventBase, IRespondableEv
                 var actual = Math.Min(state.Population.Guards, defectors);
                 state.Population.Guards -= actual;
                 state.Population.HealthyWorkers += actual;
-                StateChangeApplier.AddMorale(state, 5, report, ReasonTags.Event, Name);
-                report.Add(ReasonTags.Event, $"{Name}: You offer amnesty. {actual} guards rejoin as workers. Mercy earns grudging respect.");
+                entry.Write($"You offer amnesty. {actual} guards rejoin as workers. Mercy earns grudging respect.");
+                state.AddMorale(5, entry);
                 break;
             }
 
@@ -53,24 +50,28 @@ public sealed class BetrayalFromWithinEvent : TriggeredEventBase, IRespondableEv
                 var actual = Math.Min(state.Population.Guards, defectors);
                 state.Population.Guards -= actual;
                 state.Population.HealthyWorkers += Math.Max(0, actual - 2);
-                StateChangeApplier.ApplyDeaths(state, 2, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddUnrest(state, 10, report, ReasonTags.Event, Name);
-                report.Add(ReasonTags.Event, $"{Name}: Two ringleaders are publicly executed. The rest are stripped of rank. Fear keeps order — for now.");
+
+                entry.Write(
+                    $"You make an example of the ringleaders. {Math.Min(2, actual)} are executed, the rest are demoted to workers. Fear keeps order.");
+                state.ApplyDeath(2, entry);
+                state.AddUnrest(10, entry);
                 break;
             }
 
             default: // let_go
             {
-                StateChangeApplier.ApplyDesertions(state, defectors, report, ReasonTags.Event, Name);
+                entry.Write("The conspirators leave freely");
+                state.ApplyGuardDesertion(defectors);
                 if (state.Population.Guards < LowGuardThreshold)
                 {
-                    StateChangeApplier.AddUnrest(state, 15, report, ReasonTags.Event, $"{Name} panic");
-                    report.Add(ReasonTags.Event, $"{Name}: The conspirators leave freely. With so few guards remaining, unrest surges.");
+                    entry.Write("With so few guards remaining, unrest surges.");
+                    state.AddUnrest(15, entry);
                 }
                 else
                 {
-                    report.Add(ReasonTags.Event, $"{Name}: The conspirators leave freely. The garrison is weakened.");
+                    entry.Write("The garrison is weakened, but order is maintained.");
                 }
+
                 break;
             }
         }

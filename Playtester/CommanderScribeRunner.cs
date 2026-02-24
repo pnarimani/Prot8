@@ -338,9 +338,9 @@ public class CommanderScribeRunner
                 parts.Add("WATER_DEFICIT");
             }
 
-            if (report.TriggeredEvents.Count > 0)
+            if (report.TriggeredEventNames.Count > 0)
             {
-                parts.Add(string.Join(", ", report.TriggeredEvents));
+                parts.Add(string.Join(", ", report.TriggeredEventNames));
             }
 
             if (state.GameOver)

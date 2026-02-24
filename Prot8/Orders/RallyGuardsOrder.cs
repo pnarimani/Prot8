@@ -34,9 +34,9 @@ public sealed class RallyGuardsOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, ResourceKind.Food, -FoodCost, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddUnrest(state, -UnrestReduction, report, ReasonTags.OrderEffect, Name);
+        state.AddResource(ResourceKind.Food, -FoodCost, entry);
+        state.AddUnrest(-UnrestReduction, entry);
     }
 }

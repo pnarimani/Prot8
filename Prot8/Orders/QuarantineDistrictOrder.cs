@@ -27,11 +27,11 @@ public sealed class QuarantineDistrictOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
         var zone = state.ActivePerimeterZone;
         state.DailyEffects.QuarantineZone = zone.Id;
         state.DailyEffects.QuarantineSicknessReduction = SicknessReduction;
-        report.Add(ReasonTags.OrderEffect, $"{Name}: {zone.Name} quarantined. Production halved, sickness reduced.");
+        entry.Write($"{Name}: {zone.Name} quarantined. Production halved, sickness reduced.");
     }
 }

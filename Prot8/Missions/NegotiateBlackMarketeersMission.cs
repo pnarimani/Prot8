@@ -30,27 +30,27 @@ public sealed class NegotiateBlackMarketeersMission : IMissionDefinition
         return true;
     }
 
-    public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    public void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry)
     {
         var roll = state.RollPercent();
         if (roll <= WaterChance)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Water, WaterGain, report, ReasonTags.Mission, Name);
-            StateChangeApplier.AddUnrest(state, SuccessUnrest, report, ReasonTags.Mission, $"{Name} corruption");
-            report.AddResolvedMission($"{Name}: acquired +{WaterGain} water (+{SuccessUnrest} unrest).");
+            state.AddResource(ResourceKind.Water, WaterGain, entry);
+            state.AddUnrest(SuccessUnrest, entry);
+            entry.Write($"{Name}: acquired +{WaterGain} water (+{SuccessUnrest} unrest).");
             return;
         }
 
         if (roll <= WaterChance + FoodChance)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Food, FoodGain, report, ReasonTags.Mission, Name);
-            StateChangeApplier.AddUnrest(state, SuccessUnrest, report, ReasonTags.Mission, $"{Name} corruption");
-            report.AddResolvedMission($"{Name}: acquired +{FoodGain} food (+{SuccessUnrest} unrest).");
+            state.AddResource(ResourceKind.Food, FoodGain, entry);
+            state.AddUnrest(SuccessUnrest, entry);
+            entry.Write($"{Name}: acquired +{FoodGain} food (+{SuccessUnrest} unrest).");
             return;
         }
 
-        StateChangeApplier.AddUnrest(state, BetrayalUnrest, report, ReasonTags.Mission, Name);
-        StateChangeApplier.ApplyDeaths(state, BetrayalDeaths, report, ReasonTags.Mission, $"{Name} betrayal");
-        report.AddResolvedMission($"{Name}: betrayal (+{BetrayalUnrest} unrest, {BetrayalDeaths} deaths).");
+        state.AddUnrest(BetrayalUnrest, entry);
+        state.ApplyDeath(BetrayalDeaths, entry);
+        entry.Write($"{Name}: betrayal (+{BetrayalUnrest} unrest, {BetrayalDeaths} deaths).");
     }
 }

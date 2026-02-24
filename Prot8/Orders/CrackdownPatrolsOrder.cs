@@ -21,10 +21,10 @@ public sealed class CrackdownPatrolsOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddUnrest(state, -UnrestReduction, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddMorale(state, -MoraleHit, report, ReasonTags.OrderEffect, Name);
+        state.AddUnrest(-UnrestReduction, entry);
+        state.ApplyDeath(Deaths, entry);
+        state.AddMorale(-MoraleHit, entry);
     }
 }

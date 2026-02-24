@@ -34,25 +34,25 @@ public sealed class MartialLawLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
         if (state.Unrest > UnrestCap)
         {
             var reduction = state.Unrest - UnrestCap;
-            StateChangeApplier.AddUnrest(state, -reduction, report, ReasonTags.LawPassive, Name);
+            state.AddUnrest(-reduction, entry);
         }
 
         if (state.Morale > MoraleCap)
         {
             var reduction = state.Morale - MoraleCap;
-            StateChangeApplier.AddMorale(state, -reduction, report, ReasonTags.LawPassive, Name);
+            state.AddMorale(-reduction, entry);
         }
 
-        StateChangeApplier.ApplyDeaths(state, DailyDeaths, report, ReasonTags.LawPassive, $"{Name} enforcement");
-        StateChangeApplier.AddResource(state, ResourceKind.Food, -DailyFoodCost, report, ReasonTags.LawPassive, $"{Name} patrols");
+        state.ApplyDeath(DailyDeaths, entry);
+        state.AddResource(ResourceKind.Food, -DailyFoodCost, entry);
     }
 }

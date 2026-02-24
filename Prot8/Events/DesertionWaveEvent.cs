@@ -17,10 +17,10 @@ public sealed class DesertionWaveEvent : TriggeredEventBase
         return state.Morale < MoraleThreshold;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        report.Add(ReasonTags.Event, "At dawn, the western gate stands open. Footprints lead into the fog. They chose the enemy over you.");
-        StateChangeApplier.ApplyDesertions(state, Desertions, report, ReasonTags.Event, Name);
+        entry.Write("At dawn, the western gate stands open. Footprints lead into the fog. They chose the enemy over you.");
+        state.ApplyWorkerDesertion(Desertions);
         StartCooldown(state);
     }
 }

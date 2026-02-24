@@ -28,15 +28,15 @@ public sealed class MandatoryGuardServiceLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
         var converted = state.Population.ConvertHealthyToGuards(GuardConversion);
-        report.Add(ReasonTags.LawEnact, $"{Name}: converted {converted} healthy workers into guards permanently.");
-        StateChangeApplier.AddMorale(state, -MoraleHit, report, ReasonTags.LawEnact, Name);
+        entry.Write($"{Name}: converted {converted} healthy workers into guards permanently.");
+        state.AddMorale(-MoraleHit, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, ResourceKind.Food, -DailyFoodLoss, report, ReasonTags.LawPassive, Name);
+        state.AddResource(ResourceKind.Food, -DailyFoodLoss, entry);
     }
 }

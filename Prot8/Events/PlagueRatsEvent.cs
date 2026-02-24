@@ -17,9 +17,9 @@ public sealed class PlagueRatsEvent : TriggeredEventBase, IRespondableEvent
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("nothing", state, report);
+        ApplyResponse("nothing", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -32,31 +32,31 @@ public sealed class PlagueRatsEvent : TriggeredEventBase, IRespondableEvent
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, DayResolutionReport report)
+    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
             case "hunt":
-                StateChangeApplier.AddSickness(state, 10, report, ReasonTags.Event, Name);
-                StateChangeApplier.ApplyDeaths(state, 2, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddUnrest(state, 5, report, ReasonTags.Event, $"{Name} panic");
+                state.AddSickness(10, entry);
+                state.ApplyDeath(2, entry);
+                state.AddUnrest(5, entry);
                 state.PlagueRatsActive = false;
-                report.Add(ReasonTags.Event, $"{Name}: Organized hunts contain the rats, but not before disease claims lives.");
+                entry.Write($"{Name}: Organized hunts contain the rats, but not before disease claims lives.");
                 break;
 
             case "burn":
-                StateChangeApplier.AddSickness(state, 5, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddResource(state, ResourceKind.Materials, -10, report, ReasonTags.Event, Name);
+                state.AddSickness(5, entry);
+                state.AddResource(ResourceKind.Materials, -10, entry);
                 state.PlagueRatsActive = false;
-                report.Add(ReasonTags.Event, $"{Name}: Fire purges the infested quarter. The rats are gone, but so are precious supplies.");
+                entry.Write($"{Name}: Fire purges the infested quarter. The rats are gone, but so are precious supplies.");
                 break;
 
             default: // nothing
-                StateChangeApplier.AddSickness(state, 15, report, ReasonTags.Event, Name);
-                StateChangeApplier.ApplyDeaths(state, 3, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddUnrest(state, 10, report, ReasonTags.Event, $"{Name} panic");
+                state.AddSickness(15, entry);
+                state.ApplyDeath(3, entry);
+                state.AddUnrest(10, entry);
                 state.PlagueRatsActive = true;
-                report.Add(ReasonTags.Event, $"{Name}: Rats carry disease into the inner city. Sickness will spread faster from now on.");
+                entry.Write($"{Name}: Rats carry disease into the inner city. Sickness will spread faster from now on.");
                 break;
         }
 

@@ -17,9 +17,9 @@ public sealed class WallBreachAttemptEvent : TriggeredEventBase, IRespondableEve
         return state.ActivePerimeterZone.Integrity < IntegrityThreshold;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("fall_back", state, report);
+        ApplyResponse("fall_back", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -39,35 +39,35 @@ public sealed class WallBreachAttemptEvent : TriggeredEventBase, IRespondableEve
         return responses;
     }
 
-    public void ApplyResponse(string responseId, GameState state, DayResolutionReport report)
+    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
             case "reinforce":
                 if (state.Population.Guards >= 15)
                 {
-                    report.Add(ReasonTags.Event, $"{Name}: Guards held the breach and negated the damage.");
+                    entry.Write($"{Name}: Guards held the breach and negated the damage.");
                 }
                 else
                 {
                     var perimeter = state.ActivePerimeterZone;
                     perimeter.Integrity -= 8;
-                    report.Add(ReasonTags.Event, $"{Name}: Not enough guards to hold the line. {perimeter.Name} integrity -8.");
+                    entry.Write($"{Name}: Not enough guards to hold the line. {perimeter.Name} integrity -8.");
                     if (perimeter.Integrity <= 0)
                     {
-                        StateChangeApplier.LoseZone(state, perimeter.Id, false, report);
+                        state.LoseZone(perimeter.Id, false, entry);
                     }
                 }
                 break;
 
             case "barricade":
-                StateChangeApplier.AddResource(state, ResourceKind.Materials, -10, report, ReasonTags.Event, Name);
+                state.AddResource(ResourceKind.Materials, -10, entry);
                 var barrPerimeter = state.ActivePerimeterZone;
                 barrPerimeter.Integrity -= 5;
-                report.Add(ReasonTags.Event, $"{Name}: Barricades slow the breach. {barrPerimeter.Name} integrity -5.");
+                entry.Write($"{Name}: Barricades slow the breach. {barrPerimeter.Name} integrity -5.");
                 if (barrPerimeter.Integrity <= 0)
                 {
-                    StateChangeApplier.LoseZone(state, barrPerimeter.Id, false, report);
+                    state.LoseZone(barrPerimeter.Id, false, entry);
                 }
                 break;
 
@@ -75,10 +75,10 @@ public sealed class WallBreachAttemptEvent : TriggeredEventBase, IRespondableEve
             {
                 var perimeter = state.ActivePerimeterZone;
                 perimeter.Integrity -= 15;
-                report.Add(ReasonTags.Event, $"{Name}: Full retreat. {perimeter.Name} integrity -15.");
+                entry.Write($"{Name}: Full retreat. {perimeter.Name} integrity -15.");
                 if (perimeter.Integrity <= 0)
                 {
-                    StateChangeApplier.LoseZone(state, perimeter.Id, false, report);
+                    state.LoseZone(perimeter.Id, false, entry);
                 }
                 break;
             }

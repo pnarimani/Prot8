@@ -16,9 +16,9 @@ public sealed class MilitiaVolunteersEvent : TriggeredEventBase, IRespondableEve
         return state.Day == TriggerDay && state.Population.HealthyWorkers >= 3;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("accept", state, report);
+        ApplyResponse("accept", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -31,7 +31,7 @@ public sealed class MilitiaVolunteersEvent : TriggeredEventBase, IRespondableEve
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, DayResolutionReport report)
+    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
@@ -39,21 +39,20 @@ public sealed class MilitiaVolunteersEvent : TriggeredEventBase, IRespondableEve
             {
                 var converted = state.Population.ConvertHealthyToGuards(3);
                 state.Allocation.RemoveWorkersProportionally(converted);
-                report.Add(ReasonTags.Event, $"{Name}: {converted} workers take up arms. \"We'd rather fight than starve behind walls.\"");
+                entry.Write($"{Name}: {converted} workers take up arms. \"We'd rather fight than starve behind walls.\"");
                 break;
             }
 
             case "decline":
-                StateChangeApplier.AddMorale(state, 3, report, ReasonTags.Event, Name);
-                report.Add(ReasonTags.Event, $"{Name}: You turn them down gently. The workers appreciate being valued.");
+                state.AddMorale(3, entry);
+                entry.Write($"{Name}: You turn them down gently. The workers appreciate being valued.");
                 break;
 
             default: // conscript
             {
                 var converted = state.Population.ConvertHealthyToGuards(5);
                 state.Allocation.RemoveWorkersProportionally(converted);
-                StateChangeApplier.AddUnrest(state, 5, report, ReasonTags.Event, Name);
-                report.Add(ReasonTags.Event, $"{Name}: You conscript {converted} workers by force. The people murmur their displeasure.");
+                state.AddUnrest(5, entry);
                 break;
             }
         }

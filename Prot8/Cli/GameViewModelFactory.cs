@@ -151,13 +151,9 @@ public class GameViewModelFactory(GameState state)
         return new DayReportViewModel
         {
             Day = report.Day,
-            Entries = report.Entries.Select(e => new DeltaLogEntryViewModel
-            {
-                Tag = e.Tag,
-                Message = e.Message,
-            }).ToList(),
-            TriggeredEvents = report.TriggeredEvents,
-            ResolvedMissions = report.ResolvedMissions,
+            Entries = report.ResEntries,
+            TriggeredEvents = report.TriggeredEventNames,
+            ResolvedMissions = report.ResolvedMissionNames,
             EventResponses = eventResponseSummaries,
             FoodConsumedToday = report.FoodConsumedToday,
             WaterConsumedToday = report.WaterConsumedToday,

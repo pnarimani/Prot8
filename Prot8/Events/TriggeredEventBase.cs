@@ -20,7 +20,7 @@ public abstract class TriggeredEventBase : ITriggeredEvent
 
     public abstract bool ShouldTrigger(GameState state);
 
-    public abstract void Apply(GameState state, DayResolutionReport report);
+    public abstract void Apply(GameState state, ResolutionEntry entry);
 
     public bool IsOnCooldown(GameState state)
     {

@@ -12,5 +12,5 @@ public interface ITriggeredEvent
 
     bool ShouldTrigger(GameState state);
 
-    void Apply(GameState state, DayResolutionReport report);
+    void Apply(GameState state, ResolutionEntry entry);
 }

@@ -19,15 +19,15 @@ public sealed class StrictRationsLaw : ILaw
         return true;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddMorale(state, -MoraleHit, report, ReasonTags.LawEnact, Name);
+        state.AddMorale(-MoraleHit, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
         state.DailyEffects.FoodConsumptionMultiplier *= FoodConsumptionMultiplier;
-        StateChangeApplier.AddUnrest(state, DailyUnrest, report, ReasonTags.LawPassive, Name);
-        StateChangeApplier.AddSickness(state, DailySickness, report, ReasonTags.LawPassive, $"{Name} malnourishment");
+        state.AddUnrest(DailyUnrest, entry);
+        state.AddSickness(DailySickness, entry);
     }
 }

@@ -31,18 +31,18 @@ public sealed class ConscriptElderlyLaw : ILaw
         return true;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
         var converted = state.Population.Elderly;
         state.Population.Elderly = 0;
         state.Population.HealthyWorkers += converted;
-        report.Add(ReasonTags.LawEnact, $"{Name}: {converted} elderly forced into labour.");
-        StateChangeApplier.AddMorale(state, -MoraleHit, report, ReasonTags.LawEnact, Name);
-        StateChangeApplier.AddUnrest(state, UnrestHit, report, ReasonTags.LawEnact, Name);
+        entry.Write($"{Name}: {converted} elderly forced into labour.");
+        state.AddMorale(-MoraleHit, entry);
+        state.AddUnrest(UnrestHit, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.ApplyDeaths(state, DailyDeaths, report, ReasonTags.LawPassive, $"{Name} toll");
+        state.ApplyDeath(DailyDeaths, entry);
     }
 }

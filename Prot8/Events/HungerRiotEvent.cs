@@ -21,12 +21,12 @@ public sealed class HungerRiotEvent : TriggeredEventBase
         return state.ConsecutiveFoodDeficitDays >= ConsecutiveDeficitDays && state.Unrest > UnrestThreshold;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        report.Add(ReasonTags.Event, "The granary is ransacked by a mob. Guards are overwhelmed. Screaming from the lower quarter.");
-        StateChangeApplier.AddResource(state, ResourceKind.Food, -FoodLost, report, ReasonTags.Event, Name);
-        StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.Event, Name);
-        StateChangeApplier.AddUnrest(state, UnrestGain, report, ReasonTags.Event, Name);
+        entry.Write("The granary is ransacked by a mob. Guards are overwhelmed. Screaming from the lower quarter.");
+        state.AddResource(ResourceKind.Food, -FoodLost, entry);
+        state.ApplyDeath(Deaths, entry);
+        state.AddUnrest(UnrestGain, entry);
         StartCooldown(state);
     }
 }

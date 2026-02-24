@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text.Json;
 using Prot8.Simulation;
 
@@ -10,7 +7,7 @@ public sealed class RunTelemetryWriter : IDisposable
 {
     private readonly StreamWriter _writer;
     private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = false };
-    GameState _state;
+    readonly GameState _state;
 
     public RunTelemetryWriter(GameState state, int? seed)
     {
@@ -39,9 +36,6 @@ public sealed class RunTelemetryWriter : IDisposable
             state = SnapshotState(_state),
             report = new
             {
-                entries = report.Entries,
-                triggered_events = report.TriggeredEvents,
-                resolved_missions = report.ResolvedMissions,
                 food_deficit_today = report.FoodDeficitToday,
                 water_deficit_today = report.WaterDeficitToday,
                 fuel_deficit_today = report.FuelDeficitToday,

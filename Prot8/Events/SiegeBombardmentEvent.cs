@@ -29,7 +29,7 @@ public sealed class SiegeBombardmentEvent : TriggeredEventBase
         return state.Random.Next(1, 101) <= TriggerChance;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
         var nonLostZones = new List<ZoneState>();
         foreach (var zone in state.Zones)
@@ -45,17 +45,17 @@ public sealed class SiegeBombardmentEvent : TriggeredEventBase
             var target = nonLostZones[state.Random.Next(nonLostZones.Count)];
             var damage = BaseDamage + state.SiegeIntensity * DamagePerSiegeLevel;
             target.Integrity -= damage;
-            report.Add(ReasonTags.Event, $"{Name}: bombardment struck {target.Name} for -{damage} integrity.");
+            entry.Write($"{Name}: bombardment struck {target.Name} for -{damage} integrity.");
 
             if (target.Integrity <= 0)
             {
-                StateChangeApplier.LoseZone(state, target.Id, false, report);
+                state.LoseZone(target.Id, false, entry);
             }
         }
 
         var foodLost = BaseFoodLost + state.SiegeIntensity * FoodLostPerSiegeLevel;
-        StateChangeApplier.AddResource(state, ResourceKind.Food, -foodLost, report, ReasonTags.Event, $"{Name} supplies destroyed");
-        StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.Event, Name);
+        state.AddResource(ResourceKind.Food, -foodLost, entry);
+        state.ApplyDeath(Deaths, entry);
 
         StartCooldown(state);
     }

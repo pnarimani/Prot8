@@ -17,9 +17,9 @@ public sealed class RefugeesAtTheGatesEvent : TriggeredEventBase, IRespondableEv
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("turn_away", state, report);
+        ApplyResponse("turn_away", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -32,7 +32,7 @@ public sealed class RefugeesAtTheGatesEvent : TriggeredEventBase, IRespondableEv
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, DayResolutionReport report)
+    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
@@ -40,21 +40,20 @@ public sealed class RefugeesAtTheGatesEvent : TriggeredEventBase, IRespondableEv
                 state.Population.HealthyWorkers += 5;
                 var recoveryDays = GameBalance.ComputeRecoveryDays(state.Sickness);
                 state.Population.AddSickWorkers(3, recoveryDays);
-                StateChangeApplier.AddUnrest(state, 5, report, ReasonTags.Event, $"{Name} overcrowding");
-                StateChangeApplier.AddMorale(state, 3, report, ReasonTags.Event, $"{Name} solidarity");
-                report.Add(ReasonTags.Event, $"{Name}: 8 refugees admitted. +5 healthy workers, +3 sick. The city opens its arms.");
+                state.AddUnrest(5, entry);
+                state.AddMorale(3, entry);
+                entry.Write($"{Name}: 8 refugees admitted. +5 healthy workers, +3 sick. The city opens its arms.");
                 break;
 
             case "healthy_only":
                 state.Population.HealthyWorkers += 5;
-                StateChangeApplier.AddUnrest(state, 3, report, ReasonTags.Event, $"{Name} selection");
-                report.Add(ReasonTags.Event, $"{Name}: Only the healthy are admitted. The sick are turned away, their cries echoing beyond the walls.");
+                state.AddUnrest(3, entry);
+                entry.Write($"{Name}: Only the healthy are admitted. The sick are turned away, their cries echoing beyond the walls.");
                 break;
 
             default: // turn_away
-                StateChangeApplier.AddMorale(state, -10, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddUnrest(state, 5, report, ReasonTags.Event, Name);
-                report.Add(ReasonTags.Event, $"{Name}: The gates remain closed. The refugees scatter into the wasteland. Morale plummets.");
+                state.AddMorale(-10, entry);
+                state.AddUnrest(5, entry);
                 break;
         }
 

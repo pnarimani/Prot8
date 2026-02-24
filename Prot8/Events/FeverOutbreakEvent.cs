@@ -18,11 +18,11 @@ public sealed class FeverOutbreakEvent : TriggeredEventBase
         return state.Sickness > SicknessThreshold;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        report.Add(ReasonTags.Event, "The clinic overflows. Corpses line the halls. The stench of death fills every corner.");
-        StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.Event, Name);
-        StateChangeApplier.AddUnrest(state, UnrestGain, report, ReasonTags.Event, Name);
+        entry.Write("The clinic overflows. Corpses line the halls. The stench of death fills every corner.");
+        state.ApplyDeath(Deaths, entry);
+        state.AddUnrest(UnrestGain, entry);
         StartCooldown(state);
     }
 }

@@ -18,18 +18,18 @@ public sealed class EnemySappersEvent : TriggeredEventBase
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
         foreach (var zone in state.Zones)
         {
             if (!zone.IsLost)
             {
                 zone.Integrity -= IntegrityDamage;
-                report.Add(ReasonTags.Event, $"{Name}: {zone.Name} -{IntegrityDamage} integrity.");
+                entry.Write($"{Name}: {zone.Name} -{IntegrityDamage} integrity.");
 
                 if (zone.Integrity <= 0)
                 {
-                    StateChangeApplier.LoseZone(state, zone.Id, false, report);
+                    state.LoseZone(zone.Id, false, entry);
                 }
             }
         }
@@ -37,7 +37,7 @@ public sealed class EnemySappersEvent : TriggeredEventBase
         if (state.SiegeIntensity < Constants.GameBalance.MaxSiegeIntensity)
         {
             state.SiegeIntensity += SiegeIncrease;
-            report.Add(ReasonTags.Event, $"{Name}: siege intensity increased to {state.SiegeIntensity}.");
+            entry.Write($"{Name}: siege intensity increased to {state.SiegeIntensity}.");
         }
 
         StartCooldown(state);

@@ -147,7 +147,7 @@ public sealed class MissionCooldownViewModel
 public sealed class DayReportViewModel
 {
     public int Day { get; init; }
-    public IReadOnlyList<DeltaLogEntryViewModel> Entries { get; init; } = [];
+    public IReadOnlyList<ResolutionEntry> Entries { get; init; } = [];
     public IReadOnlyList<string> TriggeredEvents { get; init; } = [];
     public IReadOnlyList<string> ResolvedMissions { get; init; } = [];
     public IReadOnlyList<EventResponseSummary> EventResponses { get; init; } = [];

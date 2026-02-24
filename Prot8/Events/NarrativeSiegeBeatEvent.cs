@@ -19,9 +19,9 @@ public sealed class NarrativeSiegeBeatEvent : TriggeredEventBase
         return state.Day == _triggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        report.Add(ReasonTags.Event, _narrativeText);
+        entry.Write(_narrativeText);
         StartCooldown(state);
     }
 }

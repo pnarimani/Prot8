@@ -17,9 +17,9 @@ public sealed class WellContaminationScareEvent : TriggeredEventBase, IRespondab
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("ignore", state, report);
+        ApplyResponse("ignore", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -37,25 +37,25 @@ public sealed class WellContaminationScareEvent : TriggeredEventBase, IRespondab
         return responses;
     }
 
-    public void ApplyResponse(string responseId, GameState state, DayResolutionReport report)
+    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
             case "medicine":
-                StateChangeApplier.AddResource(state, ResourceKind.Medicine, -5, report, ReasonTags.Event, Name);
-                StateChangeApplier.AddSickness(state, 2, report, ReasonTags.Event, Name);
-                report.Add(ReasonTags.Event, $"{Name}: Medicine purifies the wells. The worst is averted — for now.");
+                state.AddResource(ResourceKind.Medicine, -5, entry);
+                state.AddSickness(2, entry);
+                entry.Write($"{Name}: Medicine purifies the wells. The worst is averted — for now.");
                 break;
 
             case "boil":
-                StateChangeApplier.AddSickness(state, 3, report, ReasonTags.Event, Name);
+                state.AddSickness(3, entry);
                 state.TaintedWellDaysRemaining = 1;
-                report.Add(ReasonTags.Event, $"{Name}: You order all water boiled. It slows production, but limits the contamination.");
+                entry.Write($"{Name}: You order all water boiled. It slows production, but limits the contamination.");
                 break;
 
             default: // ignore
-                StateChangeApplier.AddSickness(state, 5, report, ReasonTags.Event, Name);
-                report.Add(ReasonTags.Event, $"{Name}: Without action, sickness spreads through the water supply.");
+                state.AddSickness(5, entry);
+                entry.Write($"{Name}: Without action, sickness spreads through the water supply.");
                 break;
         }
 

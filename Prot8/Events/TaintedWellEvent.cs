@@ -21,14 +21,14 @@ public sealed class TaintedWellEvent : TriggeredEventBase
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, ResourceKind.Water, -WaterLost, report, ReasonTags.Event, Name);
-        StateChangeApplier.AddSickness(state, SicknessGain, report, ReasonTags.Event, $"{Name} contamination");
+        state.AddResource(ResourceKind.Water, -WaterLost, entry);
+        state.AddSickness(SicknessGain, entry);
 
         state.TaintedWellDaysRemaining = PenaltyDuration;
 
-        report.Add(ReasonTags.Event, $"{Name}: the main well is contaminated. Water production reduced to {WaterProductionPenalty * 100}% for {PenaltyDuration} days.");
+        entry.Write($"{Name}: the main well is contaminated. Water production reduced to {WaterProductionPenalty * 100}% for {PenaltyDuration} days.");
         StartCooldown(state);
     }
 }

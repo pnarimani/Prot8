@@ -6,177 +6,185 @@ namespace Prot8.Simulation;
 
 public static class StateChangeApplier
 {
-    public static void AddResource(GameState state, ResourceKind kind, int amount, DayResolutionReport report, string tag, string reason)
+    extension(GameState state)
     {
-        if (amount == 0)
+        public void AddResource(ResourceKind kind, int amount, ResolutionEntry entry)
         {
-            return;
+            if (amount == 0)
+            {
+                return;
+            }
+
+            if (amount > 0)
+            {
+                state.Resources.Add(kind, amount);
+                entry.Write($"+{amount} {kind}");
+            }
+
+            var consumed = state.Resources.Consume(kind, -amount);
+            entry.Write($"-{consumed} {kind}");
         }
 
-        if (amount > 0)
+        public void AddMorale(int amount, ResolutionEntry entry)
         {
-            state.Resources.Add(kind, amount);
-            report.Add(tag, $"{reason}: +{amount} {kind}.");
-            return;
+            if (amount == 0)
+            {
+                return;
+            }
+
+            var before = state.Morale;
+            state.Morale = GameBalance.ClampStat(state.Morale + amount);
+            var applied = state.Morale - before;
+            if (applied != 0)
+            {
+                entry.Write($"{(applied > 0 ? "+" : string.Empty)}{applied} Morale");
+            }
         }
 
-        var consumed = state.Resources.Consume(kind, -amount);
-        report.Add(tag, $"{reason}: -{consumed} {kind}.");
-    }
-
-    public static void AddMorale(GameState state, int amount, DayResolutionReport report, string tag, string reason)
-    {
-        if (amount == 0)
+        public void AddUnrest(int amount, ResolutionEntry entry)
         {
-            return;
+            if (amount == 0)
+            {
+                return;
+            }
+
+            var before = state.Unrest;
+            state.Unrest = GameBalance.ClampStat(state.Unrest + amount);
+            var applied = state.Unrest - before;
+            if (applied != 0)
+            {
+                entry.Write($"{(applied > 0 ? "+" : string.Empty)}{applied} Unrest");
+            }
         }
 
-        var before = state.Morale;
-        state.Morale = GameBalance.ClampStat(state.Morale + amount);
-        var applied = state.Morale - before;
-        if (applied != 0)
+        public void ApplyGuardDesertion(int deserters)
         {
-            report.Add(tag, $"{reason}: {(applied > 0 ? "+" : string.Empty)}{applied} Morale.");
-        }
-    }
+            if (deserters == 0)
+            {
+                return;
+            }
 
-    public static void AddUnrest(GameState state, int amount, DayResolutionReport report, string tag, string reason)
-    {
-        if (amount == 0)
-        {
-            return;
+            state.Population.Guards = Math.Max(0, state.Population.Guards - deserters);
         }
 
-        var before = state.Unrest;
-        state.Unrest = GameBalance.ClampStat(state.Unrest + amount);
-        var applied = state.Unrest - before;
-        if (applied != 0)
+        public void LoseZone(ZoneId zoneId, bool isControlledEvacuation, ResolutionEntry entry)
         {
-            report.Add(tag, $"{reason}: {(applied > 0 ? "+" : string.Empty)}{applied} Unrest.");
-        }
-    }
+            var zone = state.GetZone(zoneId);
+            if (zone.IsLost)
+            {
+                return;
+            }
 
-    public static void AddSickness(GameState state, int amount, DayResolutionReport report, string tag, string reason)
-    {
-        if (amount == 0)
-        {
-            return;
-        }
+            zone.IsLost = true;
+            zone.Integrity = 0;
 
-        var before = state.Sickness;
-        state.Sickness = GameBalance.ClampStat(state.Sickness + amount);
-        var applied = state.Sickness - before;
-        if (applied != 0)
-        {
-            report.Add(tag, $"{reason}: {(applied > 0 ? "+" : string.Empty)}{applied} Sickness.");
-        }
-    }
+            state.DayFirstZoneLost ??= state.Day;
 
-    public static int ApplyDeaths(GameState state, int deathsRequested, DayResolutionReport report, string tag, string reason)
-    {
-        if (deathsRequested <= 0)
-        {
-            return 0;
-        }
+            state.ZoneLossOccurred = true;
 
-        var applied = state.Population.RemovePeopleByPriority(deathsRequested);
-        if (applied > 0)
-        {
-            state.TotalDeaths += applied;
-            state.Allocation.RemoveWorkersProportionally(applied);
-            report.Add(tag, $"{reason}: {applied} deaths.");
+            entry.Write($"Zone Lost: {zone.Name}");
+            entry.Write($"Active perimiter is now {state.ActivePerimeterZone.Name}");
+
+            if (isControlledEvacuation)
+            {
+                state.AddUnrest(GameBalance.EvacuationUnrestShock[zoneId], entry);
+                state.AddMorale(-GameBalance.EvacuationMoraleShock[zoneId], entry);
+                state.AddSickness(GameBalance.EvacuationSicknessShock[zoneId], entry);
+                state.AddResource(ResourceKind.Materials, -GameBalance.EvacuationMaterialsPenalty[zoneId], entry);
+            }
+            else
+            {
+                entry.Write("Sudden loss of the zone has caused chaos and panic.");
+                state.AddUnrest(GameBalance.NaturalLossUnrestShock[zoneId], entry);
+                state.AddMorale(-GameBalance.NaturalLossMoraleShock[zoneId], entry);
+                state.AddSickness(GameBalance.NaturalLossSicknessShock[zoneId], entry);
+            }
         }
 
-        return applied;
-    }
-
-    public static int ApplyDesertions(GameState state, int desertersRequested, DayResolutionReport report, string tag, string reason)
-    {
-        if (desertersRequested <= 0)
+        public void AddSickness(int amount, ResolutionEntry entry)
         {
-            return 0;
+            if (amount == 0)
+            {
+                return;
+            }
+
+            var before = state.Sickness;
+            state.Sickness = GameBalance.ClampStat(state.Sickness + amount);
+            var applied = state.Sickness - before;
+            if (applied != 0)
+            {
+                entry.Write($"{(applied > 0 ? "+" : string.Empty)}{applied} Sickness.");
+            }
         }
 
-        var applied = state.Population.RemoveHealthyWorkers(desertersRequested);
-        if (applied > 0)
+        public void ApplyDeath(int deathsRequested, ResolutionEntry entry)
         {
-            state.TotalDesertions += applied;
-            state.Allocation.RemoveWorkersProportionally(applied);
-            report.Add(tag, $"{reason}: {applied} workers deserted.");
+            if (deathsRequested <= 0)
+            {
+                return;
+            }
+
+            var applied = state.Population.RemovePeopleByPriority(deathsRequested);
+            if (applied > 0)
+            {
+                state.TotalDeaths += applied;
+                state.Allocation.RemoveWorkersProportionally(applied);
+                entry.Write($"{applied} deaths");
+            }
         }
 
-        return applied;
-    }
-
-    public static void ConvertHealthyToSick(GameState state, int amount, DayResolutionReport report, string reason)
-    {
-        if (amount <= 0)
+        public int ApplyWorkerDesertion(int desertersRequested)
         {
-            return;
+            if (desertersRequested <= 0)
+            {
+                return 0;
+            }
+
+            var applied = state.Population.RemoveHealthyWorkers(desertersRequested);
+            if (applied > 0)
+            {
+                state.TotalDesertions += applied;
+                state.Allocation.RemoveWorkersProportionally(applied);
+            }
+
+            return applied;
         }
 
-        var converted = state.Population.RemoveHealthyWorkers(amount);
-        if (converted <= 0)
+        public void ConvertHealthyToSick(int amount, ResolutionEntry entry)
         {
-            return;
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            var converted = state.Population.RemoveHealthyWorkers(amount);
+            if (converted <= 0)
+            {
+                return;
+            }
+
+            state.Allocation.RemoveWorkersProportionally(converted);
+            var recoveryDays = GameBalance.ComputeRecoveryDays(state.Sickness);
+            state.Population.AddSickWorkers(converted, recoveryDays);
+            entry.Write($"{converted} workers became sick (recovery base {recoveryDays} days).");
         }
 
-        state.Allocation.RemoveWorkersProportionally(converted);
-        var recoveryDays = GameBalance.ComputeRecoveryDays(state.Sickness);
-        state.Population.AddSickWorkers(converted, recoveryDays);
-        report.Add(ReasonTags.Sickness, $"{reason}: {converted} workers became sick (recovery base {recoveryDays} days).");
-    }
-
-    public static void RecoverSickWorkers(GameState state, int amount, DayResolutionReport report, string reason)
-    {
-        if (amount <= 0)
+        public void RecoverSickWorkers(int amount, DayResolutionReport report, ResolutionEntry entry)
         {
-            return;
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            var recovered = state.Population.RecoverWorkers(amount);
+            if (recovered <= 0)
+            {
+                return;
+            }
+
+            report.RecoveredWorkersToday += recovered;
+            state.TotalRecoveredWorkers += recovered;
+            entry.Write($"{recovered} sick workers recovered to healthy.");
         }
-
-        var recovered = state.Population.RecoverWorkers(amount);
-        if (recovered <= 0)
-        {
-            return;
-        }
-
-        report.RecoveredWorkersToday += recovered;
-        state.TotalRecoveredWorkers += recovered;
-        report.Add(ReasonTags.RecoveryComplete, $"{reason}: {recovered} sick workers recovered to healthy.");
-    }
-
-    public static void LoseZone(GameState state, ZoneId zoneId, bool isControlledEvacuation, DayResolutionReport report)
-    {
-        var zone = state.GetZone(zoneId);
-        if (zone.IsLost)
-        {
-            return;
-        }
-
-        zone.IsLost = true;
-        zone.Integrity = 0;
-
-        if (!state.DayFirstZoneLost.HasValue)
-        {
-            state.DayFirstZoneLost = state.Day;
-        }
-
-        state.ZoneLossOccurred = true;
-
-        if (isControlledEvacuation)
-        {
-            AddUnrest(state, GameBalance.EvacuationUnrestShock[zoneId], report, ReasonTags.ZoneLoss, $"Evacuated {zone.Name}");
-            AddMorale(state, -GameBalance.EvacuationMoraleShock[zoneId], report, ReasonTags.ZoneLoss, $"Evacuated {zone.Name}");
-            AddSickness(state, GameBalance.EvacuationSicknessShock[zoneId], report, ReasonTags.ZoneLoss, $"Evacuated {zone.Name}");
-            AddResource(state, ResourceKind.Materials, -GameBalance.EvacuationMaterialsPenalty[zoneId], report, ReasonTags.ZoneLoss, $"Evacuation loss from {zone.Name}");
-        }
-        else
-        {
-            AddUnrest(state, GameBalance.NaturalLossUnrestShock[zoneId], report, ReasonTags.ZoneLoss, $"{zone.Name} fell");
-            AddMorale(state, -GameBalance.NaturalLossMoraleShock[zoneId], report, ReasonTags.ZoneLoss, $"{zone.Name} fell");
-            AddSickness(state, GameBalance.NaturalLossSicknessShock[zoneId], report, ReasonTags.ZoneLoss, $"{zone.Name} fell");
-        }
-
-        report.Add(ReasonTags.ZoneLoss, $"Zone lost: {zone.Name}. Active perimeter is now {state.ActivePerimeterZone.Name}.");
     }
 }

@@ -27,9 +27,9 @@ public sealed class DoubleWaterRationsOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddMorale(state, MoraleGain, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddResource(state, ResourceKind.Water, -WaterCost, report, ReasonTags.OrderEffect, Name);
+        state.AddMorale(MoraleGain, entry);
+        state.AddResource(ResourceKind.Water, -WaterCost, entry);
     }
 }

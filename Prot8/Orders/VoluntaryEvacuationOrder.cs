@@ -13,8 +13,8 @@ public sealed class VoluntaryEvacuationOrder : IEmergencyOrder
     public bool CanIssue(GameState state, out string reason) =>
         ZoneRules.CanEvacuate(state, state.ActivePerimeterZone.Id, out reason);
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.LoseZone(state, state.ActivePerimeterZone.Id, true, report);
+        state.LoseZone(state.ActivePerimeterZone.Id, true, entry);
     }
 }

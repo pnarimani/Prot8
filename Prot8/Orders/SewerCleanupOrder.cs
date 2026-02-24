@@ -33,9 +33,9 @@ public sealed class SewerCleanupOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, ResourceKind.Fuel, -FuelCost, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddSickness(state, -SicknessReduction, report, ReasonTags.OrderEffect, Name);
+        state.AddResource(ResourceKind.Fuel, -FuelCost, entry);
+        state.AddSickness(-SicknessReduction, entry);
     }
 }

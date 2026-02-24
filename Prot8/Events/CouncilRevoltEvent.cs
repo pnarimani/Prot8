@@ -15,12 +15,12 @@ public sealed class CouncilRevoltEvent : TriggeredEventBase
         return state.Unrest > GameBalance.RevoltThreshold;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
         state.GameOver = true;
         state.GameOverCause = GameOverCause.CouncilRevolt;
         state.GameOverDetails = "Council revolt overwhelmed command.";
-        report.Add(ReasonTags.Event, $"{Name}: the council revolted. Immediate game over.");
+        entry.Write($"{Name}: the council revolted. Immediate game over.");
         StartCooldown(state);
     }
 }

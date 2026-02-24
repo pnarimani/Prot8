@@ -32,21 +32,20 @@ public sealed class FireInArtisanQuarterEvent : TriggeredEventBase
         return state.Random.Next(1, 101) <= TriggerChance;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, ResourceKind.Materials, -MaterialsLost, report, ReasonTags.Event, Name);
+        state.AddResource(ResourceKind.Materials, -MaterialsLost, entry);
         var artisan = state.GetZone(ZoneId.ArtisanQuarter);
         if (!artisan.IsLost)
         {
             artisan.Integrity -= IntegrityDamage;
-            report.Add(ReasonTags.Event, $"{Name}: Artisan Quarter integrity -{IntegrityDamage}.");
+            entry.Write($"{Name}: Artisan Quarter integrity -{IntegrityDamage}.");
             if (artisan.Integrity <= 0)
             {
-                StateChangeApplier.LoseZone(state, ZoneId.ArtisanQuarter, false, report);
+                state.LoseZone(ZoneId.ArtisanQuarter, false, entry);
             }
         }
 
-        StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.Event, Name);
-        StartCooldown(state);
+        state.ApplyDeath(Deaths, entry);        StartCooldown(state);
     }
 }

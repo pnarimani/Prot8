@@ -70,21 +70,47 @@ public sealed class GameSimulationEngine(GameState state)
 
         PrepareDay(state);
         ApplyPlayerAction(state, action, report);
-
         ApplyLawPassives(state, report);
         ApplyEmergencyOrderEffects(state, report);
 
-        var production = CalculateProduction(state, report);
-        ApplyConsumption(state, report);
-        ApplyDeficitPenalties(state, report);
-        ApplyOvercrowdingPenalties(state, report);
-        ApplySicknessProgression(state, production, report);
-        ApplyUnrestProgression(state, report);
-        ApplySiegeDamage(state, report);
-        ApplyRepairs(state, production, report);
+        var productionEntry = new ResolutionEntry { Title = "Production" };
+        var production = CalculateProduction(state, productionEntry);
+        if (productionEntry.Messages.Count > 0) report.ResEntries.Add(productionEntry);
+
+        var consumptionEntry = new ResolutionEntry { Title = "Consumption" };
+        ApplyConsumption(state, report, consumptionEntry);
+        if (consumptionEntry.Messages.Count > 0) report.ResEntries.Add(consumptionEntry);
+
+        var deficitEntry = new ResolutionEntry { Title = "Deficit Pressure" };
+        ApplyDeficitPenalties(state, deficitEntry);
+        if (deficitEntry.Messages.Count > 0) report.ResEntries.Add(deficitEntry);
+
+        var overcrowdingEntry = new ResolutionEntry { Title = "Overcrowding" };
+        ApplyOvercrowdingPenalties(state, report, overcrowdingEntry);
+        if (overcrowdingEntry.Messages.Count > 0) report.ResEntries.Add(overcrowdingEntry);
+
+        var sicknessEntry = new ResolutionEntry { Title = "Sickness & Recovery" };
+        ApplySicknessProgression(state, production, report, sicknessEntry);
+        if (sicknessEntry.Messages.Count > 0) report.ResEntries.Add(sicknessEntry);
+
+        var unrestEntry = new ResolutionEntry { Title = "Morale & Unrest" };
+        ApplyUnrestProgression(state, unrestEntry);
+        if (unrestEntry.Messages.Count > 0) report.ResEntries.Add(unrestEntry);
+
+        var siegeEntry = new ResolutionEntry { Title = "Siege" };
+        ApplySiegeDamage(state, siegeEntry);
+        if (siegeEntry.Messages.Count > 0) report.ResEntries.Add(siegeEntry);
+
+        var repairEntry = new ResolutionEntry { Title = "Repairs" };
+        ApplyRepairs(state, production, repairEntry);
+        if (repairEntry.Messages.Count > 0) report.ResEntries.Add(repairEntry);
+
         ResolveTriggeredEvents(state, report);
         ResolveActiveMissions(state, report);
-        CheckLossConditions(state, report);
+
+        var statusEntry = new ResolutionEntry { Title = "Status" };
+        CheckLossConditions(state, statusEntry);
+        if (statusEntry.Messages.Count > 0) report.ResEntries.Add(statusEntry);
 
         FinalizeDay(state);
         return report;
@@ -120,13 +146,17 @@ public sealed class GameSimulationEngine(GameState state)
             var law = LawCatalog.Find(action.LawId);
             if (law is null)
             {
-                report.Add(ReasonTags.LawEnact, "Law selection failed: law not found.");
+                var failEntry = new ResolutionEntry { Title = "Law Action" };
+                failEntry.Write("Law selection failed: law not found.");
+                report.ResEntries.Add(failEntry);
                 return;
             }
 
             if (state.ActiveLawIds.Contains(law.Id))
             {
-                report.Add(ReasonTags.LawEnact, $"Law already enacted: {law.Name}.");
+                var failEntry = new ResolutionEntry { Title = $"Law: {law.Name}" };
+                failEntry.Write($"Law already enacted: {law.Name}.");
+                report.ResEntries.Add(failEntry);
                 return;
             }
 
@@ -135,13 +165,17 @@ public sealed class GameSimulationEngine(GameState state)
             if (lawCooldownActive)
             {
                 var nextDay = state.LastLawDay + GameBalance.LawCooldownDays;
-                report.Add(ReasonTags.LawEnact, $"Law cooldown active. Next enactment day: {nextDay}.");
+                var failEntry = new ResolutionEntry { Title = $"Law: {law.Name}" };
+                failEntry.Write($"Law cooldown active. Next enactment day: {nextDay}.");
+                report.ResEntries.Add(failEntry);
                 return;
             }
 
             if (!law.CanEnact(state, out var reason))
             {
-                report.Add(ReasonTags.LawEnact, $"Cannot enact {law.Name}: {reason}");
+                var failEntry = new ResolutionEntry { Title = $"Law: {law.Name}" };
+                failEntry.Write($"Cannot enact {law.Name}: {reason}");
+                report.ResEntries.Add(failEntry);
                 return;
             }
 
@@ -153,8 +187,10 @@ public sealed class GameSimulationEngine(GameState state)
                 state.FirstLawName = law.Name;
             }
 
-            report.Add(ReasonTags.LawEnact, $"Law enacted: {law.Name}.");
-            law.OnEnact(state, report);
+            var lawEntry = new ResolutionEntry { Title = $"Law Enacted: {law.Name}" };
+            lawEntry.Write($"Law enacted: {law.Name}.");
+            law.OnEnact(state, lawEntry);
+            report.ResEntries.Add(lawEntry);
             return;
         }
 
@@ -163,7 +199,9 @@ public sealed class GameSimulationEngine(GameState state)
             var order = EmergencyOrderCatalog.Find(action.EmergencyOrderId);
             if (order is null)
             {
-                report.Add(ReasonTags.OrderEffect, "Emergency order selection failed: order not found.");
+                var failEntry = new ResolutionEntry { Title = "Order Action" };
+                failEntry.Write("Emergency order selection failed: order not found.");
+                report.ResEntries.Add(failEntry);
                 return;
             }
 
@@ -171,20 +209,25 @@ public sealed class GameSimulationEngine(GameState state)
                 && state.Day - lastDay < order.CooldownDays)
             {
                 var nextDay = lastDay + order.CooldownDays;
-                report.Add(ReasonTags.OrderEffect,
-                    $"Emergency order cooldown active for {order.Name}. Next available day: {nextDay}.");
+                var failEntry = new ResolutionEntry { Title = $"Order: {order.Name}" };
+                failEntry.Write($"Emergency order cooldown active for {order.Name}. Next available day: {nextDay}.");
+                report.ResEntries.Add(failEntry);
                 return;
             }
 
             if (!order.CanIssue(state, out var reason))
             {
-                report.Add(ReasonTags.OrderEffect, $"Cannot issue {order.Name}: {reason}");
+                var failEntry = new ResolutionEntry { Title = $"Order: {order.Name}" };
+                failEntry.Write($"Cannot issue {order.Name}: {reason}");
+                report.ResEntries.Add(failEntry);
                 return;
             }
 
             state.ActiveOrderId = order.Id;
             state.OrderCooldowns[order.Id] = state.Day;
-            report.Add(ReasonTags.OrderEffect, $"Emergency order prepared: {order.Name}.");
+            var orderEntry = new ResolutionEntry { Title = $"Order Prepared: {order.Name}" };
+            orderEntry.Write($"Emergency order prepared: {order.Name}.");
+            report.ResEntries.Add(orderEntry);
             return;
         }
 
@@ -193,7 +236,9 @@ public sealed class GameSimulationEngine(GameState state)
             var mission = MissionCatalog.Find(action.MissionId);
             if (mission is null)
             {
-                report.Add(ReasonTags.Mission, "Mission selection failed: mission not found.");
+                var failEntry = new ResolutionEntry { Title = "Mission Action" };
+                failEntry.Write("Mission selection failed: mission not found.");
+                report.ResEntries.Add(failEntry);
                 return;
             }
 
@@ -202,29 +247,34 @@ public sealed class GameSimulationEngine(GameState state)
                 if (state.Day - lastMissionDay < GameBalance.MissionCooldownDays)
                 {
                     var nextDay = lastMissionDay + GameBalance.MissionCooldownDays;
-                    report.Add(ReasonTags.Mission,
-                        $"Mission cooldown active for {mission.Name}. Next available day: {nextDay}.");
+                    var failEntry = new ResolutionEntry { Title = $"Mission: {mission.Name}" };
+                    failEntry.Write($"Mission cooldown active for {mission.Name}. Next available day: {nextDay}.");
+                    report.ResEntries.Add(failEntry);
                     return;
                 }
             }
 
             if (!mission.CanStart(state, out var reason))
             {
-                report.Add(ReasonTags.Mission, $"Cannot start mission {mission.Name}: {reason}");
+                var failEntry = new ResolutionEntry { Title = $"Mission: {mission.Name}" };
+                failEntry.Write($"Cannot start mission {mission.Name}: {reason}");
+                report.ResEntries.Add(failEntry);
                 return;
             }
 
             if (state.IdleWorkers < mission.WorkerCost)
             {
-                report.Add(ReasonTags.Mission,
-                    $"Cannot start mission {mission.Name}: not enough idle workers (need {mission.WorkerCost}, have {state.IdleWorkers}).");
+                var failEntry = new ResolutionEntry { Title = $"Mission: {mission.Name}" };
+                failEntry.Write($"Cannot start mission {mission.Name}: not enough idle workers (need {mission.WorkerCost}, have {state.IdleWorkers}).");
+                report.ResEntries.Add(failEntry);
                 return;
             }
 
             state.ActiveMissions.Add(new ActiveMission(mission));
             state.MissionCooldowns[mission.Id] = state.Day;
-            report.Add(ReasonTags.Mission,
-                $"Mission started: {mission.Name} ({mission.DurationDays} day(s), {mission.WorkerCost} workers committed).");
+            var missionEntry = new ResolutionEntry { Title = $"Mission Started: {mission.Name}" };
+            missionEntry.Write($"Mission started: {mission.Name} ({mission.DurationDays} day(s), {mission.WorkerCost} workers committed).");
+            report.ResEntries.Add(missionEntry);
         }
     }
 
@@ -233,7 +283,10 @@ public sealed class GameSimulationEngine(GameState state)
         foreach (var lawId in state.ActiveLawIds)
         {
             var law = LawCatalog.Find(lawId);
-            law?.ApplyDaily(state, report);
+            if (law is null) continue;
+            var lawEntry = new ResolutionEntry { Title = $"Law: {law.Name}" };
+            law.ApplyDaily(state, lawEntry);
+            if (lawEntry.Messages.Count > 0) report.ResEntries.Add(lawEntry);
         }
     }
 
@@ -250,10 +303,12 @@ public sealed class GameSimulationEngine(GameState state)
             return;
         }
 
-        order.Apply(state, report);
+        var orderEntry = new ResolutionEntry { Title = $"Order: {order.Name}" };
+        order.Apply(state, orderEntry);
+        if (orderEntry.Messages.Count > 0) report.ResEntries.Add(orderEntry);
     }
 
-    static DailyProductionResult CalculateProduction(GameState state, DayResolutionReport report)
+    static DailyProductionResult CalculateProduction(GameState state, ResolutionEntry entry)
     {
         var result = new DailyProductionResult();
 
@@ -362,7 +417,7 @@ public sealed class GameSimulationEngine(GameState state)
                     if (spend > 0)
                     {
                         state.Resources.Consume(pair.Resource, spend);
-                        report.Add(ReasonTags.Production, $"{job}: consumed {spend} {pair.Resource}.");
+                        entry.Write($"{job}: consumed {spend} {pair.Resource}.");
                         if (job == JobType.ClinicStaff && pair.Resource == ResourceKind.Medicine)
                         {
                             result.ClinicMedicineSpent += spend;
@@ -383,25 +438,25 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 state.Resources.Add(outputResource.Resource, produced);
                 result.AddResourceProduction(outputResource.Resource, produced);
-                report.Add(ReasonTags.Production, $"{job}: +{produced} {outputResource.Resource}.");
+                entry.Write($"{job}: +{produced} {outputResource.Resource}.");
             }
             else if (job == JobType.Repairs)
             {
                 result.RepairPoints += produced;
-                report.Add(ReasonTags.Production, $"Repair teams prepared {produced} integrity points.");
+                entry.Write($"Repair teams prepared {produced} integrity points.");
             }
             else if (job == JobType.ClinicStaff)
             {
                 result.ClinicCarePoints += produced;
                 result.ClinicSlotsUsed += (int)Math.Max(1, Math.Floor(effectiveCycles));
-                report.Add(ReasonTags.Production, $"Clinic care capacity: {produced} care points.");
+                entry.Write($"Clinic care capacity: {produced} care points.");
             }
         }
 
         return result;
     }
 
-    static void ApplyConsumption(GameState state, DayResolutionReport report)
+    static void ApplyConsumption(GameState state, DayResolutionReport report, ResolutionEntry entry)
     {
         var population = state.Population.TotalPopulation;
 
@@ -421,41 +476,40 @@ public sealed class GameSimulationEngine(GameState state)
         state.LastDayFoodConsumed = foodConsumed;
         state.LastDayWaterConsumed = waterConsumed;
 
-        report.Add(ReasonTags.Consumption,
-            $"Daily consumption: food {foodConsumed}/{foodNeed}, water {waterConsumed}/{waterNeed}, fuel {fuelConsumed}/{fuelNeed}.");
+        entry.Write($"Daily consumption: food {foodConsumed}/{foodNeed}, water {waterConsumed}/{waterNeed}, fuel {fuelConsumed}/{fuelNeed}.");
 
         if (foodConsumed < foodNeed)
         {
             state.FoodDeficitToday = true;
             report.FoodDeficitToday = true;
-            report.Add(ReasonTags.Consumption, $"Food deficit: short by {foodNeed - foodConsumed}.");
+            entry.Write($"Food deficit: short by {foodNeed - foodConsumed}.");
         }
 
         if (waterConsumed < waterNeed)
         {
             state.WaterDeficitToday = true;
             report.WaterDeficitToday = true;
-            report.Add(ReasonTags.Consumption, $"Water deficit: short by {waterNeed - waterConsumed}.");
+            entry.Write($"Water deficit: short by {waterNeed - waterConsumed}.");
         }
 
         if (fuelConsumed < fuelNeed)
         {
             state.FuelDeficitToday = true;
             report.FuelDeficitToday = true;
-            report.Add(ReasonTags.Consumption, $"Fuel deficit: short by {fuelNeed - fuelConsumed}.");
+            entry.Write($"Fuel deficit: short by {fuelNeed - fuelConsumed}.");
         }
     }
 
-    static void ApplyDeficitPenalties(GameState state, DayResolutionReport report)
+    static void ApplyDeficitPenalties(GameState state, ResolutionEntry entry)
     {
         if (state.FoodDeficitToday)
         {
             state.DayFirstFoodDeficit ??= state.Day;
 
             state.ConsecutiveFoodDeficitDays += 1;
-            StateChangeApplier.AddUnrest(state, 6, report, ReasonTags.Deficit, "Food deficit pressure");
-            StateChangeApplier.AddMorale(state, -8, report, ReasonTags.Deficit, "Food deficit pressure");
-            StateChangeApplier.AddSickness(state, 2, report, ReasonTags.Deficit, "Food deficit pressure");
+            state.AddUnrest(6, entry);
+            state.AddMorale(-8, entry);
+            state.AddSickness(2, entry);
         }
         else
         {
@@ -467,9 +521,9 @@ public sealed class GameSimulationEngine(GameState state)
             state.DayFirstWaterDeficit ??= state.Day;
 
             state.ConsecutiveWaterDeficitDays += 1;
-            StateChangeApplier.AddUnrest(state, 7, report, ReasonTags.Deficit, "Water deficit pressure");
-            StateChangeApplier.AddMorale(state, -10, report, ReasonTags.Deficit, "Water deficit pressure");
-            StateChangeApplier.AddSickness(state, 6, report, ReasonTags.Deficit, "Water deficit pressure");
+            state.AddUnrest(7, entry);
+            state.AddMorale(-10, entry);
+            state.AddSickness(6, entry);
         }
         else
         {
@@ -478,12 +532,12 @@ public sealed class GameSimulationEngine(GameState state)
 
         if (state.FuelDeficitToday)
         {
-            StateChangeApplier.AddMorale(state, -4, report, ReasonTags.Deficit, "Fuel shortage");
-            StateChangeApplier.AddSickness(state, 2, report, ReasonTags.Deficit, "Fuel shortage");
+            state.AddMorale(-4, entry);
+            state.AddSickness(2, entry);
         }
     }
 
-    static void ApplyOvercrowdingPenalties(GameState state, DayResolutionReport report)
+    static void ApplyOvercrowdingPenalties(GameState state, DayResolutionReport report, ResolutionEntry entry)
     {
         var totalPop = state.Population.TotalPopulation;
         var totalCapacity = 0;
@@ -506,10 +560,8 @@ public sealed class GameSimulationEngine(GameState state)
 
         report.OvercrowdingStacksToday = totalStacks;
 
-        StateChangeApplier.AddUnrest(state, totalStacks * GameBalance.OvercrowdingUnrestPerStack, report,
-            ReasonTags.Overcrowding, "Overcrowding");
-        StateChangeApplier.AddSickness(state, totalStacks * GameBalance.OvercrowdingSicknessPerStack, report,
-            ReasonTags.Overcrowding, "Overcrowding");
+        state.AddUnrest(totalStacks * GameBalance.OvercrowdingUnrestPerStack, entry);
+        state.AddSickness(totalStacks * GameBalance.OvercrowdingSicknessPerStack, entry);
 
         var multiplier = totalStacks * GameBalance.OvercrowdingConsumptionPerStack;
         var extraFood = (int)Math.Ceiling(report.FoodConsumedToday * multiplier);
@@ -518,19 +570,17 @@ public sealed class GameSimulationEngine(GameState state)
         if (extraFood > 0)
         {
             var consumed = state.Resources.Consume(ResourceKind.Food, extraFood);
-            report.Add(ReasonTags.Overcrowding,
-                $"Overcrowding strain: additional food consumption {consumed}/{extraFood}.");
+            entry.Write($"Overcrowding strain: additional food consumption {consumed}/{extraFood}.");
         }
 
         if (extraWater > 0)
         {
             var consumed = state.Resources.Consume(ResourceKind.Water, extraWater);
-            report.Add(ReasonTags.Overcrowding,
-                $"Overcrowding strain: additional water consumption {consumed}/{extraWater}.");
+            entry.Write($"Overcrowding strain: additional water consumption {consumed}/{extraWater}.");
         }
     }
 
-    static void ApplySicknessProgression(GameState state, DailyProductionResult production, DayResolutionReport report)
+    static void ApplySicknessProgression(GameState state, DailyProductionResult production, DayResolutionReport report, ResolutionEntry entry)
     {
         var sicknessDelta = StatModifiers.ComputeSicknessFromEnvironment(state);
         sicknessDelta -= state.DailyEffects.QuarantineSicknessReduction;
@@ -543,8 +593,7 @@ public sealed class GameSimulationEngine(GameState state)
 
         if (sicknessDelta != 0)
         {
-            StateChangeApplier.AddSickness(state, sicknessDelta, report, ReasonTags.Sickness,
-                "Daily sickness progression");
+            state.AddSickness(sicknessDelta, entry);
         }
 
         var newCases = Math.Max(0, (state.Sickness - 15) / 20);
@@ -561,21 +610,20 @@ public sealed class GameSimulationEngine(GameState state)
         newCases -= production.ClinicCarePoints / 10;
         if (newCases > 0)
         {
-            StateChangeApplier.ConvertHealthyToSick(state, newCases, report, "Disease spread");
+            state.ConvertHealthyToSick(newCases, entry);
         }
 
         var diseaseDeaths = state.Sickness > 70 ? Math.Max(1, (state.Sickness - 70) / 15) : 0;
         if (diseaseDeaths > 0)
         {
-            StateChangeApplier.ApplyDeaths(state, diseaseDeaths, report, ReasonTags.Sickness,
-                "Critical sickness mortality");
+            state.ApplyDeath(diseaseDeaths, entry);
         }
 
         if (state.Sickness < GameBalance.RecoveryThresholdSickness)
         {
             report.RecoveryEnabledToday = true;
             state.Population.AdvanceRecoveryTimers();
-            report.Add(ReasonTags.RecoveryProgress, "Recovery timers advanced.");
+            entry.Write("Recovery timers advanced.");
 
             var ready = state.Population.ReadyToRecoverCount();
             var clinicCap = production.ClinicSlotsUsed * GameBalance.RecoveryPerClinicSlot;
@@ -590,7 +638,7 @@ public sealed class GameSimulationEngine(GameState state)
                 var medicineSpend = (int)Math.Ceiling(recoveries * medicinePerRecovery);
                 state.Resources.Consume(ResourceKind.Medicine, medicineSpend);
                 report.RecoveryMedicineSpentToday += medicineSpend;
-                StateChangeApplier.RecoverSickWorkers(state, recoveries, report, "Clinical recovery");
+                state.RecoverSickWorkers(recoveries, report, entry);
             }
             else if (ready > 0)
             {
@@ -601,7 +649,7 @@ public sealed class GameSimulationEngine(GameState state)
                 else if (medicineCap <= 0)
                 {
                     report.RecoveryBlockedReason = "Insufficient medicine for recoveries.";
-                    report.Add(ReasonTags.RecoveryBlockedMedicine, "Recovery blocked by medicine shortage.");
+                    entry.Write("Recovery blocked by medicine shortage.");
                 }
             }
         }
@@ -610,11 +658,11 @@ public sealed class GameSimulationEngine(GameState state)
             report.RecoveryEnabledToday = false;
             report.RecoveryBlockedReason =
                 $"Global sickness is {state.Sickness}, recovery requires below {GameBalance.RecoveryThresholdSickness}.";
-            report.Add(ReasonTags.RecoveryBlockedThreshold, report.RecoveryBlockedReason);
+            entry.Write(report.RecoveryBlockedReason);
         }
     }
 
-    static void ApplyUnrestProgression(GameState state, DayResolutionReport report)
+    static void ApplyUnrestProgression(GameState state, ResolutionEntry entry)
     {
         var unrestDelta = StatModifiers.ComputeUnrestProgression(state);
         if (state.FoodDeficitToday)
@@ -629,23 +677,22 @@ public sealed class GameSimulationEngine(GameState state)
 
         if (unrestDelta != 0)
         {
-            StateChangeApplier.AddUnrest(state, unrestDelta, report, ReasonTags.Unrest, "Daily unrest progression");
+            state.AddUnrest(unrestDelta, entry);
         }
 
         var moraleDelta = StatModifiers.ComputeMoraleDrift(state);
         if (moraleDelta != 0)
         {
-            StateChangeApplier.AddMorale(state, moraleDelta, report, ReasonTags.Unrest, "Daily morale drift");
+            state.AddMorale(moraleDelta, entry);
         }
     }
 
-    static void ApplySiegeDamage(GameState state, DayResolutionReport report)
+    static void ApplySiegeDamage(GameState state, ResolutionEntry entry)
     {
         if (state.SiegeEscalationDelayDays > 0)
         {
             state.SiegeEscalationDelayDays -= 1;
-            report.Add(ReasonTags.Siege,
-                $"Night raid pressure delay active: {state.SiegeEscalationDelayDays} day(s) remaining.");
+            entry.Write($"Night raid pressure delay active: {state.SiegeEscalationDelayDays} day(s) remaining.");
         }
         else
         {
@@ -685,7 +732,7 @@ public sealed class GameSimulationEngine(GameState state)
             if (shouldEscalate && state.SiegeIntensity < GameBalance.MaxSiegeIntensity)
             {
                 state.SiegeIntensity += 1;
-                report.Add(ReasonTags.Siege, $"Siege intensity increased to {state.SiegeIntensity}.");
+                entry.Write($"Siege intensity increased to {state.SiegeIntensity}.");
             }
         }
 
@@ -697,11 +744,11 @@ public sealed class GameSimulationEngine(GameState state)
                                        state.SiegeDamageMultiplier * finalAssaultMultiplier * dustStormMultiplier);
 
         perimeter.Integrity -= damage;
-        report.Add(ReasonTags.Siege, $"Siege struck {perimeter.Name}: -{damage} integrity.");
+        entry.Write($"Siege struck {perimeter.Name}: -{damage} integrity.");
 
         if (perimeter.Integrity <= 0)
         {
-            StateChangeApplier.LoseZone(state, perimeter.Id, false, report);
+            state.LoseZone(perimeter.Id, false, entry);
         }
 
         if (state.SiegeIntensity >= 4 && state.RollPercent() <= 15)
@@ -710,25 +757,22 @@ public sealed class GameSimulationEngine(GameState state)
             var waterRaid = (int)Math.Ceiling(state.Resources[ResourceKind.Water] * 0.15);
             if (foodRaid > 0)
             {
-                StateChangeApplier.AddResource(state, ResourceKind.Food, -foodRaid, report, ReasonTags.Siege,
-                    "Supply line raid");
+                state.AddResource(ResourceKind.Food, -foodRaid, entry);
             }
 
             if (waterRaid > 0)
             {
-                StateChangeApplier.AddResource(state, ResourceKind.Water, -waterRaid, report, ReasonTags.Siege,
-                    "Supply line raid");
+                state.AddResource(ResourceKind.Water, -waterRaid, entry);
             }
 
             if (foodRaid > 0 || waterRaid > 0)
             {
-                report.Add(ReasonTags.Siege,
-                    $"Supply line raid: enemy forces destroyed {foodRaid} food and {waterRaid} water.");
+                entry.Write($"Supply line raid: enemy forces destroyed {foodRaid} food and {waterRaid} water.");
             }
         }
     }
 
-    static void ApplyRepairs(GameState state, DailyProductionResult production, DayResolutionReport report)
+    static void ApplyRepairs(GameState state, DailyProductionResult production, ResolutionEntry entry)
     {
         var repairPoints = (int)Math.Round(production.RepairPoints * state.DailyEffects.RepairOutputMultiplier);
         if (repairPoints <= 0)
@@ -748,7 +792,7 @@ public sealed class GameSimulationEngine(GameState state)
 
         if (applied > 0)
         {
-            report.Add(ReasonTags.Repairs, $"Repair crews restored {applied} integrity to {perimeter.Name}.");
+            entry.Write($"Repair crews restored {applied} integrity to {perimeter.Name}.");
         }
     }
 
@@ -784,12 +828,14 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 var responses = respondable.GetResponses(state);
                 report.PendingResponses.Add(new PendingEventResponse(evt, responses));
-                report.AddTriggeredEvent(evt.Name);
+                report.TriggeredEventNames.Add(evt.Name);
                 continue;
             }
 
-            evt.Apply(state, report);
-            report.AddTriggeredEvent(evt.Name);
+            var entry = new ResolutionEntry() { Title = evt.Name };
+            evt.Apply(state, entry);
+            report.ResEntries.Add(entry);
+            report.TriggeredEventNames.Add(evt.Name);
         }
     }
 
@@ -802,7 +848,9 @@ public sealed class GameSimulationEngine(GameState state)
 
             if (pending.Event is IRespondableEvent respondable)
             {
-                respondable.ApplyResponse(responseId, state, report);
+                var entry = new ResolutionEntry() { Title = pending.Event.Name };
+                respondable.ApplyResponse(responseId, state, entry);
+                report.ResEntries.Add(entry);
             }
 
             report.EventResponsesMade.Add(new EventResponseChoice(pending.Event.Id, responseId));
@@ -821,17 +869,19 @@ public sealed class GameSimulationEngine(GameState state)
             }
 
             var definition = MissionCatalog.Find(active.MissionId);
-            definition?.ResolveOutcome(state, active, report);
             state.ActiveMissions.RemoveAt(index);
 
             if (definition is not null)
             {
-                report.Add(ReasonTags.Mission, $"Mission resolved: {definition.Name}.");
+                var missionEntry = new ResolutionEntry { Title = $"Mission Completed: {definition.Name}" };
+                definition.ResolveOutcome(state, active, missionEntry);
+                report.ResEntries.Add(missionEntry);
+                report.ResolvedMissionNames.Add(definition.Name);
             }
         }
     }
 
-    static void CheckLossConditions(GameState state, DayResolutionReport report)
+    static void CheckLossConditions(GameState state, ResolutionEntry entry)
     {
         if (state.GameOver)
         {
@@ -844,7 +894,7 @@ public sealed class GameSimulationEngine(GameState state)
             state.GameOver = true;
             state.GameOverCause = GameOverCause.KeepBreached;
             state.GameOverDetails = "Keep integrity fell to zero.";
-            report.Add(ReasonTags.Event, "Loss: Keep breached.");
+            entry.Write("Loss: Keep breached.");
             return;
         }
 
@@ -853,7 +903,7 @@ public sealed class GameSimulationEngine(GameState state)
             state.GameOver = true;
             state.GameOverCause = GameOverCause.Revolt;
             state.GameOverDetails = $"Unrest exceeded {GameBalance.RevoltThreshold}.";
-            report.Add(ReasonTags.Event, "Loss: revolt overwhelmed governance.");
+            entry.Write("Loss: revolt overwhelmed governance.");
             return;
         }
 
@@ -862,7 +912,7 @@ public sealed class GameSimulationEngine(GameState state)
             state.GameOver = true;
             state.GameOverCause = GameOverCause.TotalCollapse;
             state.GameOverDetails = "Food and water at zero for 2 consecutive days.";
-            report.Add(ReasonTags.Event, "Loss: total collapse from sustained zero food and water.");
+            entry.Write("Loss: total collapse from sustained zero food and water.");
             return;
         }
 
@@ -872,7 +922,7 @@ public sealed class GameSimulationEngine(GameState state)
             state.GameOverCause = GameOverCause.PandemicCollapse;
             state.GameOverDetails =
                 $"Sickness at {state.Sickness} with only {state.Population.HealthyWorkers} healthy workers. The city cannot function.";
-            report.Add(ReasonTags.Event, "Loss: pandemic collapse. Too few healthy workers remain.");
+            entry.Write("Loss: pandemic collapse. Too few healthy workers remain.");
         }
     }
 

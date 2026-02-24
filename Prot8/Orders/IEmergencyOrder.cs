@@ -14,5 +14,5 @@ public interface IEmergencyOrder
 
     bool CanIssue(GameState state, out string reason);
 
-    void Apply(GameState state, DayResolutionReport report);
+    void Apply(GameState state, ResolutionEntry entry);
 }

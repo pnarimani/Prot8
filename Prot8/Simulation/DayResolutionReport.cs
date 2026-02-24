@@ -2,15 +2,26 @@ using Prot8.Events;
 
 namespace Prot8.Simulation;
 
+public class ResolutionEntry
+{
+    public required string Title { get; init; }
+    public List<string> Messages { get; init; } = [];
+
+    public void Write(string s)
+    {
+        Messages.Add(s);
+    }
+}
+
 public sealed class DayResolutionReport(int day)
 {
     public int Day { get; } = day;
 
-    public List<DeltaLogEntry> Entries { get; } = [];
+    public List<ResolutionEntry> ResEntries { get; } = [];
 
-    public List<string> TriggeredEvents { get; } = [];
+    public List<string> TriggeredEventNames { get; } = [];
 
-    public List<string> ResolvedMissions { get; } = [];
+    public List<string> ResolvedMissionNames { get; } = [];
 
     public List<PendingEventResponse> PendingResponses { get; } = [];
 
@@ -43,19 +54,4 @@ public sealed class DayResolutionReport(int day)
     public int StartUnrest { get; init; }
     public int StartSickness { get; init; }
     public int StartHealthyWorkers { get; init; }
-
-    public void Add(string tag, string message)
-    {
-        Entries.Add(new DeltaLogEntry(tag, message));
-    }
-
-    public void AddTriggeredEvent(string eventName)
-    {
-        TriggeredEvents.Add(eventName);
-    }
-
-    public void AddResolvedMission(string missionName)
-    {
-        ResolvedMissions.Add(missionName);
-    }
 }

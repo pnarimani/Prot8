@@ -22,10 +22,10 @@ public sealed class ForcedLaborOrder : IEmergencyOrder
         return true;
     }
 
-    public void Apply(GameState state, DayResolutionReport report)
+    public void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, ResourceKind.Materials, MaterialsGain, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.AddUnrest(state, UnrestGain, report, ReasonTags.OrderEffect, Name);
-        StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.OrderEffect, $"{Name} exhaustion");
+        state.AddResource(ResourceKind.Materials, MaterialsGain, entry);
+        state.AddUnrest(UnrestGain, entry);
+        state.ApplyDeath(Deaths, entry);
     }
 }

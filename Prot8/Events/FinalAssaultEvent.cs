@@ -18,13 +18,12 @@ public sealed class FinalAssaultEvent : TriggeredEventBase
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
         state.FinalAssaultActive = true;
-        StateChangeApplier.AddUnrest(state, UnrestGain, report, ReasonTags.Event, Name);
-        StateChangeApplier.AddMorale(state, -MoraleLoss, report, ReasonTags.Event, Name);
+        state.AddUnrest(UnrestGain, entry);
 
-        report.Add(ReasonTags.Event, $"{Name}: the enemy commits all forces. Siege damage permanently increased.");
+        entry.Write($"{Name}: the enemy commits all forces. Siege damage permanently increased.");
         StartCooldown(state);
     }
 }

@@ -26,15 +26,15 @@ public sealed class BurnTheDeadLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddMorale(state, -MoraleHit, report, ReasonTags.LawEnact, Name);
+        state.AddMorale(-MoraleHit, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddSickness(state, -DailySicknessReduction, report, ReasonTags.LawPassive, Name);
-        StateChangeApplier.AddMorale(state, -DailyMoraleHit, report, ReasonTags.LawPassive, Name);
-        StateChangeApplier.AddResource(state, Resources.ResourceKind.Fuel, -DailyFuelCost, report, ReasonTags.LawPassive, Name);
+        state.AddSickness(-DailySicknessReduction, entry);
+        state.AddMorale(-DailyMoraleHit, entry);
+        state.AddResource(Resources.ResourceKind.Fuel, -DailyFuelCost, entry);
     }
 }

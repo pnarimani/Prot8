@@ -26,15 +26,15 @@ public sealed class FoodConfiscationLaw : ILaw
         return false;
     }
 
-    public void OnEnact(GameState state, DayResolutionReport report)
+    public void OnEnact(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddResource(state, Resources.ResourceKind.Food, FoodGain, report, ReasonTags.LawEnact, Name);
-        StateChangeApplier.AddUnrest(state, UnrestHit, report, ReasonTags.LawEnact, Name);
-        StateChangeApplier.AddMorale(state, -MoraleHit, report, ReasonTags.LawEnact, Name);
-        StateChangeApplier.ApplyDeaths(state, Deaths, report, ReasonTags.LawEnact, $"{Name} enforcement");
+        state.AddResource(Resources.ResourceKind.Food, FoodGain, entry);
+        state.AddUnrest(UnrestHit, entry);
+        state.AddMorale(-MoraleHit, entry);
+        state.ApplyDeath(Deaths, entry);
     }
 
-    public void ApplyDaily(GameState state, DayResolutionReport report)
+    public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
     }
 }

@@ -31,11 +31,10 @@ public sealed class DespairEvent : TriggeredEventBase
         return state.Random.Next(1, 101) <= TriggerChance;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
-        StateChangeApplier.AddMorale(state, -MoraleLoss, report, ReasonTags.Event, Name);
-        StateChangeApplier.AddUnrest(state, UnrestGain, report, ReasonTags.Event, Name);
-        StateChangeApplier.ApplyDesertions(state, Desertions, report, ReasonTags.Event, $"{Name} desertions");
+        state.AddMorale(-MoraleLoss, entry);
+        state.AddUnrest(UnrestGain, entry);
 
         StartCooldown(state);
     }

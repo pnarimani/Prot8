@@ -33,29 +33,29 @@ public sealed class SearchAbandonedHomesMission : IMissionDefinition
         return true;
     }
 
-    public void ResolveOutcome(GameState state, ActiveMission mission, DayResolutionReport report)
+    public void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry)
     {
         var (materialsChance, medicineChance) = GetChances(state);
         var roll = state.RollPercent();
         if (roll <= materialsChance)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Materials, MaterialsGain, report, ReasonTags.Mission, Name);
-            StateChangeApplier.AddSickness(state, SuccessSickness, report, ReasonTags.Mission, $"{Name} exposure");
-            report.AddResolvedMission($"{Name}: recovered +{MaterialsGain} materials (+{SuccessSickness} sickness).");
+            state.AddResource(ResourceKind.Materials, MaterialsGain, entry);
+            state.AddSickness(SuccessSickness, entry);
+            entry.Write($"{Name}: recovered +{MaterialsGain} materials (+{SuccessSickness} sickness).");
             return;
         }
 
         if (roll <= materialsChance + medicineChance)
         {
-            StateChangeApplier.AddResource(state, ResourceKind.Medicine, MedicineGain, report, ReasonTags.Mission, Name);
-            StateChangeApplier.AddSickness(state, SuccessSickness, report, ReasonTags.Mission, $"{Name} exposure");
-            report.AddResolvedMission($"{Name}: recovered +{MedicineGain} medicine (+{SuccessSickness} sickness).");
+            state.AddResource(ResourceKind.Medicine, MedicineGain, entry);
+            state.AddSickness(SuccessSickness, entry);
+            entry.Write($"{Name}: recovered +{MedicineGain} medicine (+{SuccessSickness} sickness).");
             return;
         }
 
-        StateChangeApplier.AddSickness(state, PlagueSickness, report, ReasonTags.Mission, Name);
-        StateChangeApplier.ApplyDeaths(state, PlagueDeaths, report, ReasonTags.Mission, $"{Name} plague");
-        report.AddResolvedMission($"{Name}: plague exposure (+{PlagueSickness} sickness, {PlagueDeaths} deaths).");
+        state.AddSickness(PlagueSickness, entry);
+        state.ApplyDeath(PlagueDeaths, entry);
+        entry.Write($"{Name}: plague exposure (+{PlagueSickness} sickness, {PlagueDeaths} deaths).");
     }
 
     (int materialsChance, int medicineChance) GetChances(GameState state)

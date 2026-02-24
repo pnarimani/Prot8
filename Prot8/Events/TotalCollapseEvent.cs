@@ -15,12 +15,12 @@ public sealed class TotalCollapseEvent : TriggeredEventBase
         return state.ConsecutiveBothFoodWaterZeroDays >= GameBalance.FoodWaterLossThresholdDays;
     }
 
-    public override void Apply(GameState state, DayResolutionReport report)
+    public override void Apply(GameState state, ResolutionEntry entry)
     {
         state.GameOver = true;
         state.GameOverCause = GameOverCause.TotalCollapse;
         state.GameOverDetails = "Food and water both reached zero for too long.";
-        report.Add(ReasonTags.Event, $"{Name}: full supply collapse. Immediate game over.");
+        entry.Write($"{Name}: full supply collapse. Immediate game over.");
         StartCooldown(state);
     }
 }

@@ -511,8 +511,10 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
         foreach (var entry in vm.Entries)
         {
-            var color = GetTagColor(entry.Tag);
-            TypewriteLine($"[{color}][[{Esc(entry.Tag)}]][/] {Esc(entry.Message)}");
+            if (entry.Messages.Count == 0) continue;
+            TypewriteLine($"[bold yellow]{Esc(entry.Title)}[/]");
+            foreach (var msg in entry.Messages)
+                TypewriteLine($"  {Esc(msg)}");
         }
 
         if (vm.TriggeredEvents.Count > 0)
