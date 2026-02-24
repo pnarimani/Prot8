@@ -152,9 +152,6 @@ public class GameViewModelFactory(GameState state)
         {
             Day = report.Day,
             Entries = report.ResEntries,
-            TriggeredEvents = report.TriggeredEventNames,
-            ResolvedMissions = report.ResolvedMissionNames,
-            EventResponses = eventResponseSummaries,
             FoodConsumedToday = report.FoodConsumedToday,
             WaterConsumedToday = report.WaterConsumedToday,
             FoodDeficitToday = report.FoodDeficitToday,

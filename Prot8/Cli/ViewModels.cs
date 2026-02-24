@@ -148,9 +148,6 @@ public sealed class DayReportViewModel
 {
     public int Day { get; init; }
     public IReadOnlyList<ResolutionEntry> Entries { get; init; } = [];
-    public IReadOnlyList<string> TriggeredEvents { get; init; } = [];
-    public IReadOnlyList<string> ResolvedMissions { get; init; } = [];
-    public IReadOnlyList<EventResponseSummary> EventResponses { get; init; } = [];
     public int FoodConsumedToday { get; init; }
     public int WaterConsumedToday { get; init; }
     public bool FoodDeficitToday { get; init; }

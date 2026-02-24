@@ -498,42 +498,33 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     public void RenderDayReport(DayReportViewModel vm)
     {
+        foreach (var entry in vm.Entries)
+        {
+            if (entry.Messages.Count == 0)
+            {
+                continue;
+            }
+
+            Clear();
+            console.WriteLine();
+            console.Write(new Rule($"[bold]Day {vm.Day} Resolution[/]") { Style = Style.Parse("blue") });
+
+            var text = entry.Messages.Aggregate("", (s, s1) => s + "\n" + s1) + "\n";
+            console.Write(new Panel(new Text(text) { Justification = Justify.Center })
+            {
+                Header = new PanelHeader(entry.Title, Justify.Center),
+                Border = BoxBorder.Rounded,
+                Expand = true,
+                Padding = new Padding(1, 10),
+            });
+
+            console.MarkupLine("[grey]Press any key to continue...[/]");
+            Console.ReadKey(true);
+        }
+
         Clear();
         console.WriteLine();
         console.Write(new Rule($"[bold]Day {vm.Day} Resolution[/]") { Style = Style.Parse("blue") });
-
-        if (vm.DeltaSummary is not null)
-        {
-            console.MarkupLine(Esc(vm.DeltaSummary));
-        }
-
-        console.WriteLine();
-
-        foreach (var entry in vm.Entries)
-        {
-            if (entry.Messages.Count == 0) continue;
-            TypewriteLine($"[bold yellow]{Esc(entry.Title)}[/]");
-            foreach (var msg in entry.Messages)
-                TypewriteLine($"  {Esc(msg)}");
-        }
-
-        if (vm.TriggeredEvents.Count > 0)
-        {
-            TypewriteLine($"[bold orange1]Events:[/] {Esc(string.Join(", ", vm.TriggeredEvents))}");
-        }
-
-        if (vm.EventResponses.Count > 0)
-        {
-            foreach (var resp in vm.EventResponses)
-            {
-                TypewriteLine($"[bold orange1]Response:[/] {Esc(resp.EventName)} -> {Esc(resp.ChosenResponse)}");
-            }
-        }
-
-        if (vm.ResolvedMissions.Count > 0)
-        {
-            TypewriteLine($"[bold dodgerblue1]Missions:[/] {Esc(string.Join(", ", vm.ResolvedMissions))}");
-        }
 
         if (vm.RecoveryEnabledToday)
         {
@@ -549,6 +540,11 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         {
             console.WriteLine();
             console.MarkupLine($"[bold yellow]{Esc(vm.AllocationAlert)}[/]");
+        }
+
+        if (vm.DeltaSummary is not null)
+        {
+            console.MarkupLine(Esc(vm.DeltaSummary));
         }
 
         console.WriteLine();
