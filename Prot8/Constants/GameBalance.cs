@@ -61,11 +61,11 @@ public static class GameBalance
 
     public static readonly IReadOnlyList<ZoneTemplate> ZoneTemplates = new List<ZoneTemplate>
     {
-        new(ZoneId.OuterFarms, "Outer Farms", 70, 15, 1.0),
-        new(ZoneId.OuterResidential, "Outer Residential", 75, 15, 0.9),
-        new(ZoneId.ArtisanQuarter, "Artisan Quarter", 70, 15, 0.8),
-        new(ZoneId.InnerDistrict, "Inner District", 65, 15, 0.7),
-        new(ZoneId.Keep, "Keep", 60, 15, 0.6),
+        new(ZoneId.OuterFarms, "Outer Farms", 70, 25, 1.0),
+        new(ZoneId.OuterResidential, "Outer Residential", 75, 25, 0.9),
+        new(ZoneId.ArtisanQuarter, "Artisan Quarter", 70, 25, 0.8),
+        new(ZoneId.InnerDistrict, "Inner District", 65, 25, 0.7),
+        new(ZoneId.Keep, "Keep", 60, 25, 0.6),
     };
 
     public static readonly IReadOnlyDictionary<JobType, ZoneId> JobZoneMap = new Dictionary<JobType, ZoneId>
