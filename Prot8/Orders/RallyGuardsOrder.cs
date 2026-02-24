@@ -5,16 +5,17 @@ namespace Prot8.Orders;
 
 public sealed class RallyGuardsOrder : IEmergencyOrder
 {
-    private const int FoodCost = 5;
-    private const int UnrestReduction = 12;
+    private const int FoodCost = 10;
+    private const int UnrestReduction = 15;
+    private const int MoraleGain = 5;
     private const int GuardThreshold = 5;
 
     public string Id => "rally_guards";
     public string Name => "Rally the Guards";
-    public int CooldownDays => 2;
+    public int CooldownDays => 3;
 
     public string GetTooltip(GameState state) =>
-        $"-{FoodCost} food, -{UnrestReduction} unrest. Requires guards >= {GuardThreshold}.";
+        $"-{FoodCost} food, -{UnrestReduction} unrest, +{MoraleGain} morale. Requires guards >= {GuardThreshold}.";
 
     public bool CanIssue(GameState state, out string reason)
     {
@@ -38,6 +39,7 @@ public sealed class RallyGuardsOrder : IEmergencyOrder
     {
         state.AddResource(ResourceKind.Food, -FoodCost, entry);
         state.AddUnrest(-UnrestReduction, entry);
-        entry.Write("A feast is laid out for the garrison. Guards eat well and raise their swords in salute. The streets feel safer tonight.");
+        state.AddMorale(MoraleGain, entry);
+        entry.Write("A feast is laid out for the garrison. Guards eat well and parade through the streets. The people feel safer — but the food stores are lighter.");
     }
 }

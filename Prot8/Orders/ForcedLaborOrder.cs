@@ -5,16 +5,16 @@ namespace Prot8.Orders;
 
 public sealed class ForcedLaborOrder : IEmergencyOrder
 {
-    private const int MaterialsGain = 8;
-    private const int UnrestGain = 5;
-    private const int Deaths = 1;
+    private const int MaterialsGain = 15;
+    private const int UnrestGain = 8;
+    private const int Deaths = 2;
 
     public string Id => "forced_labor";
     public string Name => "Forced Labor Detail";
-    public int CooldownDays => 2;
+    public int CooldownDays => 3;
 
     public string GetTooltip(GameState state) =>
-        $"+{MaterialsGain} materials, +{UnrestGain} unrest, {Deaths} death.";
+        $"+{MaterialsGain} materials, +{UnrestGain} unrest, {Deaths} deaths.";
 
     public bool CanIssue(GameState state, out string reason)
     {
@@ -27,6 +27,6 @@ public sealed class ForcedLaborOrder : IEmergencyOrder
         state.AddResource(ResourceKind.Materials, MaterialsGain, entry);
         state.AddUnrest(UnrestGain, entry);
         state.ApplyDeath(Deaths, entry);
-        entry.Write("Conscripts are rounded up and put to work. Materials are produced, but at the cost of lives. One collapses from exhaustion and does not rise.");
+        entry.Write("Conscripts are driven into the quarries at spearpoint. Materials pile up — but two collapse from exhaustion and do not rise. The others stare with hollow eyes.");
     }
 }

@@ -1,11 +1,11 @@
 using Prot8.Simulation;
-using Prot8.Zones;
 
 namespace Prot8.Orders;
 
 public sealed class QuarantineDistrictOrder : IEmergencyOrder
 {
-    private const int SicknessReduction = 8;
+    private const int SicknessReduction = 12;
+    private const int UnrestReduction = 3;
     private const int SicknessThreshold = 30;
 
     public string Id => "quarantine_district";
@@ -13,7 +13,7 @@ public sealed class QuarantineDistrictOrder : IEmergencyOrder
     public int CooldownDays => 3;
 
     public string GetTooltip(GameState state) =>
-        $"Quarantine the active perimeter zone: -50% production in that zone today, -{SicknessReduction} sickness. Requires sickness > {SicknessThreshold}.";
+        $"Quarantine the active perimeter zone: -50% production in that zone today, -{SicknessReduction} sickness, -{UnrestReduction} unrest. Requires sickness > {SicknessThreshold}.";
 
     public bool CanIssue(GameState state, out string reason)
     {
@@ -32,6 +32,7 @@ public sealed class QuarantineDistrictOrder : IEmergencyOrder
         var zone = state.ActivePerimeterZone;
         state.DailyEffects.QuarantineZone = zone.Id;
         state.DailyEffects.QuarantineSicknessReduction = SicknessReduction;
-        entry.Write($"The {zone.Name} is sealed. No one enters, no one leaves. Production halts, but the disease is contained — for now.");
+        state.AddUnrest(-UnrestReduction, entry);
+        entry.Write($"The {zone.Name} is sealed. No one enters, no one leaves. Production halts, but the disease is contained — and the streets feel calmer for it.");
     }
 }
