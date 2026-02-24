@@ -15,7 +15,7 @@ public static class StatModifiers
 
         if (state.Morale < GameBalance.MoraleProductionThreshold)
         {
-            var moraleFactor = 0.75 + (state.Morale / 200.0);
+            var moraleFactor = 0.5 + (state.Morale / (2.0 * GameBalance.MoraleProductionThreshold));
             result.Apply($"Low morale ({state.Morale})", moraleFactor);
         }
 

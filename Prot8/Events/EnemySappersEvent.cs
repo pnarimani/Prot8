@@ -11,7 +11,7 @@ public sealed class EnemySappersEvent : ITriggeredEvent
     public string Description =>
         "The enemy has been tunneling beneath the walls. Their engineers work in silence, undermining the foundations stone by stone, waiting for the moment to strike.";
 
-    const int TriggerDay = 16;
+    const int TriggerDay = 14;
     const int IntegrityDamage = 5;
     const int SiegeIncrease = 1;
 

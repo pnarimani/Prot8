@@ -5,8 +5,8 @@ namespace Prot8.Orders;
 
 public sealed class RallyGuardsOrder : IEmergencyOrder
 {
-    private const int FoodCost = 3;
-    private const int UnrestReduction = 5;
+    private const int FoodCost = 5;
+    private const int UnrestReduction = 12;
     private const int GuardThreshold = 5;
 
     public string Id => "rally_guards";

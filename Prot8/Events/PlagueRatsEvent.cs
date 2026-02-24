@@ -9,7 +9,7 @@ public sealed class PlagueRatsEvent() : IRespondableEvent, ITriggeredEvent
     public string Name => "Plague Rats";
     public string Description => "Rats have infested the city in vast numbers, driven inward by the siege. They gnaw through food stores and carry disease wherever they nest.";
 
-    const int TriggerDay = 18;
+    const int TriggerDay = 23;
 
     public bool ShouldTrigger(GameState state)
     {

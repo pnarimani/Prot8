@@ -5,15 +5,16 @@ namespace Prot8.Orders;
 
 public sealed class DoubleWaterRationsOrder : IEmergencyOrder
 {
-    private const int MoraleGain = 5;
+    private const int MoraleGain = 8;
     private const int WaterCost = 15;
+    private const int SicknessReduction = 3;
 
     public string Id => "double_water_rations";
     public string Name => "Double Water Rations";
     public int CooldownDays => 2;
 
     public string GetTooltip(GameState state) =>
-        $"+{MoraleGain} morale, -{WaterCost} water.";
+        $"+{MoraleGain} morale, -{SicknessReduction} sickness, -{WaterCost} water.";
 
     public bool CanIssue(GameState state, out string reason)
     {
@@ -30,7 +31,8 @@ public sealed class DoubleWaterRationsOrder : IEmergencyOrder
     public void Apply(GameState state, ResolutionEntry entry)
     {
         state.AddMorale(MoraleGain, entry);
+        state.AddSickness(-SicknessReduction, entry);
         state.AddResource(ResourceKind.Water, -WaterCost, entry);
-        entry.Write("Water flows freely today. The pumps run overtime, and the people drink their fill. Morale soars, but reserves dwindle.");
+        entry.Write("Water flows freely today. The pumps run overtime, and the people drink their fill. Clean water washes away illness, and spirits lift.");
     }
 }

@@ -719,7 +719,7 @@ public sealed class GameSimulationEngine(GameState state)
     static void ApplyUnrestProgression(GameState state, ResolutionEntry entry)
     {
         var unrestDeltaTracked = StatModifiers.ComputeUnrestProgression(state);
-        var unrestDelta = Math.Max(0, unrestDeltaTracked.Value);
+        var unrestDelta = unrestDeltaTracked.Value;
         if (state.FoodDeficitToday)
         {
             unrestDelta += 2;

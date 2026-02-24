@@ -5,7 +5,7 @@ namespace Prot8.Orders;
 
 public sealed class BurnSurplusOrder : IEmergencyOrder
 {
-    const int MaterialsCost = 5;
+    const int MaterialsCost = 10;
     const int SicknessReduction = 5;
     const int MoraleGain = 10;
 

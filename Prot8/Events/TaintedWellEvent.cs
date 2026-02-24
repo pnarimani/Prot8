@@ -9,7 +9,7 @@ public sealed class TaintedWellEvent() : ITriggeredEvent
     public string Name => "Tainted Well";
     public string Description => "The city's primary well has been fouled — whether by enemy sabotage or simple rot. The water runs discoloured and smells of death.";
 
-    private const int TriggerDay = 20;
+    private const int TriggerDay = 18;
     private const int WaterLost = 20;
     private const int SicknessGain = 10;
     private const double WaterProductionPenalty = 0.6;

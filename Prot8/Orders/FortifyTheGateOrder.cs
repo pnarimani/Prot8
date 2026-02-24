@@ -6,7 +6,7 @@ namespace Prot8.Orders;
 public sealed class FortifyTheGateOrder : IEmergencyOrder
 {
     private const int MaterialsCost = 5;
-    private const int IntegrityGain = 3;
+    private const int IntegrityGain = 6;
 
     public string Id => "fortify_gate";
     public string Name => "Fortify the Gate";

@@ -6,8 +6,8 @@ namespace Prot8.Orders;
 public sealed class DistributeFuelOrder : IEmergencyOrder
 {
     private const int FuelCost = 5;
-    private const int MoraleGain = 3;
-    private const int SicknessReduction = 2;
+    private const int MoraleGain = 6;
+    private const int SicknessReduction = 5;
 
     public string Id => "distribute_fuel";
     public string Name => "Distribute Fuel Reserves";

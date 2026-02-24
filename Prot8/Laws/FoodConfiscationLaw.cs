@@ -4,7 +4,8 @@ namespace Prot8.Laws;
 
 public sealed class FoodConfiscationLaw : ILaw
 {
-    private const int FoodGain = 50;
+    private const int FoodGain = 35;
+    private const int DailyUnrest = 2;
     private const int UnrestHit = 25;
     private const int MoraleHit = 15;
     private const int Deaths = 3;
@@ -12,7 +13,7 @@ public sealed class FoodConfiscationLaw : ILaw
 
     public string Id => "food_confiscation";
     public string Name => "Food Confiscation";
-    public string GetTooltip(GameState state) => $"+{FoodGain} food, +{UnrestHit} unrest, -{MoraleHit} morale, {Deaths} deaths. Requires food < {FoodThreshold}.";
+    public string GetTooltip(GameState state) => $"+{FoodGain} food, +{UnrestHit} unrest, -{MoraleHit} morale, {Deaths} deaths, +{DailyUnrest} unrest/day. Requires food < {FoodThreshold}.";
 
     public bool CanEnact(GameState state, out string reason)
     {
@@ -37,5 +38,7 @@ public sealed class FoodConfiscationLaw : ILaw
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
+        state.AddUnrest(DailyUnrest, entry);
+        entry.Write("Resentment lingers from the confiscation. The people do not forget.");
     }
 }

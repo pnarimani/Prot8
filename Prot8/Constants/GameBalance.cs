@@ -49,7 +49,7 @@ public static class GameBalance
 
     public const int SiegeEscalationIntervalDays = 4;
 
-    public const int RecoveryThresholdSickness = 50;
+    public const int RecoveryThresholdSickness = 60;
     public const int BaseRecoveryTimeDays = 4;
     public const int RecoveryPerClinicSlot = 2;
     public const int MedicinePerRecovery = 1;
@@ -61,11 +61,11 @@ public static class GameBalance
 
     public static readonly IReadOnlyList<ZoneTemplate> ZoneTemplates = new List<ZoneTemplate>
     {
-        new(ZoneId.OuterFarms, "Outer Farms", 70, 12, 1.0),
-        new(ZoneId.OuterResidential, "Outer Residential", 75, 12, 0.9),
-        new(ZoneId.ArtisanQuarter, "Artisan Quarter", 70, 12, 0.8),
-        new(ZoneId.InnerDistrict, "Inner District", 65, 12, 0.7),
-        new(ZoneId.Keep, "Keep", 60, 12, 0.6),
+        new(ZoneId.OuterFarms, "Outer Farms", 70, 15, 1.0),
+        new(ZoneId.OuterResidential, "Outer Residential", 75, 15, 0.9),
+        new(ZoneId.ArtisanQuarter, "Artisan Quarter", 70, 15, 0.8),
+        new(ZoneId.InnerDistrict, "Inner District", 65, 15, 0.7),
+        new(ZoneId.Keep, "Keep", 60, 15, 0.6),
     };
 
     public static readonly IReadOnlyDictionary<JobType, ZoneId> JobZoneMap = new Dictionary<JobType, ZoneId>

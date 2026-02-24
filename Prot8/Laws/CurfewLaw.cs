@@ -4,8 +4,8 @@ namespace Prot8.Laws;
 
 public sealed class CurfewLaw : ILaw
 {
-    private const int DailyUnrestReduction = 8;
-    private const double ProductionMultiplier = 0.75;
+    private const int DailyUnrestReduction = 5;
+    private const double ProductionMultiplier = 0.85;
     private const int UnrestThreshold = 50;
 
     public string Id => "curfew";

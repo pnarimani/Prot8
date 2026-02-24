@@ -5,9 +5,9 @@ namespace Prot8.Orders;
 
 public sealed class RationMedicineOrder : IEmergencyOrder
 {
-    private const int MedicineCost = 3;
-    private const int SicknessReduction = 3;
-    private const int UnrestGain = 2;
+    private const int MedicineCost = 5;
+    private const int SicknessReduction = 10;
+    private const int UnrestGain = 3;
 
     public string Id => "ration_medicine";
     public string Name => "Ration the Medicine";
