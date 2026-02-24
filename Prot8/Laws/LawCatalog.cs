@@ -7,7 +7,7 @@ public static class LawCatalog
     private static readonly IReadOnlyList<ILaw> AllLaws = new ILaw[]
     {
         new StrictRationsLaw(),
-        new DilutedWaterLaw(),
+        new WaterRationingLaw(),
         new ExtendedShiftsLaw(),
         new MandatoryGuardServiceLaw(),
         new EmergencySheltersLaw(),

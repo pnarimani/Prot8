@@ -212,7 +212,7 @@ public static class MoodLines
             "Productivity rises. So does the count of injuries.",
         ]));
 
-        entries.Add(new MoodEntry(60, s => s.ActiveLawIds.Contains("diluted_water"),
+        entries.Add(new MoodEntry(60, s => s.ActiveLawIds.Contains("water_rationing"),
         [
             "The water tastes wrong. Everyone knows it is diluted. No one says it.",
             "Diluted water stretches the supply. It also stretches patience.",
