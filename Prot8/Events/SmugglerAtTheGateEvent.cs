@@ -3,59 +3,62 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class SmugglerAtTheGateEvent : TriggeredEventBase, IRespondableEvent
+public sealed class SmugglerAtTheGateEvent : IRespondableEvent
 {
-    private const int TriggerDay = 3;
-    private const int MaterialsCost = 15;
+    public string Id => "smuggler_at_gate";
+    public string Name => "Smuggler at the Gate";
 
-    public SmugglerAtTheGateEvent() : base("smuggler_gate", "Smuggler at the Gate",
-        "A smuggler slips through the siege lines, offering food in exchange for materials.")
-    {
-    }
+    public string Description =>
+        "A hooded figure taps at the postern door with unusual confidence. A smuggler — offering food for materials. Someone is already making a living from your suffering.";
 
-    public override bool ShouldTrigger(GameState state)
+    const int TriggerDay = 3;
+    const int MaterialsCost = 15;
+    const int FairFoodAmount = 20;
+    const int ForceFoodAmount = 30;
+
+    public bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
-        // Default: accept the trade (backward compat for non-interactive callers)
-        ApplyResponse("accept", state, entry);
+        ResolveWithResponse("refuse", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
     {
         return
         [
-            new EventResponse("accept", "Accept the trade"),
-            new EventResponse("demand", "Demand a better deal"),
+            new EventResponse("accept", "Accept the trade", $"{FairFoodAmount} food for {MaterialsCost} materials"),
+            new EventResponse("demand", "Demand a better deal",
+                $"Ask for {ForceFoodAmount} food for {MaterialsCost} materials instead"),
             new EventResponse("refuse", "Turn him away"),
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
+    public void ResolveWithResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
             case "accept":
-                state.AddResource(ResourceKind.Food, 20, entry);
+                entry.Write(
+                    "You accept the smuggler's offer. Food for materials — a fair trade in desperate times. He slips away before the guards notice.");
+                state.AddResource(ResourceKind.Food, FairFoodAmount, entry);
                 state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
-                entry.Write($"{Name}: You accept the smuggler's offer. Food for materials — a fair trade in desperate times.");
                 break;
 
             case "demand":
-                state.AddResource(ResourceKind.Food, 25, entry);
+                entry.Write(
+                    "You press the smuggler for more. He complies, but the transaction is uglier now. Word of your heavy-handedness spreads through the market alleys.");
+                state.AddResource(ResourceKind.Food, ForceFoodAmount, entry);
                 state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
                 state.AddUnrest(5, entry);
-                entry.Write($"{Name}: You press the smuggler for more. He complies, but word of your heavy-handedness spreads.");
                 break;
 
             default: // refuse
-                entry.Write($"{Name}: You turn the smuggler away. He vanishes back into the night.");
+                entry.Write("You turn the smuggler away. He vanishes back into the night.");
                 break;
         }
-
-        StartCooldown(state);
     }
 }

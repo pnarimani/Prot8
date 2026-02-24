@@ -2,26 +2,20 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class NarrativeSiegeBeatEvent : TriggeredEventBase
+public sealed class NarrativeSiegeBeatEvent(string id, string name, int triggerDay, string narrativeText)
+    : ITriggeredEvent
 {
-    private readonly int _triggerDay;
-    private readonly string _narrativeText;
+    public string Id => id;
+    public string Name => name;
+    public string Description => narrativeText;
 
-    public NarrativeSiegeBeatEvent(string id, string name, int triggerDay, string narrativeText)
-        : base(id, name, $"Narrative event on day {triggerDay}.")
+    public bool ShouldTrigger(GameState state)
     {
-        _triggerDay = triggerDay;
-        _narrativeText = narrativeText;
+        return state.Day == triggerDay;
     }
 
-    public override bool ShouldTrigger(GameState state)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
-        return state.Day == _triggerDay;
-    }
-
-    public override void Apply(GameState state, ResolutionEntry entry)
-    {
-        entry.Write(_narrativeText);
-        StartCooldown(state);
+        entry.Write(narrativeText);
     }
 }

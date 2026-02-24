@@ -37,20 +37,20 @@ public sealed class NightRaidMission : IMissionDefinition
         if (roll <= greatChance)
         {
             state.SiegeEscalationDelayDays += GreatSiegeDelay;
-            entry.Write($"{Name}: major disruption, siege escalation delayed by {GreatSiegeDelay} days.");
+            entry.Write($"The raid was a masterwork! Supplies were burned, siege engines destroyed. The enemy will not attack for {GreatSiegeDelay} more days.");
             return;
         }
 
         if (roll <= greatChance + okChance)
         {
             state.SiegeEscalationDelayDays += OkSiegeDelay;
-            entry.Write($"{Name}: partial success, siege escalation delayed by {OkSiegeDelay} days.");
+            entry.Write($"The raid caused some disruption. Enemy preparations are delayed, though not stopped. {OkSiegeDelay} days of reprieve bought.");
             return;
         }
 
         state.ApplyDeath(FailDeaths, entry);
         state.AddUnrest(FailUnrest, entry);
-        entry.Write($"{Name}: operation failed ({FailDeaths} deaths, +{FailUnrest} unrest).");
+        entry.Write($"The raid failed catastrophically. The enemy was waiting. {FailDeaths} soldiers died for nothing. The city questions your leadership.");
     }
 
     (int greatChance, int okChance) GetChances(GameState state)

@@ -1,3 +1,4 @@
+using Prot8.Events;
 using Prot8.Jobs;
 using Prot8.Resources;
 using Prot8.Simulation;
@@ -30,6 +31,7 @@ public sealed class DayStartViewModel
     public IReadOnlyList<OrderCooldownViewModel> OrderCooldowns { get; init; } = [];
     public IReadOnlyList<MissionViewModel> AvailableMissions { get; init; } = [];
     public Dictionary<JobType, JobViewModel> Jobs { get; init; } = [];
+    public PendingEvent? CurrentEvent { get; init; }
 
     public string? ThreatProjection { get; init; }
     public string? ProductionForecast { get; init; }
@@ -159,18 +161,6 @@ public sealed class DayReportViewModel
     public string? RecoveryBlockedReason { get; init; }
     public string? DeltaSummary { get; init; }
     public string? AllocationAlert { get; init; }
-}
-
-public sealed class EventResponseSummary
-{
-    public string EventName { get; init; } = "";
-    public string ChosenResponse { get; init; } = "";
-}
-
-public sealed class DeltaLogEntryViewModel
-{
-    public string Tag { get; init; } = "";
-    public string Message { get; init; } = "";
 }
 
 public sealed class GameOverViewModel

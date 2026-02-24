@@ -28,6 +28,7 @@ public sealed class ExtendedShiftsLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        entry.Write("The factories and forges roar through the night. Sleep is a weakness the siege cannot afford.");
         state.AddMorale(-MoraleHit, entry);
     }
 
@@ -37,6 +38,7 @@ public sealed class ExtendedShiftsLaw : ILaw
         state.AddSickness(DailySickness, entry);
         if (state.RollPercent() <= DeathChancePercent)
         {
+            entry.Write("A worker collapses from exhaustion. The shift continues without them.");
             state.ApplyDeath(1, entry);
         }
     }

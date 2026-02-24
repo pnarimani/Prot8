@@ -26,11 +26,13 @@ public sealed class DilutedWaterLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        entry.Write("The wells are stretched thin. You order water be cut with river water — it quenches thirst but carries disease.");
         state.AddMorale(-MoraleHit, entry);
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
+        entry.Write("Diluted water flows from the pumps. Thirst is sated, but bellies rumble with sickness.");
         state.DailyEffects.WaterConsumptionMultiplier *= WaterConsumptionMultiplier;
         state.AddSickness(DailySickness, entry);
     }

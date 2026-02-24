@@ -49,7 +49,7 @@ public sealed class ConsoleInputReader(GameState state, GameViewModelFactory vmF
 
             if (raw is null)
             {
-                return new DayCommandPlan(allocation, action);
+                return new DayCommandPlan(action);
             }
 
             var trimmed = raw.Trim();
@@ -83,7 +83,7 @@ public sealed class ConsoleInputReader(GameState state, GameViewModelFactory vmF
                 default:
                     if (!parser.TryParse(trimmed, out var parsed, out var parseError))
                     {
-                        PrintInvalidAndHelp(renderer, currentVm, parseError);
+                        PrintInvalidAndHelp(parseError);
                         break;
                     }
 
@@ -95,7 +95,7 @@ public sealed class ConsoleInputReader(GameState state, GameViewModelFactory vmF
                     {
                         if (result.EndDayRequested)
                         {
-                            return new DayCommandPlan(allocation, action);
+                            return new DayCommandPlan(action);
                         }
 
                         currentVm = ReRender(renderer, action);
@@ -103,7 +103,7 @@ public sealed class ConsoleInputReader(GameState state, GameViewModelFactory vmF
                     }
                     else
                     {
-                        PrintInvalidAndHelp(renderer, currentVm, result.Message);
+                        PrintInvalidAndHelp(result.Message);
                     }
 
                     break;
@@ -121,41 +121,41 @@ public sealed class ConsoleInputReader(GameState state, GameViewModelFactory vmF
         return vm;
     }
 
-    static void PrintInvalidAndHelp(ConsoleRenderer renderer, DayStartViewModel vm, string message)
+    static void PrintInvalidAndHelp(string message)
     {
         Console.WriteLine($"Invalid command: {message}");
     }
 
-    public List<EventResponseChoice> ReadEventResponses(IReadOnlyList<PendingEventResponse> pendingResponses,
-        ConsoleRenderer renderer)
+    public EventResponseChoice ReadEventResponses(PendingEvent pending)
     {
-        var choices = new List<EventResponseChoice>();
+        ConsoleRenderer.RenderEventPrompt(pending);
 
-        foreach (var pending in pendingResponses)
+        if (pending.Responses == null)
         {
-            renderer.RenderEventPrompt(pending);
-            Console.Write("Enter your choice (or press Enter for default): ");
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey();
+            return new EventResponseChoice(pending.Event.Id, "");
+        }
+        
+        Console.Write("Enter your choice (or press Enter for default): ");
 
-            var line = Console.ReadLine()?.Trim();
-            string responseId;
+        var line = Console.ReadLine()?.Trim();
+        string responseId;
 
-            if (string.IsNullOrEmpty(line))
-            {
-                responseId = pending.Responses[^1].Id;
-            }
-            else if (int.TryParse(line, out var num) && num >= 1 && num <= pending.Responses.Count)
-            {
-                responseId = pending.Responses[num - 1].Id;
-            }
-            else
-            {
-                responseId = pending.Responses[^1].Id;
-            }
-
-            choices.Add(new EventResponseChoice(pending.Event.Id, responseId));
+        if (string.IsNullOrEmpty(line))
+        {
+            responseId = pending.Responses[^1].Id;
+        }
+        else if (int.TryParse(line, out var num) && num >= 1 && num <= pending.Responses.Count)
+        {
+            responseId = pending.Responses[num - 1].Id;
+        }
+        else
+        {
+            responseId = pending.Responses[^1].Id;
         }
 
-        return choices;
+        return new EventResponseChoice(pending.Event.Id, responseId);
     }
 
     static bool TryParseTab(string input, out ActionTab tab)

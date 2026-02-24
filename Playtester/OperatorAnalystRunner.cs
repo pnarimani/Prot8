@@ -53,6 +53,7 @@ public class OperatorAnalystRunner
                 var dayStartVm = viewModelFactory.CreateDayStartViewModel();
                 var daySnapshot = JsonSerializer.Serialize(dayStartVm, jsonOptions);
 
+                var report = engine.StartDay();
                 TurnActionChoice action = new();
 
                 var operatorUser = Agents.Operator.GetUserPrompt(
@@ -85,15 +86,15 @@ public class OperatorAnalystRunner
                     }
                 }
 
-                var report = engine.ResolveDay(action);
+                engine.ResolveDay(action, report);
 
-                if (report.PendingResponses.Count > 0)
-                {
-                    var defaultChoices = report.PendingResponses
-                        .Select(p => new EventResponseChoice(p.Event.Id, p.Responses[^1].Id))
-                        .ToList();
-                    engine.ApplyEventResponses(report, defaultChoices);
-                }
+                // if (report.PendingResponses.Count > 0)
+                // {
+                //     var defaultChoices = report.PendingResponses
+                //         .Select(p => new EventResponseChoice(p.Event.Id, p.Responses[^1].Id))
+                //         .ToList();
+                //     engine.ApplyEventResponses(report, defaultChoices);
+                // }
 
                 var dayReportVm = GameViewModelFactory.ToDayReportViewModel(state, report);
                 lastDayResolution = JsonSerializer.Serialize(dayReportVm, jsonOptions);

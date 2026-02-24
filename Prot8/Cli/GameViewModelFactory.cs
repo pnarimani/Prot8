@@ -82,7 +82,23 @@ public class GameViewModelFactory(GameState state)
             MoraleDelta = StatModifiers.ComputeMoraleDrift(state),
             UnrestDelta = StatModifiers.ComputeUnrestProgression(state),
             SicknessDelta = StatModifiers.ComputeSicknessFromEnvironment(state),
+            CurrentEvent = GetCurrentEvent(),
         };
+    }
+
+    PendingEvent? GetCurrentEvent()
+    {
+        if (state.DailyEffects.TriggeredEvents.FirstOrDefault() is { } evt)
+        {
+            if (evt is IRespondableEvent resp)
+            {
+                return new PendingEvent(evt, resp.GetResponses(state));
+            }
+
+            return new PendingEvent(evt);
+        }
+
+        return null;
     }
 
     public static PendingPlanViewModel ToPendingPlanViewModel(TurnActionChoice action)
@@ -127,31 +143,21 @@ public class GameViewModelFactory(GameState state)
         var moraleDelta = state.Morale - report.StartMorale;
         var unrestDelta = state.Unrest - report.StartUnrest;
         var sicknessDelta = state.Sickness - report.StartSickness;
-        var deltaSummary = $"NET: Food {(foodDelta >= 0 ? "+" : "")}{foodDelta}  Water {(waterDelta >= 0 ? "+" : "")}{waterDelta}  Fuel {(fuelDelta >= 0 ? "+" : "")}{fuelDelta}  |  Morale {(moraleDelta >= 0 ? "+" : "")}{moraleDelta}  Unrest {(unrestDelta >= 0 ? "+" : "")}{unrestDelta}  Sickness {(sicknessDelta >= 0 ? "+" : "")}{sicknessDelta}";
+        var deltaSummary =
+            $"NET: Food {(foodDelta >= 0 ? "+" : "")}{foodDelta}  Water {(waterDelta >= 0 ? "+" : "")}{waterDelta}  Fuel {(fuelDelta >= 0 ? "+" : "")}{fuelDelta}  |  Morale {(moraleDelta >= 0 ? "+" : "")}{moraleDelta}  Unrest {(unrestDelta >= 0 ? "+" : "")}{unrestDelta}  Sickness {(sicknessDelta >= 0 ? "+" : "")}{sicknessDelta}";
 
         var workerDelta = state.Population.HealthyWorkers - report.StartHealthyWorkers;
         string? allocationAlert = null;
         if (workerDelta < 0)
         {
-            allocationAlert = $"ATTENTION: {-workerDelta} workers removed from assignments due to population loss. Review allocations.";
+            allocationAlert =
+                $"ATTENTION: {-workerDelta} workers removed from assignments due to population loss. Review allocations.";
         }
-
-        var eventResponseSummaries = report.EventResponsesMade
-            .Select(choice =>
-            {
-                var pending = report.PendingResponses.FirstOrDefault(p => p.Event.Id == choice.EventId);
-                var responseName = pending?.Responses.FirstOrDefault(r => r.Id == choice.ResponseId)?.Label ?? choice.ResponseId;
-                return new EventResponseSummary
-                {
-                    EventName = pending?.Event.Name ?? choice.EventId,
-                    ChosenResponse = responseName,
-                };
-            }).ToList();
 
         return new DayReportViewModel
         {
             Day = report.Day,
-            Entries = report.ResEntries,
+            Entries = report.Entries,
             FoodConsumedToday = report.FoodConsumedToday,
             WaterConsumedToday = report.WaterConsumedToday,
             FoodDeficitToday = report.FoodDeficitToday,
@@ -202,7 +208,11 @@ public class GameViewModelFactory(GameState state)
         foreach (var lawId in state.ActiveLawIds)
         {
             var law = LawCatalog.Find(lawId);
-            if (law is null) continue;
+            if (law is null)
+            {
+                continue;
+            }
+
             result.Add(new LawViewModel
             {
                 Id = law.Id,
@@ -230,7 +240,9 @@ public class GameViewModelFactory(GameState state)
     static int ComputeLawCooldown(GameState state)
     {
         if (state.LastLawDay == int.MinValue)
+        {
             return 0;
+        }
 
         var remaining = GameBalance.LawCooldownDays - (state.Day - state.LastLawDay);
         return remaining > 0 ? remaining : 0;
@@ -252,6 +264,7 @@ public class GameViewModelFactory(GameState state)
                 });
             }
         }
+
         return result;
     }
 
@@ -262,7 +275,9 @@ public class GameViewModelFactory(GameState state)
         foreach (var zone in state.Zones)
         {
             if (!zone.IsLost)
+            {
                 totalCapacity += zone.Capacity;
+            }
         }
 
         var overflow = totalPop - totalCapacity;
@@ -287,6 +302,7 @@ public class GameViewModelFactory(GameState state)
                 }
             }
         }
+
         return result;
     }
 
@@ -309,7 +325,9 @@ public class GameViewModelFactory(GameState state)
             }
 
             if (onCooldown || !order.CanIssue(state, out _))
+            {
                 continue;
+            }
 
             result.Add(new OrderViewModel
             {
@@ -386,14 +404,18 @@ public class GameViewModelFactory(GameState state)
         {
             var foodDays = state.Resources[ResourceKind.Food] / foodNeed;
             if (foodDays <= 5)
+            {
                 parts.Add($"Food runs out in ~{foodDays} days");
+            }
         }
 
         if (waterNeed > 0 && state.Resources[ResourceKind.Water] > 0)
         {
             var waterDays = state.Resources[ResourceKind.Water] / waterNeed;
             if (waterDays <= 5)
+            {
                 parts.Add($"Water runs out in ~{waterDays} days");
+            }
         }
 
         var unrestRate = StatModifiers.ComputeUnrestProgression(state);
@@ -401,19 +423,24 @@ public class GameViewModelFactory(GameState state)
         {
             var revoltDays = (GameBalance.RevoltThreshold - state.Unrest) / unrestRate;
             if (revoltDays <= 10)
+            {
                 parts.Add($"Revolt in ~{revoltDays} days");
+            }
         }
 
         var perimeter = state.ActivePerimeterZone;
         if (!perimeter.IsLost && perimeter.Integrity > 0)
         {
             var perimeterFactor = ZoneRules.PerimeterFactor(state);
-            var dailyDamage = (int)Math.Ceiling((GameBalance.PerimeterScalingBase + state.SiegeIntensity) * perimeterFactor);
+            var dailyDamage =
+                (int)Math.Ceiling((GameBalance.PerimeterScalingBase + state.SiegeIntensity) * perimeterFactor);
             if (dailyDamage > 0)
             {
                 var zoneDays = perimeter.Integrity / dailyDamage;
                 if (zoneDays <= 7)
+                {
                     parts.Add($"Zone fall in ~{zoneDays} days");
+                }
             }
         }
 
@@ -426,12 +453,12 @@ public class GameViewModelFactory(GameState state)
         var foodNeed = (int)Math.Ceiling(pop * GameBalance.FoodPerPersonPerDay);
         var waterNeed = (int)Math.Ceiling(pop * GameBalance.WaterPerPersonPerDay);
 
-        var foodWorkers = state.Allocation.Workers[Jobs.JobType.FoodProduction];
-        var waterWorkers = state.Allocation.Workers[Jobs.JobType.WaterDrawing];
-        var foodOutput = GameBalance.JobOutputs[Jobs.JobType.FoodProduction].FirstOrDefault();
-        var waterOutput = GameBalance.JobOutputs[Jobs.JobType.WaterDrawing].FirstOrDefault();
-        var foodProd = (int)(foodWorkers * (foodOutput.Quantity));
-        var waterProd = (int)(waterWorkers * (waterOutput.Quantity));
+        var foodWorkers = state.Allocation.Workers[JobType.FoodProduction];
+        var waterWorkers = state.Allocation.Workers[JobType.WaterDrawing];
+        var foodOutput = GameBalance.JobOutputs[JobType.FoodProduction].FirstOrDefault();
+        var waterOutput = GameBalance.JobOutputs[JobType.WaterDrawing].FirstOrDefault();
+        var foodProd = (int)(foodWorkers * foodOutput.Quantity);
+        var waterProd = (int)(waterWorkers * waterOutput.Quantity);
 
         var parts = new List<string>();
         if (foodWorkers > 0 || foodNeed > 0)
@@ -454,16 +481,26 @@ public class GameViewModelFactory(GameState state)
         var warnings = new List<string>();
         foreach (var zone in state.Zones)
         {
-            if (zone.IsLost) continue;
+            if (zone.IsLost)
+            {
+                continue;
+            }
+
             var template = GameBalance.ZoneTemplates.FirstOrDefault(t => t.ZoneId == zone.Id);
-            if (template == null) continue;
+            if (template == null)
+            {
+                continue;
+            }
+
             var threshold = (int)(template.StartingIntegrity * 0.3);
             if (zone.Integrity <= threshold && zone.Integrity > 0)
             {
                 var perimeterFactor = ZoneRules.PerimeterFactor(state);
-                var dailyDamage = (int)Math.Ceiling((GameBalance.PerimeterScalingBase + state.SiegeIntensity) * perimeterFactor);
+                var dailyDamage =
+                    (int)Math.Ceiling((GameBalance.PerimeterScalingBase + state.SiegeIntensity) * perimeterFactor);
                 var estDays = dailyDamage > 0 ? zone.Integrity / dailyDamage : 99;
-                warnings.Add($"!!! {zone.Name.ToUpper()} CRITICALLY DAMAGED ({zone.Integrity}/{template.StartingIntegrity}) — ESTIMATED FALL: {estDays} DAYS");
+                warnings.Add(
+                    $"!!! {zone.Name.ToUpper()} CRITICALLY DAMAGED ({zone.Integrity}/{template.StartingIntegrity}) — ESTIMATED FALL: {estDays} DAYS");
             }
         }
 
@@ -480,9 +517,13 @@ public class GameViewModelFactory(GameState state)
         {
             var foodDays = state.Resources[ResourceKind.Food] / foodNeed;
             if (foodDays <= 1)
+            {
                 alerts.Add("CRITICAL: Food runs out tomorrow");
+            }
             else if (foodDays <= 2)
+            {
                 alerts.Add("WARNING: Food runs out in 2 days");
+            }
         }
         else if (state.Resources[ResourceKind.Food] == 0)
         {
@@ -494,9 +535,13 @@ public class GameViewModelFactory(GameState state)
         {
             var waterDays = state.Resources[ResourceKind.Water] / waterNeed;
             if (waterDays <= 1)
+            {
                 alerts.Add("CRITICAL: Water runs out tomorrow");
+            }
             else if (waterDays <= 2)
+            {
                 alerts.Add("WARNING: Water runs out in 2 days");
+            }
         }
         else if (state.Resources[ResourceKind.Water] == 0)
         {
@@ -504,18 +549,28 @@ public class GameViewModelFactory(GameState state)
         }
 
         if (state.Unrest >= 80)
+        {
             alerts.Add("CRITICAL: Revolt imminent");
+        }
         else if (state.Unrest >= 70)
+        {
             alerts.Add("WARNING: Unrest dangerously high");
+        }
 
         if (state.Sickness >= 80)
+        {
             alerts.Add("CRITICAL: Pandemic collapse approaching");
+        }
         else if (state.Sickness >= 60)
+        {
             alerts.Add("WARNING: Sickness epidemic spreading");
+        }
 
         var perimeter = state.ActivePerimeterZone;
         if (!perimeter.IsLost && perimeter.Integrity <= 15 && perimeter.Integrity > 0)
+        {
             alerts.Add($"CRITICAL: {perimeter.Name} about to fall");
+        }
 
         return alerts;
     }
@@ -524,20 +579,28 @@ public class GameViewModelFactory(GameState state)
     {
         var reasons = new List<string>();
 
-        var moraleFactor = 0.75 + (state.Morale / 200.0);
-        var unrestFactor = 1.0 - (state.Unrest / 200.0);
-        var sicknessFactor = 1.0 - (state.Sickness / 200.0);
+        var moraleFactor = 0.75 + state.Morale / 200.0;
+        var unrestFactor = 1.0 - state.Unrest / 200.0;
+        var sicknessFactor = 1.0 - state.Sickness / 200.0;
 
         if (moraleFactor < 1.0)
+        {
             reasons.Add($"Low morale ({state.Morale}): {moraleFactor:F2}x");
+        }
         else if (moraleFactor > 1.0)
+        {
             reasons.Add($"High morale ({state.Morale}): {moraleFactor:F2}x");
+        }
 
         if (unrestFactor < 1.0)
+        {
             reasons.Add($"Unrest ({state.Unrest}): {unrestFactor:F2}x");
+        }
 
         if (sicknessFactor < 1.0)
+        {
             reasons.Add($"Sickness ({state.Sickness}): {sicknessFactor:F2}x");
+        }
 
         return reasons;
     }
@@ -546,7 +609,10 @@ public class GameViewModelFactory(GameState state)
     {
         var multiplier = 1.0;
         if (state.ActiveLawIds.Contains("strict_rations"))
+        {
             multiplier *= 0.75;
+        }
+
         return multiplier;
     }
 
@@ -554,7 +620,10 @@ public class GameViewModelFactory(GameState state)
     {
         var multiplier = 1.0;
         if (state.ActiveLawIds.Contains("diluted_water"))
+        {
             multiplier *= 0.75;
+        }
+
         return multiplier;
     }
 }

@@ -30,6 +30,7 @@ public sealed class PublicExecutionsLaw : ILaw
         state.AddUnrest(-UnrestReduction, entry);
         state.AddMorale(-MoraleHit, entry);
         state.ApplyDeath(Deaths, entry);
+        entry.Write("Five bodies hang from the gallows. The crowd watches in silence. Fear keeps the streets calm — for now.");
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)

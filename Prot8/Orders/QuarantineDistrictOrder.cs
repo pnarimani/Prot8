@@ -32,6 +32,6 @@ public sealed class QuarantineDistrictOrder : IEmergencyOrder
         var zone = state.ActivePerimeterZone;
         state.DailyEffects.QuarantineZone = zone.Id;
         state.DailyEffects.QuarantineSicknessReduction = SicknessReduction;
-        entry.Write($"{Name}: {zone.Name} quarantined. Production halved, sickness reduced.");
+        entry.Write($"The {zone.Name} is sealed. No one enters, no one leaves. Production halts, but the disease is contained — for now.");
     }
 }

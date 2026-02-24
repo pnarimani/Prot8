@@ -1,7 +1,6 @@
 using Prot8.Cli;
 using Prot8.Cli.Input;
 using Prot8.Cli.Output;
-using Prot8.Cli.ViewModels;
 using Prot8.Simulation;
 using Prot8.Telemetry;
 using Spectre.Console;
@@ -17,22 +16,28 @@ using var telemetry = new RunTelemetryWriter(state, seed);
 
 while (!state.GameOver)
 {
-    engine.RollDailyDisruption();
-    renderer.RenderDayStart(vmFactory.CreateDayStartViewModel());
-    var dayPlan = input.ReadDayPlan(renderer);
-    state.Allocation = dayPlan.Allocation;
-    var action = dayPlan.Action;
+    var report = engine.StartDay();
+    
+    var vm = vmFactory.CreateDayStartViewModel();
+    
+    renderer.RenderDayStart(vm);
 
-    var report = engine.ResolveDay(action);
-
-    if (report.PendingResponses.Count > 0)
+    while (vm.CurrentEvent is { } evt)
     {
-        var choices = input.ReadEventResponses(report.PendingResponses, renderer);
+        var choices = input.ReadEventResponses(evt);
         engine.ApplyEventResponses(report, choices);
+
+        vm = vmFactory.CreateDayStartViewModel();
+        renderer.RenderDayStart(vm);
     }
 
+    var dayPlan = input.ReadDayPlan(renderer);
+    var action = dayPlan.Action;
+
+    engine.ResolveDay(action, report);
+
     var dayReportVm = GameViewModelFactory.ToDayReportViewModel(state, report);
-    renderer.RenderDayReport(dayReportVm);
+    renderer.RenderDayReport(vm, dayReportVm);
     telemetry.LogDay(action, report);
 }
 

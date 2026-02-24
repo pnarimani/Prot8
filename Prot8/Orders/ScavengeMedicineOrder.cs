@@ -27,5 +27,6 @@ public sealed class ScavengeMedicineOrder : IEmergencyOrder
         state.AddResource(ResourceKind.Medicine, MedicineGain, entry);
         state.AddSickness(SicknessHit, entry);
         state.ApplyDeath(Deaths, entry);
+        entry.Write("Volunteers scavenge through ruins and abandoned buildings. They return with medicine, but exposed to disease. One does not return.");
     }
 }

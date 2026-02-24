@@ -1,31 +1,35 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class EnemySappersEvent : TriggeredEventBase
+public sealed class EnemySappersEvent : ITriggeredEvent
 {
-    private const int TriggerDay = 16;
-    private const int IntegrityDamage = 5;
-    private const int SiegeIncrease = 1;
+    public string Id => "enemy_sappers";
+    public string Name => "Enemy Sappers";
 
-    public EnemySappersEvent() : base("enemy_sappers", "Enemy Sappers",
-        "Day 16: All zones lose 5 integrity. Siege intensity +1.")
-    {
-    }
+    public string Description =>
+        "The enemy has been tunneling beneath the walls. Their engineers work in silence, undermining the foundations stone by stone, waiting for the moment to strike.";
 
-    public override bool ShouldTrigger(GameState state)
+    const int TriggerDay = 16;
+    const int IntegrityDamage = 5;
+    const int SiegeIncrease = 1;
+
+    public bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
+        entry.Write(
+            "Enemy miners have been at work beneath the walls. Tunnels collapse in silence, and walls groan as their foundations are undermined.");
         foreach (var zone in state.Zones)
         {
             if (!zone.IsLost)
             {
                 zone.Integrity -= IntegrityDamage;
-                entry.Write($"{Name}: {zone.Name} -{IntegrityDamage} integrity.");
+                entry.Write($"{zone.Name} sustains damage from underground.");
 
                 if (zone.Integrity <= 0)
                 {
@@ -34,12 +38,10 @@ public sealed class EnemySappersEvent : TriggeredEventBase
             }
         }
 
-        if (state.SiegeIntensity < Constants.GameBalance.MaxSiegeIntensity)
+        if (state.SiegeIntensity < GameBalance.MaxSiegeIntensity)
         {
             state.SiegeIntensity += SiegeIncrease;
-            entry.Write($"{Name}: siege intensity increased to {state.SiegeIntensity}.");
+            entry.Write("The siege tightens its grip. Enemy forces press harder.");
         }
-
-        StartCooldown(state);
     }
 }

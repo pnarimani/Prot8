@@ -30,6 +30,7 @@ public sealed class MedicalTriageLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        entry.Write("The sick ward becomes a sorting ground. Doctors must choose who receives medicine and who is left to die.");
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
@@ -43,7 +44,7 @@ public sealed class MedicalTriageLaw : ILaw
             {
                 state.TotalDeaths += removed;
                 state.Allocation.RemoveWorkersProportionally(removed);
-                entry.Write($"{Name}: {removed} sick workers died due to triage limits.");
+                entry.Write($"Triage claims {removed} more. The clinic staff cannot meet every gaze.");
             }
         }
 

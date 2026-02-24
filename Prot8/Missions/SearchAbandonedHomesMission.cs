@@ -41,7 +41,7 @@ public sealed class SearchAbandonedHomesMission : IMissionDefinition
         {
             state.AddResource(ResourceKind.Materials, MaterialsGain, entry);
             state.AddSickness(SuccessSickness, entry);
-            entry.Write($"{Name}: recovered +{MaterialsGain} materials (+{SuccessSickness} sickness).");
+            entry.Write($"The team returns from the abandoned quarter with salvaged materials. They found {MaterialsGain} materials, though the search exposed them to disease.");
             return;
         }
 
@@ -49,13 +49,13 @@ public sealed class SearchAbandonedHomesMission : IMissionDefinition
         {
             state.AddResource(ResourceKind.Medicine, MedicineGain, entry);
             state.AddSickness(SuccessSickness, entry);
-            entry.Write($"{Name}: recovered +{MedicineGain} medicine (+{SuccessSickness} sickness).");
+            entry.Write($"The team discovered a hidden cache of medicine in an abandoned pharmacy. +{MedicineGain} medicine secured, but the dusty air brought illness.");
             return;
         }
 
         state.AddSickness(PlagueSickness, entry);
         state.ApplyDeath(PlagueDeaths, entry);
-        entry.Write($"{Name}: plague exposure (+{PlagueSickness} sickness, {PlagueDeaths} deaths).");
+        entry.Write("Disaster! The team found only death. The abandoned homes were plague pits — two volunteers fell to the sickness, and the survivors carry it back.");
     }
 
     (int materialsChance, int medicineChance) GetChances(GameState state)

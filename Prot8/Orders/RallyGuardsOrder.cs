@@ -38,5 +38,6 @@ public sealed class RallyGuardsOrder : IEmergencyOrder
     {
         state.AddResource(ResourceKind.Food, -FoodCost, entry);
         state.AddUnrest(-UnrestReduction, entry);
+        entry.Write("A feast is laid out for the garrison. Guards eat well and raise their swords in salute. The streets feel safer tonight.");
     }
 }

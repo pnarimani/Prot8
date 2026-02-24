@@ -11,7 +11,7 @@ namespace Prot8.Simulation;
 
 public sealed class GameSimulationEngine(GameState state)
 {
-    public void RollDailyDisruption()
+    void RollDailyDisruption()
     {
         state.ActiveDisruption = null;
         state.DailyEffects = new TemporaryDailyEffects();
@@ -55,8 +55,10 @@ public sealed class GameSimulationEngine(GameState state)
         }
     }
 
-    public DayResolutionReport ResolveDay(TurnActionChoice action)
+    public DayResolutionReport StartDay()
     {
+        PrepareDay();
+
         var report = new DayResolutionReport(state.Day)
         {
             StartFood = state.Resources[ResourceKind.Food],
@@ -68,55 +70,87 @@ public sealed class GameSimulationEngine(GameState state)
             StartHealthyWorkers = state.Population.HealthyWorkers,
         };
 
-        PrepareDay(state);
+        RollDailyDisruption();
+        TriggerEvents();
+
+        return report;
+    }
+
+    public void ResolveDay(TurnActionChoice action, DayResolutionReport report)
+    {
         ApplyPlayerAction(state, action, report);
         ApplyLawPassives(state, report);
         ApplyEmergencyOrderEffects(state, report);
 
         var productionEntry = new ResolutionEntry { Title = "Production" };
         var production = CalculateProduction(state, productionEntry);
-        if (productionEntry.Messages.Count > 0) report.ResEntries.Add(productionEntry);
+        if (productionEntry.Messages.Count > 0)
+        {
+            report.Entries.Add(productionEntry);
+        }
 
         var consumptionEntry = new ResolutionEntry { Title = "Consumption" };
         ApplyConsumption(state, report, consumptionEntry);
-        if (consumptionEntry.Messages.Count > 0) report.ResEntries.Add(consumptionEntry);
+        if (consumptionEntry.Messages.Count > 0)
+        {
+            report.Entries.Add(consumptionEntry);
+        }
 
         var deficitEntry = new ResolutionEntry { Title = "Deficit Pressure" };
         ApplyDeficitPenalties(state, deficitEntry);
-        if (deficitEntry.Messages.Count > 0) report.ResEntries.Add(deficitEntry);
+        if (deficitEntry.Messages.Count > 0)
+        {
+            report.Entries.Add(deficitEntry);
+        }
 
         var overcrowdingEntry = new ResolutionEntry { Title = "Overcrowding" };
         ApplyOvercrowdingPenalties(state, report, overcrowdingEntry);
-        if (overcrowdingEntry.Messages.Count > 0) report.ResEntries.Add(overcrowdingEntry);
+        if (overcrowdingEntry.Messages.Count > 0)
+        {
+            report.Entries.Add(overcrowdingEntry);
+        }
 
         var sicknessEntry = new ResolutionEntry { Title = "Sickness & Recovery" };
         ApplySicknessProgression(state, production, report, sicknessEntry);
-        if (sicknessEntry.Messages.Count > 0) report.ResEntries.Add(sicknessEntry);
+        if (sicknessEntry.Messages.Count > 0)
+        {
+            report.Entries.Add(sicknessEntry);
+        }
 
         var unrestEntry = new ResolutionEntry { Title = "Morale & Unrest" };
         ApplyUnrestProgression(state, unrestEntry);
-        if (unrestEntry.Messages.Count > 0) report.ResEntries.Add(unrestEntry);
+        if (unrestEntry.Messages.Count > 0)
+        {
+            report.Entries.Add(unrestEntry);
+        }
 
         var siegeEntry = new ResolutionEntry { Title = "Siege" };
         ApplySiegeDamage(state, siegeEntry);
-        if (siegeEntry.Messages.Count > 0) report.ResEntries.Add(siegeEntry);
+        if (siegeEntry.Messages.Count > 0)
+        {
+            report.Entries.Add(siegeEntry);
+        }
 
         var repairEntry = new ResolutionEntry { Title = "Repairs" };
         ApplyRepairs(state, production, repairEntry);
-        if (repairEntry.Messages.Count > 0) report.ResEntries.Add(repairEntry);
+        if (repairEntry.Messages.Count > 0)
+        {
+            report.Entries.Add(repairEntry);
+        }
 
-        ResolveTriggeredEvents(state, report);
         ResolveActiveMissions(state, report);
 
         var statusEntry = new ResolutionEntry { Title = "Status" };
         CheckLossConditions(state, statusEntry);
-        if (statusEntry.Messages.Count > 0) report.ResEntries.Add(statusEntry);
+        if (statusEntry.Messages.Count > 0)
+        {
+            report.Entries.Add(statusEntry);
+        }
 
         FinalizeDay(state);
-        return report;
     }
 
-    static void PrepareDay(GameState state)
+    void PrepareDay()
     {
         state.ActiveOrderId = null;
         state.FoodDeficitToday = false;
@@ -148,7 +182,7 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 var failEntry = new ResolutionEntry { Title = "Law Action" };
                 failEntry.Write("Law selection failed: law not found.");
-                report.ResEntries.Add(failEntry);
+                report.Entries.Add(failEntry);
                 return;
             }
 
@@ -156,7 +190,7 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 var failEntry = new ResolutionEntry { Title = $"Law: {law.Name}" };
                 failEntry.Write($"Law already enacted: {law.Name}.");
-                report.ResEntries.Add(failEntry);
+                report.Entries.Add(failEntry);
                 return;
             }
 
@@ -167,7 +201,7 @@ public sealed class GameSimulationEngine(GameState state)
                 var nextDay = state.LastLawDay + GameBalance.LawCooldownDays;
                 var failEntry = new ResolutionEntry { Title = $"Law: {law.Name}" };
                 failEntry.Write($"Law cooldown active. Next enactment day: {nextDay}.");
-                report.ResEntries.Add(failEntry);
+                report.Entries.Add(failEntry);
                 return;
             }
 
@@ -175,7 +209,7 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 var failEntry = new ResolutionEntry { Title = $"Law: {law.Name}" };
                 failEntry.Write($"Cannot enact {law.Name}: {reason}");
-                report.ResEntries.Add(failEntry);
+                report.Entries.Add(failEntry);
                 return;
             }
 
@@ -188,9 +222,8 @@ public sealed class GameSimulationEngine(GameState state)
             }
 
             var lawEntry = new ResolutionEntry { Title = $"Law Enacted: {law.Name}" };
-            lawEntry.Write($"Law enacted: {law.Name}.");
             law.OnEnact(state, lawEntry);
-            report.ResEntries.Add(lawEntry);
+            report.Entries.Add(lawEntry);
             return;
         }
 
@@ -201,7 +234,7 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 var failEntry = new ResolutionEntry { Title = "Order Action" };
                 failEntry.Write("Emergency order selection failed: order not found.");
-                report.ResEntries.Add(failEntry);
+                report.Entries.Add(failEntry);
                 return;
             }
 
@@ -211,7 +244,7 @@ public sealed class GameSimulationEngine(GameState state)
                 var nextDay = lastDay + order.CooldownDays;
                 var failEntry = new ResolutionEntry { Title = $"Order: {order.Name}" };
                 failEntry.Write($"Emergency order cooldown active for {order.Name}. Next available day: {nextDay}.");
-                report.ResEntries.Add(failEntry);
+                report.Entries.Add(failEntry);
                 return;
             }
 
@@ -219,7 +252,7 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 var failEntry = new ResolutionEntry { Title = $"Order: {order.Name}" };
                 failEntry.Write($"Cannot issue {order.Name}: {reason}");
-                report.ResEntries.Add(failEntry);
+                report.Entries.Add(failEntry);
                 return;
             }
 
@@ -227,7 +260,7 @@ public sealed class GameSimulationEngine(GameState state)
             state.OrderCooldowns[order.Id] = state.Day;
             var orderEntry = new ResolutionEntry { Title = $"Order Prepared: {order.Name}" };
             orderEntry.Write($"Emergency order prepared: {order.Name}.");
-            report.ResEntries.Add(orderEntry);
+            report.Entries.Add(orderEntry);
             return;
         }
 
@@ -238,7 +271,7 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 var failEntry = new ResolutionEntry { Title = "Mission Action" };
                 failEntry.Write("Mission selection failed: mission not found.");
-                report.ResEntries.Add(failEntry);
+                report.Entries.Add(failEntry);
                 return;
             }
 
@@ -249,7 +282,7 @@ public sealed class GameSimulationEngine(GameState state)
                     var nextDay = lastMissionDay + GameBalance.MissionCooldownDays;
                     var failEntry = new ResolutionEntry { Title = $"Mission: {mission.Name}" };
                     failEntry.Write($"Mission cooldown active for {mission.Name}. Next available day: {nextDay}.");
-                    report.ResEntries.Add(failEntry);
+                    report.Entries.Add(failEntry);
                     return;
                 }
             }
@@ -258,23 +291,25 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 var failEntry = new ResolutionEntry { Title = $"Mission: {mission.Name}" };
                 failEntry.Write($"Cannot start mission {mission.Name}: {reason}");
-                report.ResEntries.Add(failEntry);
+                report.Entries.Add(failEntry);
                 return;
             }
 
             if (state.IdleWorkers < mission.WorkerCost)
             {
                 var failEntry = new ResolutionEntry { Title = $"Mission: {mission.Name}" };
-                failEntry.Write($"Cannot start mission {mission.Name}: not enough idle workers (need {mission.WorkerCost}, have {state.IdleWorkers}).");
-                report.ResEntries.Add(failEntry);
+                failEntry.Write(
+                    $"Cannot start mission {mission.Name}: not enough idle workers (need {mission.WorkerCost}, have {state.IdleWorkers}).");
+                report.Entries.Add(failEntry);
                 return;
             }
 
             state.ActiveMissions.Add(new ActiveMission(mission));
             state.MissionCooldowns[mission.Id] = state.Day;
             var missionEntry = new ResolutionEntry { Title = $"Mission Started: {mission.Name}" };
-            missionEntry.Write($"Mission started: {mission.Name} ({mission.DurationDays} day(s), {mission.WorkerCost} workers committed).");
-            report.ResEntries.Add(missionEntry);
+            missionEntry.Write(
+                $"Mission started: {mission.Name} ({mission.DurationDays} day(s), {mission.WorkerCost} workers committed).");
+            report.Entries.Add(missionEntry);
         }
     }
 
@@ -283,10 +318,17 @@ public sealed class GameSimulationEngine(GameState state)
         foreach (var lawId in state.ActiveLawIds)
         {
             var law = LawCatalog.Find(lawId);
-            if (law is null) continue;
+            if (law is null)
+            {
+                continue;
+            }
+
             var lawEntry = new ResolutionEntry { Title = $"Law: {law.Name}" };
             law.ApplyDaily(state, lawEntry);
-            if (lawEntry.Messages.Count > 0) report.ResEntries.Add(lawEntry);
+            if (lawEntry.Messages.Count > 0)
+            {
+                report.Entries.Add(lawEntry);
+            }
         }
     }
 
@@ -305,7 +347,10 @@ public sealed class GameSimulationEngine(GameState state)
 
         var orderEntry = new ResolutionEntry { Title = $"Order: {order.Name}" };
         order.Apply(state, orderEntry);
-        if (orderEntry.Messages.Count > 0) report.ResEntries.Add(orderEntry);
+        if (orderEntry.Messages.Count > 0)
+        {
+            report.Entries.Add(orderEntry);
+        }
     }
 
     static DailyProductionResult CalculateProduction(GameState state, ResolutionEntry entry)
@@ -476,7 +521,8 @@ public sealed class GameSimulationEngine(GameState state)
         state.LastDayFoodConsumed = foodConsumed;
         state.LastDayWaterConsumed = waterConsumed;
 
-        entry.Write($"Daily consumption: food {foodConsumed}/{foodNeed}, water {waterConsumed}/{waterNeed}, fuel {fuelConsumed}/{fuelNeed}.");
+        entry.Write(
+            $"Daily consumption: food {foodConsumed}/{foodNeed}, water {waterConsumed}/{waterNeed}, fuel {fuelConsumed}/{fuelNeed}.");
 
         if (foodConsumed < foodNeed)
         {
@@ -580,7 +626,8 @@ public sealed class GameSimulationEngine(GameState state)
         }
     }
 
-    static void ApplySicknessProgression(GameState state, DailyProductionResult production, DayResolutionReport report, ResolutionEntry entry)
+    static void ApplySicknessProgression(GameState state, DailyProductionResult production, DayResolutionReport report,
+        ResolutionEntry entry)
     {
         var sicknessDelta = StatModifiers.ComputeSicknessFromEnvironment(state);
         sicknessDelta -= state.DailyEffects.QuarantineSicknessReduction;
@@ -796,7 +843,7 @@ public sealed class GameSimulationEngine(GameState state)
         }
     }
 
-    static void ResolveTriggeredEvents(GameState state, DayResolutionReport report)
+    void TriggerEvents()
     {
         var keys = new List<string>(state.EventCooldowns.Keys);
         foreach (var key in keys)
@@ -814,7 +861,7 @@ public sealed class GameSimulationEngine(GameState state)
                 break;
             }
 
-            if (evt is TriggeredEventBase trackedEvent && trackedEvent.IsOnCooldown(state))
+            if (evt is ITriggeredEvent trackedEvent && trackedEvent.IsOnCooldown(state))
             {
                 continue;
             }
@@ -824,37 +871,28 @@ public sealed class GameSimulationEngine(GameState state)
                 continue;
             }
 
-            if (evt is IRespondableEvent respondable)
-            {
-                var responses = respondable.GetResponses(state);
-                report.PendingResponses.Add(new PendingEventResponse(evt, responses));
-                report.TriggeredEventNames.Add(evt.Name);
-                continue;
-            }
-
-            var entry = new ResolutionEntry() { Title = evt.Name };
-            evt.Apply(state, entry);
-            report.ResEntries.Add(entry);
-            report.TriggeredEventNames.Add(evt.Name);
+            state.DailyEffects.TriggeredEvents.Add(evt);
+            evt.StartCooldown(state);
         }
     }
 
-    public void ApplyEventResponses(DayResolutionReport report, IReadOnlyList<EventResponseChoice> choices)
+    public void ApplyEventResponses(DayResolutionReport report, EventResponseChoice choice)
     {
-        foreach (var pending in report.PendingResponses)
+        var evt = state.DailyEffects.TriggeredEvents.Find(x => x.Id == choice.EventId);
+        if (evt == null)
+            return;
+        
+        state.DailyEffects.TriggeredEvents.Remove(evt);
+        
+        var entry = new ResolutionEntry { Title = evt.Name };
+        report.Entries.Add(entry);
+        if (evt is not IRespondableEvent resp)
         {
-            var choice = choices.FirstOrDefault(c => c.EventId == pending.Event.Id);
-            var responseId = choice?.ResponseId ?? pending.Responses[^1].Id;
-
-            if (pending.Event is IRespondableEvent respondable)
-            {
-                var entry = new ResolutionEntry() { Title = pending.Event.Name };
-                respondable.ApplyResponse(responseId, state, entry);
-                report.ResEntries.Add(entry);
-            }
-
-            report.EventResponsesMade.Add(new EventResponseChoice(pending.Event.Id, responseId));
+            evt.ResolveNow(state, entry);
+            return;
         }
+
+        resp.ResolveWithResponse(choice.ResponseId, state, entry);
     }
 
     static void ResolveActiveMissions(GameState state, DayResolutionReport report)
@@ -875,8 +913,7 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 var missionEntry = new ResolutionEntry { Title = $"Mission Completed: {definition.Name}" };
                 definition.ResolveOutcome(state, active, missionEntry);
-                report.ResEntries.Add(missionEntry);
-                report.ResolvedMissionNames.Add(definition.Name);
+                report.Entries.Add(missionEntry);
             }
         }
     }

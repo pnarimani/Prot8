@@ -3,23 +3,24 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class WellContaminationScareEvent : TriggeredEventBase, IRespondableEvent
+public sealed class WellContaminationScareEvent : IRespondableEvent
 {
-    private const int TriggerDay = 5;
+    public string Id => "well_contamination_scare";
+    public string Name => "Well Contamination Scare";
 
-    public WellContaminationScareEvent() : base("well_contamination", "Well Contamination Scare",
-        "Reports of fouled water spread through the city. The wells may be contaminated.")
-    {
-    }
+    public string Description =>
+        "Word spreads through the city that the wells may have been poisoned by enemy agents. Whether true or not, the panic is real — and spreading fast.";
 
-    public override bool ShouldTrigger(GameState state)
+    const int TriggerDay = 5;
+
+    public bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("ignore", state, entry);
+        ResolveWithResponse("ignore", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -37,28 +38,25 @@ public sealed class WellContaminationScareEvent : TriggeredEventBase, IRespondab
         return responses;
     }
 
-    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
+    public void ResolveWithResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
             case "medicine":
+                entry.Write("Medicine purifies the wells. The worst is averted... for now.");
                 state.AddResource(ResourceKind.Medicine, -5, entry);
-                state.AddSickness(2, entry);
-                entry.Write($"{Name}: Medicine purifies the wells. The worst is averted — for now.");
                 break;
 
             case "boil":
-                state.AddSickness(3, entry);
+                entry.Write("You order all water boiled. It slows production, but limits the contamination.");
+                state.AddSickness(1, entry);
                 state.TaintedWellDaysRemaining = 1;
-                entry.Write($"{Name}: You order all water boiled. It slows production, but limits the contamination.");
                 break;
 
             default: // ignore
+                entry.Write("Without action, sickness spreads through the water supply.");
                 state.AddSickness(5, entry);
-                entry.Write($"{Name}: Without action, sickness spreads through the water supply.");
                 break;
         }
-
-        StartCooldown(state);
     }
 }

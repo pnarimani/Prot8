@@ -21,11 +21,13 @@ public sealed class StrictRationsLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        entry.Write("You order portions halved. The bowls are empty, but they will stretch our stores.");
         state.AddMorale(-MoraleHit, entry);
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
+        entry.Write("Ration carts distribute meagre portions. Hunger gnaws at everyone.");
         state.DailyEffects.FoodConsumptionMultiplier *= FoodConsumptionMultiplier;
         state.AddUnrest(DailyUnrest, entry);
         state.AddSickness(DailySickness, entry);

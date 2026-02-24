@@ -24,5 +24,6 @@ public sealed class EmergencyWaterRationOrder : IEmergencyOrder
     {
         state.DailyEffects.WaterConsumptionMultiplier *= WaterConsumptionMultiplier;
         state.AddSickness(SicknessHit, entry);
+        entry.Write("Water is strictly rationed. Throat are parched, but the reserves hold. The sickness spreads from dehydration and unclean water.");
     }
 }

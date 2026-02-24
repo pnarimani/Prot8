@@ -33,7 +33,7 @@ public sealed class SacrificeTheSickOrder : IEmergencyOrder
         var killed = Math.Min(SickKilled, state.Population.SickWorkers);
         state.Population.RemoveSickWorkers(killed);
         state.TotalDeaths += killed;
-        entry.Write($"{Name}: {killed} sick workers put down.");
+        entry.Write($"The sick are taken from their beds and put down. {killed} corpses are carried to the pyres. It is mercy, the garrison says — but the city trembles.");
         state.AddSickness(-SicknessReduction, entry);
         state.AddUnrest(UnrestGain, entry);
     }

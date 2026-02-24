@@ -1,18 +1,22 @@
+using Prot8.Resources;
 using Prot8.Simulation;
 
 namespace Prot8.Laws;
 
 public sealed class BurnTheDeadLaw : ILaw
 {
-    private const int DailySicknessReduction = 4;
-    private const int DailyMoraleHit = 2;
-    private const int DailyFuelCost = 2;
-    private const int MoraleHit = 10;
-    private const int SicknessThreshold = 35;
+    const int SicknessReduction = 15;
+    const int FuelCost = 2;
+    const int MoraleHit = 10;
+    const int SicknessThreshold = 35;
 
     public string Id => "burn_the_dead";
     public string Name => "Burn the Dead";
-    public string GetTooltip(GameState state) => $"-{DailySicknessReduction} sickness/day, -{DailyMoraleHit} morale/day, -{DailyFuelCost} fuel/day, -{MoraleHit} morale on enact. Requires sickness > {SicknessThreshold}.";
+
+    public string GetTooltip(GameState state)
+    {
+        return $"-{SicknessReduction} sickness, -{FuelCost} fuel, -{MoraleHit} morale";
+    }
 
     public bool CanEnact(GameState state, out string reason)
     {
@@ -28,13 +32,14 @@ public sealed class BurnTheDeadLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        entry.Write(
+            "Pyres burn day and night. The stench of cremation fills the air. The dead find no proper burial, but at least they no longer spread plague.");
         state.AddMorale(-MoraleHit, entry);
+        state.AddResource(ResourceKind.Fuel, -FuelCost, entry);
+        state.AddSickness(-SicknessReduction, entry);
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
-        state.AddSickness(-DailySicknessReduction, entry);
-        state.AddMorale(-DailyMoraleHit, entry);
-        state.AddResource(Resources.ResourceKind.Fuel, -DailyFuelCost, entry);
     }
 }

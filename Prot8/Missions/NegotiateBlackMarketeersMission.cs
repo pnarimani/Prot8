@@ -37,7 +37,7 @@ public sealed class NegotiateBlackMarketeersMission : IMissionDefinition
         {
             state.AddResource(ResourceKind.Water, WaterGain, entry);
             state.AddUnrest(SuccessUnrest, entry);
-            entry.Write($"{Name}: acquired +{WaterGain} water (+{SuccessUnrest} unrest).");
+            entry.Write($"The negotiators secured water from the black market. The people drink, but whispers of dealings with criminals spread through the streets.");
             return;
         }
 
@@ -45,12 +45,12 @@ public sealed class NegotiateBlackMarketeersMission : IMissionDefinition
         {
             state.AddResource(ResourceKind.Food, FoodGain, entry);
             state.AddUnrest(SuccessUnrest, entry);
-            entry.Write($"{Name}: acquired +{FoodGain} food (+{SuccessUnrest} unrest).");
+            entry.Write($"The negotiators returned with food. bellies are full tonight, but the cost of dealing with smugglers breeds contempt.");
             return;
         }
 
         state.AddUnrest(BetrayalUnrest, entry);
         state.ApplyDeath(BetrayalDeaths, entry);
-        entry.Write($"{Name}: betrayal (+{BetrayalUnrest} unrest, {BetrayalDeaths} deaths).");
+        entry.Write("Ambush! The black marketeers turned on your people. Two are killed, the rest barely escape. The deal was a trap.");
     }
 }

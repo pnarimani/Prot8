@@ -2,23 +2,24 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class EnemyUltimatumEvent : TriggeredEventBase, IRespondableEvent
+public sealed class EnemyUltimatumEvent : IRespondableEvent
 {
-    private const int TriggerDay = 30;
+    public string Id => "enemy_ultimatum";
+    public string Name => "Enemy Ultimatum";
 
-    public EnemyUltimatumEvent() : base("enemy_ultimatum", "Enemy Ultimatum",
-        "The enemy commander demands your surrender. Civilians question whether resistance is worth the cost.")
-    {
-    }
+    public string Description =>
+        "A messenger arrives under flag of truce with a message from the enemy commander: surrender the city or face total annihilation. He gives you until dawn to decide.";
 
-    public override bool ShouldTrigger(GameState state)
+    const int TriggerDay = 30;
+
+    public bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("ignore", state, entry);
+        ResolveWithResponse("ignore", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -31,31 +32,46 @@ public sealed class EnemyUltimatumEvent : TriggeredEventBase, IRespondableEvent
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
+    public void ResolveWithResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
             case "defy":
+                entry.Write(
+                    """
+                    You stand on the walls and shout defiance.
+                    The people rally to your voice, but some hear only war, and grow restless for bloodshed.
+                    """
+                );
                 state.AddMorale(10, entry);
                 state.AddUnrest(15, entry);
-                entry.Write($"{Name}: You rally the people with fiery words. Spirits lift, but the hotheads grow bolder.");
                 break;
 
             case "negotiate":
+                entry.Write(
+                    """
+                    You send envoys to treat with the enemy. 
+                    The people see weakness in negotiation. 
+                    Some desert rather than face a doomed stand.
+                    """
+                );
                 state.AddMorale(-5, entry);
                 state.AddUnrest(5, entry);
                 state.ApplyWorkerDesertion(2);
-                entry.Write($"{Name}: You buy time, but the appearance of weakness emboldens deserters.");
                 break;
 
             default: // ignore
+                entry.Write(
+                    """
+                    You refuse to answer.
+                    Silence is interpreted as cowardice. 
+                    Hope drains from the city like blood from a wound.
+                    """
+                );
                 state.AddMorale(-15, entry);
                 state.AddUnrest(20, entry);
                 state.ApplyWorkerDesertion(5);
-                entry.Write($"{Name}: Silence is taken as weakness. Panic spreads through the ranks.");
                 break;
         }
-
-        StartCooldown(state);
     }
 }

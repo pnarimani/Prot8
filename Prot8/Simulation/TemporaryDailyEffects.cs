@@ -1,7 +1,10 @@
+using Prot8.Events;
+
 namespace Prot8.Simulation;
 
 public sealed class TemporaryDailyEffects
 {
+    public List<ITriggeredEvent> TriggeredEvents { get; } = [];
     public double FoodConsumptionMultiplier { get; set; } = 1.0;
 
     public double WaterConsumptionMultiplier { get; set; } = 1.0;

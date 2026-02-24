@@ -4,27 +4,32 @@ using Prot8.Zones;
 
 namespace Prot8.Events;
 
-public sealed class OpeningBombardmentEvent : TriggeredEventBase
+public sealed class OpeningBombardmentEvent : ITriggeredEvent
 {
-    private const int TriggerDay = 1;
-    private const int IntegrityDamage = 10;
-    private const int FoodLost = 10;
+    public string Id => "opening_bombardment";
+    public string Name => "Opening Bombardment";
 
-    public OpeningBombardmentEvent() : base("opening_bombardment", "Opening Bombardment",
-        "Day 1: Outer Farms loses 10 integrity, -10 food from burning stores.")
-    {
-    }
+    public string Description =>
+        """
+        The siege has begun. Enemy catapults loose their first volley.
+        stones arc through the dawn sky and crash into the outer districts with a sound like the end of the world.
+        """;
 
-    public override bool ShouldTrigger(GameState state)
+    const int TriggerDay = 1;
+    const int IntegrityDamage = 10;
+    const int FoodLost = 10;
+
+    public bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
         var farms = state.GetZone(ZoneId.OuterFarms);
         farms.Integrity -= IntegrityDamage;
-        entry.Write($"{Name}: the siege begins. Outer Farms struck for -{IntegrityDamage} integrity.");
+        entry.Write(
+            "The first boulders crash into Outer Farms. Smoke rises from burning granaries as the enemy demonstrates their intent.");
 
         state.AddResource(ResourceKind.Food, -FoodLost, entry);
 
@@ -32,7 +37,5 @@ public sealed class OpeningBombardmentEvent : TriggeredEventBase
         {
             state.LoseZone(farms.Id, false, entry);
         }
-
-        StartCooldown(state);
     }
 }

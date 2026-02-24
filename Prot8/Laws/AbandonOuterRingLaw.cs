@@ -34,10 +34,10 @@ public sealed class AbandonOuterRingLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
-        entry.Write("You order evacuation of the perimiter");
-        entry.Write("The perimiter gets smaller, and smaller perimiter is easier to defend.");
+        entry.Write("You order evacuation of the outer farms. Families are dragged from their homes, their livestock left behind to the enemy.");
+        entry.Write("The perimeter contracts. Fewer walls to defend, but the lost land feeds fewer mouths.");
         state.SiegeDamageMultiplier *= SiegeDamageMultiplier;
-        entry.Write($"Daily siege damage multiplier: {SiegeDamageMultiplier.ToPercent()}");
+        entry.Write($"Siege pressure eases as the enemy must cover more ground to reach us.");
         state.LoseZone(ZoneId.OuterFarms, true, entry);
         state.AddUnrest(UnrestHit, entry);
     }

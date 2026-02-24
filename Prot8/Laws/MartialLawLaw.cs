@@ -36,6 +36,7 @@ public sealed class MartialLawLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        entry.Write("The garrison takes control. Soldiers patrol every street. Dissent will be answered with steel.");
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
@@ -44,15 +45,18 @@ public sealed class MartialLawLaw : ILaw
         {
             var reduction = state.Unrest - UnrestCap;
             state.AddUnrest(-reduction, entry);
+            entry.Write("Martial law suppresses unrest by force.");
         }
 
         if (state.Morale > MoraleCap)
         {
             var reduction = state.Morale - MoraleCap;
             state.AddMorale(-reduction, entry);
+            entry.Write("Hope is a luxury the garrison cannot afford.");
         }
 
         state.ApplyDeath(DailyDeaths, entry);
         state.AddResource(ResourceKind.Food, -DailyFoodCost, entry);
+        entry.Write("The price of order: blood and bread.");
     }
 }

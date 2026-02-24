@@ -3,35 +3,21 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public abstract class TriggeredEventBase : ITriggeredEvent
+public static class EventExtensions
 {
-    protected TriggeredEventBase(string id, string name, string description)
+    extension(ITriggeredEvent evt)
     {
-        Id = id;
-        Name = name;
-        Description = description;
-    }
-
-    public string Id { get; }
-
-    public string Name { get; }
-
-    public string Description { get; }
-
-    public abstract bool ShouldTrigger(GameState state);
-
-    public abstract void Apply(GameState state, ResolutionEntry entry);
-
-    public bool IsOnCooldown(GameState state)
-    {
-        return state.EventCooldowns.TryGetValue(Id, out var remaining) && remaining > 0;
-    }
-
-    protected void StartCooldown(GameState state)
-    {
-        if (GameBalance.EventCooldownDays.TryGetValue(Id, out var days) && days > 0)
+        public bool IsOnCooldown(GameState state)
         {
-            state.EventCooldowns[Id] = days;
+            return state.EventCooldowns.TryGetValue(evt.Id, out var remaining) && remaining > 0;
+        }
+
+        public void StartCooldown(GameState state)
+        {
+            if (GameBalance.EventCooldownDays.TryGetValue(evt.Id, out var days) && days > 0)
+            {
+                state.EventCooldowns[evt.Id] = days;
+            }
         }
     }
 }

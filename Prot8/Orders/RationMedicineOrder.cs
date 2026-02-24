@@ -33,5 +33,6 @@ public sealed class RationMedicineOrder : IEmergencyOrder
         state.AddResource(ResourceKind.Medicine, -MedicineCost, entry);
         state.AddSickness(-SicknessReduction, entry);
         state.AddUnrest(UnrestGain, entry);
+        entry.Write("Medicine is strictly rationed. The sick recover slower, but the supplies last longer. Those who need it most go without.");
     }
 }

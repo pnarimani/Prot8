@@ -32,6 +32,7 @@ public sealed class FoodConfiscationLaw : ILaw
         state.AddUnrest(UnrestHit, entry);
         state.AddMorale(-MoraleHit, entry);
         state.ApplyDeath(Deaths, entry);
+        entry.Write("Soldiers empty pantries and storerooms. Those who resist are made examples of. The food will keep the many alive — at the cost of the few.");
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)

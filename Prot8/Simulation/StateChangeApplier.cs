@@ -117,6 +117,12 @@ public static class StateChangeApplier
             }
         }
 
+        public void ApplyGuardDeath(int death, ResolutionEntry entry)
+        {
+            state.Population.Guards = Math.Max(0, state.Population.Guards - death);
+            entry.Write($"{death} guards killed");
+        }
+
         public void ApplyDeath(int deathsRequested, ResolutionEntry entry)
         {
             if (deathsRequested <= 0)

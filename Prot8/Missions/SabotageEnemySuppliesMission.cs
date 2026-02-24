@@ -34,7 +34,7 @@ public sealed class SabotageEnemySuppliesMission : IMissionDefinition
         {
             state.SiegeDamageMultiplier = SuccessDamageReduction;
             state.SiegeDamageReductionDaysRemaining = SuccessDuration;
-            entry.Write($"{Name}: major success! Siege damage reduced by 30% for {SuccessDuration} days.");
+            entry.Write($"The saboteurs succeeded beyond expectation! Enemy supply lines are disrupted — siege damage reduced by 30% for {SuccessDuration} days.");
             return;
         }
 
@@ -42,12 +42,12 @@ public sealed class SabotageEnemySuppliesMission : IMissionDefinition
         {
             state.SiegeDamageMultiplier = PartialDamageReduction;
             state.SiegeDamageReductionDaysRemaining = PartialDuration;
-            entry.Write($"{Name}: partial success. Siege damage reduced by 15% for {PartialDuration} days.");
+            entry.Write($"The saboteurs partially succeeded. Enemy supplies are scarce — siege damage reduced by 15% for {PartialDuration} days.");
             return;
         }
 
         state.ApplyDeath(FailDeaths, entry);
         state.AddUnrest(FailUnrest, entry);
-        entry.Write($"{Name}: catastrophic failure ({FailDeaths} deaths, +{FailUnrest} unrest).");
+        entry.Write($"Catastrophic failure! The saboteurs were caught and executed publicly. {FailDeaths} dead, and the enemy taunts you with their heads.");
     }
 }

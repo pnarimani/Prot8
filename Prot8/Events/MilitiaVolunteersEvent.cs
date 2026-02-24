@@ -2,23 +2,24 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class MilitiaVolunteersEvent : TriggeredEventBase, IRespondableEvent
+public sealed class MilitiaVolunteersEvent : IRespondableEvent
 {
-    private const int TriggerDay = 6;
+    public string Id => "militia_volunteers";
+    public string Name => "Militia Volunteers";
 
-    public MilitiaVolunteersEvent() : base("militia_volunteers", "Militia Volunteers",
-        "A group of workers approaches, asking to join the guard. They say they'd rather fight than starve behind walls.")
-    {
-    }
+    public string Description =>
+        "A group of workers arrives at the garrison gate armed with farming tools and grim determination. They are not soldiers. But they want to fight.";
 
-    public override bool ShouldTrigger(GameState state)
+    const int TriggerDay = 6;
+
+    public bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay && state.Population.HealthyWorkers >= 3;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("accept", state, entry);
+        ResolveWithResponse("accept", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -31,7 +32,7 @@ public sealed class MilitiaVolunteersEvent : TriggeredEventBase, IRespondableEve
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
+    public void ResolveWithResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
@@ -39,24 +40,26 @@ public sealed class MilitiaVolunteersEvent : TriggeredEventBase, IRespondableEve
             {
                 var converted = state.Population.ConvertHealthyToGuards(3);
                 state.Allocation.RemoveWorkersProportionally(converted);
-                entry.Write($"{Name}: {converted} workers take up arms. \"We'd rather fight than starve behind walls.\"");
+                entry.Write(
+                    $"You accept their offer. {converted} workers take up arms. 'We'd rather fight than starve behind walls,' they say.");
                 break;
             }
 
             case "decline":
+                entry.Write(
+                    "You turn them down gently, citing the need for workers. The volunteers appreciate being valued, and return to their posts.");
                 state.AddMorale(3, entry);
-                entry.Write($"{Name}: You turn them down gently. The workers appreciate being valued.");
                 break;
 
             default: // conscript
             {
                 var converted = state.Population.ConvertHealthyToGuards(5);
                 state.Allocation.RemoveWorkersProportionally(converted);
+                entry.Write(
+                    "You conscript even more than they offered. Workers are dragged from their tasks to fill the garrison. Unrest spreads among those left behind.");
                 state.AddUnrest(5, entry);
                 break;
             }
         }
-
-        StartCooldown(state);
     }
 }

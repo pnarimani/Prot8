@@ -23,6 +23,7 @@ public sealed class CrackdownPatrolsOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
+        entry.Write("Patrols sweep through the streets with steel. Dissent is crushed, but blood is spilled. The city is quiet, but it is the quiet of fear.");
         state.AddUnrest(-UnrestReduction, entry);
         state.ApplyDeath(Deaths, entry);
         state.AddMorale(-MoraleHit, entry);

@@ -34,6 +34,6 @@ public sealed class FortifyTheGateOrder : IEmergencyOrder
         var before = perimeter.Integrity;
         perimeter.Integrity = Math.Min(100, perimeter.Integrity + IntegrityGain);
         var applied = perimeter.Integrity - before;
-        entry.Write($"{Name}: +{applied} integrity to {perimeter.Name}.");
+        entry.Write($"Builders reinforce the {perimeter.Name}. Fresh timber and stone shore up the walls. The gate holds firm.");
     }
 }

@@ -4,22 +4,21 @@ using Prot8.Zones;
 
 namespace Prot8.Events;
 
-public sealed class SiegeBombardmentEvent : TriggeredEventBase
+public sealed class SiegeBombardmentEvent() : ITriggeredEvent
 {
-    private const int MinimumDay = 8;
-    private const int TriggerChance = 20;
-    private const int BaseDamage = 8;
-    private const int DamagePerSiegeLevel = 2;
-    private const int BaseFoodLost = 5;
-    private const int FoodLostPerSiegeLevel = 3;
-    private const int Deaths = 2;
+    public string Id => "siege_bombardment";
+    public string Name => "Siege Bombardment";
+    public string Description => "The enemy catapults thunder through the night. Stones fall without warning — each impact shaking the city and the resolve of those sheltering within.";
 
-    public SiegeBombardmentEvent() : base("siege_bombardment", "Siege Bombardment",
-        $"After day {MinimumDay}, {TriggerChance}% daily chance. -{BaseDamage}+ integrity to random zone, -{BaseFoodLost}+ food (scales with siege), {Deaths} deaths.")
-    {
-    }
+    const int MinimumDay = 8;
+    const int TriggerChance = 20;
+    const int BaseDamage = 8;
+    const int DamagePerSiegeLevel = 2;
+    const int BaseFoodLost = 5;
+    const int FoodLostPerSiegeLevel = 3;
+    const int Deaths = 2;
 
-    public override bool ShouldTrigger(GameState state)
+    public bool ShouldTrigger(GameState state)
     {
         if (state.Day < MinimumDay)
         {
@@ -29,7 +28,7 @@ public sealed class SiegeBombardmentEvent : TriggeredEventBase
         return state.Random.Next(1, 101) <= TriggerChance;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
         var nonLostZones = new List<ZoneState>();
         foreach (var zone in state.Zones)
@@ -45,7 +44,7 @@ public sealed class SiegeBombardmentEvent : TriggeredEventBase
             var target = nonLostZones[state.Random.Next(nonLostZones.Count)];
             var damage = BaseDamage + state.SiegeIntensity * DamagePerSiegeLevel;
             target.Integrity -= damage;
-            entry.Write($"{Name}: bombardment struck {target.Name} for -{damage} integrity.");
+            entry.Write($"Catapult stones slam into {target.Name}. Buildings crumble under the bombardment.");
 
             if (target.Integrity <= 0)
             {
@@ -56,7 +55,7 @@ public sealed class SiegeBombardmentEvent : TriggeredEventBase
         var foodLost = BaseFoodLost + state.SiegeIntensity * FoodLostPerSiegeLevel;
         state.AddResource(ResourceKind.Food, -foodLost, entry);
         state.ApplyDeath(Deaths, entry);
+        entry.Write("The bombardment claims lives and destroys supplies. The siege grinds on.");
 
-        StartCooldown(state);
     }
 }

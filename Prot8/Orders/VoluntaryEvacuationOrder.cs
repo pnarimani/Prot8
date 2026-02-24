@@ -15,6 +15,8 @@ public sealed class VoluntaryEvacuationOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
+        var zoneName = state.ActivePerimeterZone.Name;
+        entry.Write($"The {zoneName} is evacuated. Families are relocated deeper into the city. The perimeter shrinks, are but the people safe.");
         state.LoseZone(state.ActivePerimeterZone.Id, true, entry);
     }
 }

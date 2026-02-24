@@ -30,5 +30,6 @@ public sealed class SoupKitchensOrder : IEmergencyOrder
         state.AddUnrest(-UnrestReduction, entry);
         state.AddMorale(MoraleGain, entry);
         state.AddResource(Resources.ResourceKind.Food, -FoodCost, entry);
+        entry.Write("Soup kitchens open in the lower quarter. The hungry line up for bowls of warmth. Morale lifts, but the food stores deplete.");
     }
 }

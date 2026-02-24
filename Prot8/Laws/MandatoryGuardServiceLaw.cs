@@ -31,12 +31,13 @@ public sealed class MandatoryGuardServiceLaw : ILaw
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
         var converted = state.Population.ConvertHealthyToGuards(GuardConversion);
-        entry.Write($"{Name}: converted {converted} healthy workers into guards permanently.");
+        entry.Write($"Workers are conscripted into the garrison. {converted} take up arms, leaving their trades behind.");
         state.AddMorale(-MoraleHit, entry);
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
         state.AddResource(ResourceKind.Food, -DailyFoodLoss, entry);
+        entry.Write("Extra mouths feed at the garrison table.");
     }
 }

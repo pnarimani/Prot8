@@ -3,24 +3,22 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class CouncilRevoltEvent : TriggeredEventBase
+public sealed class CouncilRevoltEvent() : ITriggeredEvent
 {
-    public CouncilRevoltEvent() : base("council_revolt", "Council Revolt",
-        $"Triggers when unrest > {GameBalance.RevoltThreshold}. Immediate game over.")
-    {
-    }
+    public string Id => "council_revolt";
+    public string Name => "Council Revolt";
+    public string Description => "The city council, long discontented with your rule, has armed their retainers and moved against you. The halls of power are theirs now.";
 
-    public override bool ShouldTrigger(GameState state)
+    public bool ShouldTrigger(GameState state)
     {
         return state.Unrest > GameBalance.RevoltThreshold;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
         state.GameOver = true;
         state.GameOverCause = GameOverCause.CouncilRevolt;
         state.GameOverDetails = "Council revolt overwhelmed command.";
-        entry.Write($"{Name}: the council revolted. Immediate game over.");
-        StartCooldown(state);
+        entry.Write("Your reign ends in bloodshed. The council has taken over.");
     }
 }

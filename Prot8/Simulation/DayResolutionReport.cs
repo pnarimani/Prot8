@@ -17,15 +17,7 @@ public sealed class DayResolutionReport(int day)
 {
     public int Day { get; } = day;
 
-    public List<ResolutionEntry> ResEntries { get; } = [];
-
-    public List<string> TriggeredEventNames { get; } = [];
-
-    public List<string> ResolvedMissionNames { get; } = [];
-
-    public List<PendingEventResponse> PendingResponses { get; } = [];
-
-    public List<EventResponseChoice> EventResponsesMade { get; } = [];
+    public List<ResolutionEntry> Entries { get; } = [];
 
     public int FoodConsumedToday { get; set; }
 

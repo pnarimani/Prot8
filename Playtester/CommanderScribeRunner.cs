@@ -52,6 +52,8 @@ public class CommanderScribeRunner
                 var executedCommands = new StringBuilder();
                 string? commanderValidationErrors = null;
 
+                var report = engine.StartDay();
+
                 for (var attempt = 1; attempt <= maxCommanderRetries; attempt++)
                 {
                     // Reset allocation and action for this attempt
@@ -114,15 +116,15 @@ public class CommanderScribeRunner
                     }
                 }
 
-                var report = engine.ResolveDay(action);
+                engine.ResolveDay(action, report);
 
-                if (report.PendingResponses.Count > 0)
-                {
-                    var defaultChoices = report.PendingResponses
-                        .Select(p => new EventResponseChoice(p.Event.Id, p.Responses[^1].Id))
-                        .ToList();
-                    engine.ApplyEventResponses(report, defaultChoices);
-                }
+                // if (report.PendingResponses.Count > 0)
+                // {
+                //     var defaultChoices = report.PendingResponses
+                //         .Select(p => new EventResponseChoice(p.Event.Id, p.Responses[^1].Id))
+                //         .ToList();
+                //     engine.ApplyEventResponses(report, defaultChoices);
+                // }
 
                 // Capture resolution log
                 var dayReportVm = GameViewModelFactory.ToDayReportViewModel(state, report);
@@ -187,7 +189,7 @@ public class CommanderScribeRunner
             {
                 Out = new AnsiConsoleOutput(sw),
                 ColorSystem = ColorSystemSupport.NoColors,
-                Interactive = InteractionSupport.No
+                Interactive = InteractionSupport.No,
             });
             render(console);
             return sw.ToString();
@@ -336,11 +338,6 @@ public class CommanderScribeRunner
             if (report.WaterDeficitToday)
             {
                 parts.Add("WATER_DEFICIT");
-            }
-
-            if (report.TriggeredEventNames.Count > 0)
-            {
-                parts.Add(string.Join(", ", report.TriggeredEventNames));
             }
 
             if (state.GameOver)

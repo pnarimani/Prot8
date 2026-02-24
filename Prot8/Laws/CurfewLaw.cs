@@ -32,10 +32,12 @@ public sealed class CurfewLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        entry.Write("No one may walk the streets after sunset. The city becomes a prison at dusk.");
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
+        entry.Write("The curfew holds. The streets are empty, but tension simmers behind closed doors.");
         state.AddUnrest(-DailyUnrestReduction, entry);
         state.DailyEffects.ProductionMultiplier *= ProductionMultiplier;
     }

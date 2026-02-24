@@ -3,32 +3,29 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class TaintedWellEvent : TriggeredEventBase
+public sealed class TaintedWellEvent() : ITriggeredEvent
 {
+    public string Id => "tainted_well";
+    public string Name => "Tainted Well";
+    public string Description => "The city's primary well has been fouled — whether by enemy sabotage or simple rot. The water runs discoloured and smells of death.";
+
     private const int TriggerDay = 20;
     private const int WaterLost = 20;
     private const int SicknessGain = 10;
     private const double WaterProductionPenalty = 0.6;
     private const int PenaltyDuration = 3;
 
-    public TaintedWellEvent() : base("tainted_well", "Tainted Well",
-        "Day 20: -20 water, +10 sickness. Water production at 60% for 3 days.")
-    {
-    }
-
-    public override bool ShouldTrigger(GameState state)
+    public bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
+        entry.Write("The well-keeper reports a foul smell from the city's main cistern. Testing confirms contamination. Reserves are drained and the water supply is compromised for days to come.");
         state.AddResource(ResourceKind.Water, -WaterLost, entry);
         state.AddSickness(SicknessGain, entry);
-
+        entry.Write($"Water production will be reduced for {PenaltyDuration} days until the well can be treated.");
         state.TaintedWellDaysRemaining = PenaltyDuration;
-
-        entry.Write($"{Name}: the main well is contaminated. Water production reduced to {WaterProductionPenalty * 100}% for {PenaltyDuration} days.");
-        StartCooldown(state);
     }
 }

@@ -3,23 +3,22 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class PlagueRatsEvent : TriggeredEventBase, IRespondableEvent
+public sealed class PlagueRatsEvent() : IRespondableEvent, ITriggeredEvent
 {
-    private const int TriggerDay = 18;
+    public string Id => "plague_rats";
+    public string Name => "Plague Rats";
+    public string Description => "Rats have infested the city in vast numbers, driven inward by the siege. They gnaw through food stores and carry disease wherever they nest.";
 
-    public PlagueRatsEvent() : base("plague_rats", "Plague Rats",
-        "Rats swarm through the lower quarters, spreading disease. The people demand action.")
-    {
-    }
+    const int TriggerDay = 18;
 
-    public override bool ShouldTrigger(GameState state)
+    public bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("nothing", state, entry);
+        ResolveWithResponse("nothing", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -32,34 +31,36 @@ public sealed class PlagueRatsEvent : TriggeredEventBase, IRespondableEvent
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
+    public void ResolveWithResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         switch (responseId)
         {
             case "hunt":
+                entry.Write(
+                    "Organized hunts drive the rats from the quarter. But disease has already spread — some fall ill before the rodents are purged.");
                 state.AddSickness(10, entry);
                 state.ApplyDeath(2, entry);
                 state.AddUnrest(5, entry);
                 state.PlagueRatsActive = false;
-                entry.Write($"{Name}: Organized hunts contain the rats, but not before disease claims lives.");
                 break;
 
             case "burn":
+                entry.Write(
+                    "You order the quarter burned. The flames purge the rats, but also consume precious materials. At least the plague is contained.");
                 state.AddSickness(5, entry);
                 state.AddResource(ResourceKind.Materials, -10, entry);
                 state.PlagueRatsActive = false;
-                entry.Write($"{Name}: Fire purges the infested quarter. The rats are gone, but so are precious supplies.");
                 break;
 
             default: // nothing
+                entry.Write(
+                    "You do nothing. The rats multiply and spread through the city. Disease follows in their wake, spreading faster each day.");
                 state.AddSickness(15, entry);
                 state.ApplyDeath(3, entry);
                 state.AddUnrest(10, entry);
                 state.PlagueRatsActive = true;
-                entry.Write($"{Name}: Rats carry disease into the inner city. Sickness will spread faster from now on.");
                 break;
         }
 
-        StartCooldown(state);
     }
 }

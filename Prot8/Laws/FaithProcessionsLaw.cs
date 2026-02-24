@@ -32,11 +32,13 @@ public sealed class FaithProcessionsLaw : ILaw
         state.AddMorale(MoraleGain, entry);
         state.AddResource(Resources.ResourceKind.Materials, -MaterialsCost, entry);
         state.AddUnrest(UnrestHit, entry);
+        entry.Write("Priests lead processions through the streets, chanting prayers for salvation. The faithful find comfort; others see superstition.");
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
         state.AddMorale(DailyMorale, entry);
         state.AddSickness(DailySickness, entry);
+        entry.Write("Crowds gather at the temple. Faith spreads, but so does disease in the cramped pews.");
     }
 }

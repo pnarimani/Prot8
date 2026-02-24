@@ -27,5 +27,6 @@ public sealed class ForcedLaborOrder : IEmergencyOrder
         state.AddResource(ResourceKind.Materials, MaterialsGain, entry);
         state.AddUnrest(UnrestGain, entry);
         state.ApplyDeath(Deaths, entry);
+        entry.Write("Conscripts are rounded up and put to work. Materials are produced, but at the cost of lives. One collapses from exhaustion and does not rise.");
     }
 }

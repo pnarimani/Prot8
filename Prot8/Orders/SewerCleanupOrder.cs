@@ -37,5 +37,6 @@ public sealed class SewerCleanupOrder : IEmergencyOrder
     {
         state.AddResource(ResourceKind.Fuel, -FuelCost, entry);
         state.AddSickness(-SicknessReduction, entry);
+        entry.Write("Workers descend into the sewers with torches and disinfectant. The worst of the filth is cleared. Sickness recedes, but fuel is consumed.");
     }
 }

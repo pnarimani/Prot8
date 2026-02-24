@@ -33,5 +33,6 @@ public sealed class DistributeFuelOrder : IEmergencyOrder
         state.AddResource(ResourceKind.Fuel, -FuelCost, entry);
         state.AddMorale(MoraleGain, entry);
         state.AddSickness(-SicknessReduction, entry);
+        entry.Write("Fuel reserves are distributed to keep homes warm and water boiled. The chill lifts, and sickness recedes slightly. Comfort comes at a cost.");
     }
 }

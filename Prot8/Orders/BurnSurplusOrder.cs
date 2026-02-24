@@ -38,6 +38,7 @@ public sealed class BurnSurplusOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
+        entry.Write("Surplus materials are burned to warm the city. The flames push back the cold. Sickness fades in the warmth, and spirits lift.");
         state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
         state.AddSickness(-SicknessReduction, entry);
         state.AddMorale(MoraleGain, entry);

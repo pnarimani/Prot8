@@ -43,20 +43,20 @@ public sealed class ForageBeyondWallsMission() : IMissionDefinition
         if (roll <= highChance)
         {
             state.AddResource(ResourceKind.Food, HighFoodGain, entry);
-            entry.Write($"{Name}: great haul (+{HighFoodGain} food).");
+            entry.Write($"The foragers returned with a bountiful haul — wild game and edible roots. The granary swells with {HighFoodGain} food.");
             return;
         }
 
         if (roll <= highChance + mediumChance)
         {
             state.AddResource(ResourceKind.Food, MediumFoodGain, entry);
-            entry.Write($"{Name}: modest haul (+{MediumFoodGain} food).");
+            entry.Write($"The foragers found some food in the wild lands, though not as much as hoped. {MediumFoodGain} food is better than nothing.");
             return;
         }
 
         state.ApplyDeath(AmbushDeaths, entry);
         state.AddUnrest(AmbushUnrest, entry);
-        entry.Write($"{Name}: crew ambushed ({AmbushDeaths} deaths, +{AmbushUnrest} unrest).");
+        entry.Write($"Enemy scouts ambushed the foraging party. Only a handful return — {AmbushDeaths} lie dead in the fields. The city mourns.");
     }
 
     (int highChance, int mediumChance) GetChances(GameState state)

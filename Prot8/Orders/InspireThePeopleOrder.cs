@@ -28,5 +28,6 @@ public sealed class InspireThePeopleOrder : IEmergencyOrder
     {
         state.AddMorale(MoraleGain, entry);
         state.AddResource(Resources.ResourceKind.Materials, -MaterialsCost, entry);
+        entry.Write("You give a rousing speech from the balcony. The crowd roars with renewed purpose. Torches are lit, banners raised. Hope flickers back to life.");
     }
 }

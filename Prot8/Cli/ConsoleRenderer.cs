@@ -21,6 +21,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     public void RenderDayStart(DayStartViewModel vm, ActionTab activeTab = ActionTab.Laws)
     {
+        Clear();
         console.Write(
             new Rows(
                 BuildHeader(vm),
@@ -30,8 +31,9 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 new Rule { Style = Style.Parse("grey") },
                 BuildStateSection(vm),
                 new Rule { Style = Style.Parse("grey") },
-                BuildActionsSection(vm, activeTab),
-                BuildCommandPanel()
+                vm.CurrentEvent == null ? BuildActionsSection(vm, activeTab) : new Text(""),
+                vm.CurrentEvent == null ? BuildCommandPanel() : new Text(""),
+                vm.CurrentEvent != null ? RenderEventPrompt(vm.CurrentEvent) : new Text("")
             )
         );
     }
@@ -496,9 +498,23 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         }
     }
 
-    public void RenderDayReport(DayReportViewModel vm)
+    public void RenderDayReport(DayStartViewModel dayStartVm, DayReportViewModel reportVm)
     {
-        foreach (var entry in vm.Entries)
+        void RenderSlimDay()
+        {
+            console.Write(
+                new Rows(
+                    BuildHeader(dayStartVm),
+                    new Columns(BuildResourcesTable(dayStartVm), BuildPopulationTable(dayStartVm)),
+                    BuildStatusWarnings(dayStartVm),
+                    new Columns(BuildJobsTable(dayStartVm), BuildZonesTable(dayStartVm)),
+                    new Rule { Style = Style.Parse("grey") },
+                    BuildStateSection(dayStartVm)
+                )
+            );
+        }
+
+        foreach (var entry in reportVm.Entries)
         {
             if (entry.Messages.Count == 0)
             {
@@ -506,8 +522,9 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             }
 
             Clear();
+            RenderSlimDay();
             console.WriteLine();
-            console.Write(new Rule($"[bold]Day {vm.Day} Resolution[/]") { Style = Style.Parse("blue") });
+            console.Write(new Rule($"[bold]Day {reportVm.Day} Resolution[/]") { Style = Style.Parse("blue") });
 
             var text = entry.Messages.Aggregate("", (s, s1) => s + "\n" + s1) + "\n";
             console.Write(new Panel(new Text(text) { Justification = Justify.Center })
@@ -523,28 +540,24 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         }
 
         Clear();
+        RenderSlimDay();
         console.WriteLine();
-        console.Write(new Rule($"[bold]Day {vm.Day} Resolution[/]") { Style = Style.Parse("blue") });
+        console.Write(new Rule($"[bold]Day {reportVm.Day} Resolution[/]") { Style = Style.Parse("blue") });
 
-        if (vm.RecoveryEnabledToday)
-        {
-            TypewriteLine(
-                $"[green]Recovery:[/] recovered {vm.RecoveredWorkersToday} workers (medicine -{vm.RecoveryMedicineSpentToday})");
-        }
-        else
-        {
-            TypewriteLine($"[yellow]Recovery:[/] blocked — {Esc(vm.RecoveryBlockedReason ?? "unknown")}");
-        }
+        TypewriteLine(
+            reportVm.RecoveryEnabledToday
+                ? $"[green]Recovery:[/] recovered {reportVm.RecoveredWorkersToday} workers (medicine -{reportVm.RecoveryMedicineSpentToday})"
+                : $"[yellow]Recovery:[/] blocked — {Esc(reportVm.RecoveryBlockedReason ?? "unknown")}");
 
-        if (vm.AllocationAlert is not null)
+        if (reportVm.AllocationAlert is not null)
         {
             console.WriteLine();
-            console.MarkupLine($"[bold yellow]{Esc(vm.AllocationAlert)}[/]");
+            console.MarkupLine($"[bold yellow]{Esc(reportVm.AllocationAlert)}[/]");
         }
 
-        if (vm.DeltaSummary is not null)
+        if (reportVm.DeltaSummary is not null)
         {
-            console.MarkupLine(Esc(vm.DeltaSummary));
+            console.MarkupLine(Esc(reportVm.DeltaSummary));
         }
 
         console.WriteLine();
@@ -617,22 +630,33 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         console.WriteLine();
     }
 
-    public void RenderEventPrompt(PendingEventResponse pending)
+    public static Panel RenderEventPrompt(PendingEvent pending)
     {
-        console.WriteLine();
-        console.Write(new Rule($"[bold orange1]EVENT: {Esc(pending.Event.Name)}[/]")
-            { Style = Style.Parse("orange1") });
-        console.MarkupLine($"  {Esc(pending.Event.Description)}");
-        console.WriteLine();
-
-        for (var i = 0; i < pending.Responses.Count; i++)
+        var s = $"\n[italic]{Esc(pending.Event.Description)}[/]";
+        s += "\n";
+        if (pending.Responses != null)
         {
-            var r = pending.Responses[i];
-            var tooltip = r.Tooltip is not null ? $" [grey]({Esc(r.Tooltip)})[/]" : "";
-            console.MarkupLine($"  [bold]{i + 1}.[/] {Esc(r.Label)}{tooltip}");
+            for (var i = 0; i < pending.Responses.Count; i++)
+            {
+                var r = pending.Responses[i];
+                var tooltip = r.Tooltip is not null ? $" [grey]({Esc(r.Tooltip)})[/]" : "";
+                s += $"  [bold]{i + 1}.[/] {Esc(r.Label)}{tooltip}";
+            }
+
+            s += "\n";
         }
 
-        console.WriteLine();
+        var panel = new Panel(new Markup(s) { Justification = Justify.Center })
+        {
+            Header = new PanelHeader($"[bold orange1]{pending.Event.Name}[/]", Justify.Center),
+            Border = BoxBorder.Rounded,
+            BorderStyle = Style.Parse("orange1"),
+            Expand = true,
+            Padding = new Padding(1, 2),
+        };
+
+
+        return panel;
     }
 
     static string FormatDelta(int delta)

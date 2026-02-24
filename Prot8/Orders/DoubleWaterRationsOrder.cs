@@ -31,5 +31,6 @@ public sealed class DoubleWaterRationsOrder : IEmergencyOrder
     {
         state.AddMorale(MoraleGain, entry);
         state.AddResource(ResourceKind.Water, -WaterCost, entry);
+        entry.Write("Water flows freely today. The pumps run overtime, and the people drink their fill. Morale soars, but reserves dwindle.");
     }
 }

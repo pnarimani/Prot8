@@ -3,30 +3,28 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class HungerRiotEvent : TriggeredEventBase
+public sealed class HungerRiotEvent() : ITriggeredEvent
 {
-    private const int ConsecutiveDeficitDays = 2;
-    private const int UnrestThreshold = 50;
-    private const int FoodLost = 80;
-    private const int Deaths = 5;
-    private const int UnrestGain = 15;
+    public string Id => "hunger_riot";
+    public string Name => "Hunger Riot";
+    public string Description => "Days of food shortage have broken the people's patience. A mob has stormed the granaries, killing guards and taking what little remains.";
 
-    public HungerRiotEvent() : base("hunger_riot", "Hunger Riot",
-        $"Food deficit for {ConsecutiveDeficitDays} consecutive days and unrest > {UnrestThreshold}. -{FoodLost} food, {Deaths} deaths, +{UnrestGain} unrest.")
-    {
-    }
+    const int ConsecutiveDeficitDays = 2;
+    const int UnrestThreshold = 50;
+    const int FoodLost = 80;
+    const int Deaths = 5;
+    const int UnrestGain = 15;
 
-    public override bool ShouldTrigger(GameState state)
+    public bool ShouldTrigger(GameState state)
     {
         return state.ConsecutiveFoodDeficitDays >= ConsecutiveDeficitDays && state.Unrest > UnrestThreshold;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
-        entry.Write("The granary is ransacked by a mob. Guards are overwhelmed. Screaming from the lower quarter.");
+        entry.Write("Angry mobs force the granary doors. Guards are beaten back and supplies ransacked. By the time order is restored, lives are lost and stores are depleted.");
         state.AddResource(ResourceKind.Food, -FoodLost, entry);
-        state.ApplyDeath(Deaths, entry);
         state.AddUnrest(UnrestGain, entry);
-        StartCooldown(state);
+        state.ApplyGuardDeath(Deaths, entry);
     }
 }

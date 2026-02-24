@@ -11,6 +11,5 @@ public interface ITriggeredEvent
     string Description { get; }
 
     bool ShouldTrigger(GameState state);
-
-    void Apply(GameState state, ResolutionEntry entry);
+    void ResolveNow(GameState state, ResolutionEntry entry);
 }

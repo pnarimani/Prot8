@@ -33,14 +33,16 @@ public sealed class EmergencySheltersLaw : ILaw
             if (!zone.IsLost)
             {
                 zone.Capacity += CapacityGainPerZone;
-                entry.Write($"{Name}: {zone.Name} capacity +{CapacityGainPerZone}.");
+                entry.Write($"Emergency shelters erected in {zone.Name}. Cramped but shelter nonetheless.");
             }
         }
+        entry.Write("The displaced huddle together. Desperation breeds disease.");
         state.AddUnrest(UnrestHit, entry);
     }
 
     public void ApplyDaily(GameState state, ResolutionEntry entry)
     {
+        entry.Write("Overcrowded shelters breed sickness. The coughing never stops.");
         state.AddSickness(DailySickness, entry);
         state.AddUnrest(DailyUnrest, entry);
     }

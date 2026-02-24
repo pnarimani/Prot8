@@ -2,28 +2,25 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class FinalAssaultEvent : TriggeredEventBase
+public sealed class FinalAssaultEvent() : ITriggeredEvent
 {
-    private const int TriggerDay = 33;
-    private const int UnrestGain = 15;
-    private const int MoraleLoss = 10;
+    public string Id => "final_assault";
+    public string Name => "Final Assault Begins";
+    public string Description => "The enemy has marshaled their full strength for a final push. Every siege engine, every soldier, all of it aimed at your gates.";
 
-    public FinalAssaultEvent() : base("final_assault", "Final Assault Begins",
-        "Day 33: Siege damage x1.5 for remaining game. +15 unrest, -10 morale.")
-    {
-    }
+    const int TriggerDay = 33;
+    const int UnrestGain = 15;
+    const int MoraleLoss = 10;
 
-    public override bool ShouldTrigger(GameState state)
+    public bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
         state.FinalAssaultActive = true;
+        entry.Write("Battering rams thunder against the gates. Ladders rise against the walls. The enemy no longer waits, they come for you now.");
         state.AddUnrest(UnrestGain, entry);
-
-        entry.Write($"{Name}: the enemy commits all forces. Siege damage permanently increased.");
-        StartCooldown(state);
     }
 }

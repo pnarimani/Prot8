@@ -2,21 +2,25 @@ using Prot8.Simulation;
 
 namespace Prot8.Events;
 
-public sealed class BetrayalFromWithinEvent() : TriggeredEventBase("betrayal_within", "Betrayal from Within",
-        "A conspiracy among the guards is uncovered. A third of your guards have been plotting to defect."),
-    IRespondableEvent
+public sealed class BetrayalFromWithinEvent : IRespondableEvent
 {
     const int TriggerDay = 37;
     const int LowGuardThreshold = 5;
 
-    public override bool ShouldTrigger(GameState state)
+    public string Id => "betrayal_from_within";
+    public string Name => "Betrayal From Within";
+
+    public string Description =>
+        "A conspiracy among the guards is uncovered. A third of your guards have been plotting to defect.";
+
+    public bool ShouldTrigger(GameState state)
     {
         return state.Day == TriggerDay;
     }
 
-    public override void Apply(GameState state, ResolutionEntry entry)
+    public void ResolveNow(GameState state, ResolutionEntry entry)
     {
-        ApplyResponse("let_go", state, entry);
+        ResolveWithResponse("let_go", state, entry);
     }
 
     public IReadOnlyList<EventResponse> GetResponses(GameState state)
@@ -29,7 +33,7 @@ public sealed class BetrayalFromWithinEvent() : TriggeredEventBase("betrayal_wit
         ];
     }
 
-    public void ApplyResponse(string responseId, GameState state, ResolutionEntry entry)
+    public void ResolveWithResponse(string responseId, GameState state, ResolutionEntry entry)
     {
         var defectors = Math.Max(1, state.Population.Guards / 3);
 
@@ -76,6 +80,6 @@ public sealed class BetrayalFromWithinEvent() : TriggeredEventBase("betrayal_wit
             }
         }
 
-        StartCooldown(state);
+
     }
 }
