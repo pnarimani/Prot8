@@ -463,9 +463,25 @@ public sealed class GameSimulationEngine(GameState state)
 
             if (outputResource.Resource is not ResourceKind.Integrity and not ResourceKind.Care)
             {
-                state.Resources.Add(outputResource.Resource, produced);
-                result.AddResourceProduction(outputResource.Resource, produced);
-                entry.Write($"{building.Name}: +{produced} {outputResource.Resource}.");
+                if (!GameBalance.WasteExcessResources)
+                {
+                    var space = state.Resources.GetAvailableSpace(outputResource.Resource);
+                    if (produced > space)
+                        produced = space;
+                    if (produced <= 0) continue;
+                }
+
+                var actualAdded = state.Resources.Add(outputResource.Resource, produced);
+                result.AddResourceProduction(outputResource.Resource, actualAdded);
+                if (actualAdded < produced)
+                {
+                    var wasted = produced - actualAdded;
+                    entry.Write($"{building.Name}: +{actualAdded} {outputResource.Resource} ({wasted} wasted — storage full).");
+                }
+                else
+                {
+                    entry.Write($"{building.Name}: +{produced} {outputResource.Resource}.");
+                }
             }
             else if (outputResource.Resource == ResourceKind.Integrity)
             {

@@ -32,6 +32,7 @@ public sealed class DayStartViewModel
     public IReadOnlyList<OrderCooldownViewModel> OrderCooldowns { get; init; } = [];
     public IReadOnlyList<MissionViewModel> AvailableMissions { get; init; } = [];
     public IReadOnlyList<BuildingViewModel> Buildings { get; init; } = [];
+    public IReadOnlyList<ZoneStorageViewModel> ZoneStorages { get; init; } = [];
     public PendingEvent? CurrentEvent { get; init; }
 
     public string? ThreatProjection { get; init; }
@@ -144,6 +145,21 @@ public sealed class BuildingViewModel
     public required List<ResourceQuantity> CurrentOutput { get; init; }
     public required List<ResourceQuantity> InputPerWorker { get; init; }
     public required List<ResourceQuantity> OutputPerWorker { get; init; }
+}
+
+public sealed class ZoneStorageViewModel
+{
+    public ZoneId ZoneId { get; init; }
+    public string ZoneName { get; init; } = "";
+    public int Level { get; init; }
+    public int MaxLevel { get; init; }
+    public int CapacityPerResource { get; init; }
+    public int Food { get; init; }
+    public int Water { get; init; }
+    public int Fuel { get; init; }
+    public int Medicine { get; init; }
+    public int Materials { get; init; }
+    public bool IsLost { get; init; }
 }
 
 public sealed class PendingPlanViewModel

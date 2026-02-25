@@ -87,6 +87,7 @@ public sealed class RunTelemetryWriter : IDisposable
         var zones = new List<object>();
         foreach (var zone in state.Zones)
         {
+            var zoneStorage = state.Resources.GetZoneStorage(zone.Id);
             zones.Add(new
             {
                 id = zone.Id.ToString(),
@@ -94,7 +95,13 @@ public sealed class RunTelemetryWriter : IDisposable
                 integrity = zone.Integrity,
                 capacity = zone.Capacity,
                 population = zone.IsLost ? 0 : state.GetZonePopulation(),
-                is_lost = zone.IsLost
+                is_lost = zone.IsLost,
+                storage = new
+                {
+                    level = zoneStorage.UpgradeLevel,
+                    capacity_per_resource = zoneStorage.Capacity,
+                    contents = zoneStorage.Snapshot()
+                }
             });
         }
 

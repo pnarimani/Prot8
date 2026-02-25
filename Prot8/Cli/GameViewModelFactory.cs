@@ -64,6 +64,7 @@ public class GameViewModelFactory(GameState state)
             OrderCooldowns = ComputeOrderCooldowns(state),
             AvailableMissions = ToMissionViewModels(state),
             Buildings = CreateBuildingViewModels(state),
+            ZoneStorages = CreateZoneStorageViewModels(state),
             ThreatProjection = ComputeThreatProjection(state),
             ProductionForecast = ComputeProductionForecast(state),
             ZoneWarnings = ComputeZoneWarnings(state),
@@ -634,5 +635,29 @@ public class GameViewModelFactory(GameState state)
         var tracked = StatModifiers.ComputeSicknessFromEnvironment(state);
         breakdown = tracked.Entries;
         return tracked.Value;
+    }
+
+    static IReadOnlyList<ZoneStorageViewModel> CreateZoneStorageViewModels(GameState state)
+    {
+        var result = new List<ZoneStorageViewModel>();
+        foreach (var zs in state.Resources.ZoneStorages)
+        {
+            var zone = state.GetZone(zs.ZoneId);
+            result.Add(new ZoneStorageViewModel
+            {
+                ZoneId = zs.ZoneId,
+                ZoneName = zone.Name,
+                Level = zs.UpgradeLevel,
+                MaxLevel = GameBalance.StorageMaxUpgradeLevel,
+                CapacityPerResource = zs.Capacity,
+                Food = zs.GetStored(ResourceKind.Food),
+                Water = zs.GetStored(ResourceKind.Water),
+                Fuel = zs.GetStored(ResourceKind.Fuel),
+                Medicine = zs.GetStored(ResourceKind.Medicine),
+                Materials = zs.GetStored(ResourceKind.Materials),
+                IsLost = zone.IsLost,
+            });
+        }
+        return result;
     }
 }

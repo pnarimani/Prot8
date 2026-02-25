@@ -2,6 +2,7 @@ using Prot8.Cli.ViewModels;
 using Prot8.Constants;
 using Prot8.Events;
 using Prot8.Simulation;
+using Prot8.Zones;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
@@ -189,6 +190,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         table.AddColumn(new TableColumn("[bold]Total[/]").Centered());
         table.AddColumn(new TableColumn("[bold]On missions[/]").Centered());
         table.AddColumn(new TableColumn("[bold]Available[/]").Centered());
+        table.AddColumn(new TableColumn("[bold]Idle[/]").Centered());
 
         table.AddRow(
             pop.HealthyWorkers.ToString(),
@@ -197,7 +199,8 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             pop.Elderly.ToString(),
             pop.TotalPopulation.ToString(),
             onMissions.ToString(),
-            $"[bold]{available}[/]");
+            $"[bold]{available}[/]",
+            $"[bold]{vm.IdleWorkersForAssignment}[/]");
 
         if (vm.Population.SickWorkers > 0)
         {
@@ -210,7 +213,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             table.AddRow(
                 new Markup($"{recoveryInfo}{readyStr}"),
                 new Text(""), new Text(""), new Text(""),
-                new Text(""), new Text(""), new Text(""));
+                new Text(""), new Text(""), new Text(""), new Text(""));
         }
 
         table.Title = new TableTitle("[bold]Population[/]");
@@ -268,6 +271,10 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     static Table BuildZonesTable(DayStartViewModel vm)
     {
+        var storageLookup = new Dictionary<ZoneId, ZoneStorageViewModel>();
+        foreach (var zs in vm.ZoneStorages)
+            storageLookup[zs.ZoneId] = zs;
+
         var table = new Table
         {
             Border = TableBorder.Horizontal,
@@ -278,12 +285,31 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         table.AddColumn("Name");
         table.AddColumn("Status");
         table.AddColumn(new TableColumn("Integrity").RightAligned());
-        table.AddColumn(new TableColumn("Capacity").RightAligned());
-        table.AddColumn(new TableColumn("Population").RightAligned());
+        table.AddColumn(new TableColumn("Cap").RightAligned());
+        table.AddColumn(new TableColumn("Pop").RightAligned());
+        table.AddColumn(new TableColumn("Stor").RightAligned());
+        table.AddColumn(new TableColumn("Food").RightAligned());
+        table.AddColumn(new TableColumn("Water").RightAligned());
+        table.AddColumn(new TableColumn("Fuel").RightAligned());
+        table.AddColumn(new TableColumn("Med").RightAligned());
+        table.AddColumn(new TableColumn("Mat").RightAligned());
 
         foreach (var zone in vm.Zones)
         {
-            var status = zone.IsLost ? "[red]LOST[/]" : "[green]active[/]";
+            var nameMarkup = zone.IsLost ? $"[red]{Esc(zone.Name)}[/]" : Esc(zone.Name);
+
+            if (zone.IsLost)
+            {
+                table.AddRow(
+                    $"[red]{(int)zone.Id}[/]",
+                    nameMarkup,
+                    "[red]LOST[/]",
+                    "[red]-[/]", "[red]-[/]", "[red]-[/]",
+                    "[red]-[/]", "[red]-[/]", "[red]-[/]",
+                    "[red]-[/]", "[red]-[/]", "[red]-[/]");
+                continue;
+            }
+
             var integrityColor = zone.Integrity switch
             {
                 <= 25 => "bold red",
@@ -291,16 +317,29 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 _ => "green",
             };
             var over = zone.Population - zone.Capacity;
-            var overText = over > 0 ? $" [red]OVER+{over}[/]" : "";
-            var nameMarkup = zone.IsLost ? $"[red]{Esc(zone.Name)}[/]" : Esc(zone.Name);
+            var overText = over > 0 ? $" [red]+{over}[/]" : "";
+
+            var storLvl = "";
+            var food = "-"; var water = "-"; var fuel = "-"; var med = "-"; var mat = "-";
+            if (storageLookup.TryGetValue(zone.Id, out var zs))
+            {
+                storLvl = $"{zs.Level}/{zs.MaxLevel} ({zs.CapacityPerResource})";
+                food = zs.Food.ToString();
+                water = zs.Water.ToString();
+                fuel = zs.Fuel.ToString();
+                med = zs.Medicine.ToString();
+                mat = zs.Materials.ToString();
+            }
 
             table.AddRow(
                 ((int)zone.Id).ToString(),
                 nameMarkup,
-                status,
+                "[green]active[/]",
                 $"[{integrityColor}]{zone.Integrity}[/]",
                 zone.Capacity.ToString(),
-                $"{zone.Population}{overText}");
+                $"{zone.Population}{overText}",
+                storLvl,
+                food, water, fuel, med, mat);
         }
 
         return table;
@@ -494,6 +533,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 "[bold]enact[/] [grey]<LawId>[/]  [grey]|[/]  " +
                 "[bold]order[/] [grey]<OrderId>[/]  [grey]|[/]  " +
                 "[bold]mission[/] [grey]<MissionId>[/]  [grey]|[/]  " +
+                "[bold]upgrade[/] [grey]<Zone>[/]  [grey]|[/]  " +
                 "[bold]clear_assignments[/]  [grey]|[/]  " +
                 "[bold]clear_action[/]  [grey]|[/]  " +
                 "[bold]end_day[/]  [grey]|[/]  " +

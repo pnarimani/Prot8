@@ -7,7 +7,7 @@ public static class TabCompletingReadLine
     static readonly string[] CommandNames =
     [
         "assign", "clear_action", "clear_assignments",
-        "enact", "end_day", "help", "mission", "order", "view"
+        "enact", "end_day", "help", "mission", "order", "upgrade", "view"
     ];
 
     static readonly string[] ViewTabNames = ["laws", "orders", "missions"];
@@ -221,6 +221,12 @@ public static class TabCompletingReadLine
                 .Where(b => !b.IsDestroyed)
                 .Where(b => b.Id.ToString().StartsWith(argPartial, StringComparison.OrdinalIgnoreCase))
                 .Select(b => b.Id.ToString())
+                .ToArray(),
+
+            "upgrade" => vm.ZoneStorages
+                .Where(z => !z.IsLost)
+                .Where(z => z.ZoneId.ToString().StartsWith(argPartial, StringComparison.OrdinalIgnoreCase))
+                .Select(z => z.ZoneId.ToString())
                 .ToArray(),
 
             "view" => ViewTabNames

@@ -112,6 +112,16 @@ public class CommandParser
                 command = new EndDayCommand();
                 return true;
 
+            case "upgrade":
+                if (parts.Length != 2)
+                {
+                    error = "Usage: upgrade <Zone>.";
+                    return false;
+                }
+
+                command = new UpgradeStorageCommand { ZoneIdStr = parts[1] };
+                return true;
+
             default:
                 error = $"Unknown command '{parts[0]}'.";
                 return false;

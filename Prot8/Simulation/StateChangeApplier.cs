@@ -101,6 +101,25 @@ public static class StateChangeApplier
 
             entry.Write($"Active perimeter is now {state.ActivePerimeterZone.Name}");
 
+            // Handle zone storage loss
+            if (isControlledEvacuation && GameBalance.EvacuationResourceSalvagePercent > 0)
+            {
+                state.Resources.SalvageToNextZone(zoneId, GameBalance.EvacuationResourceSalvagePercent);
+                entry.Write($"Evacuated {GameBalance.EvacuationResourceSalvagePercent * 100:F0}% of stored resources to next zone.");
+            }
+
+            var lostResources = state.Resources.DestroyZoneStorage(zoneId);
+            var lostParts = new List<string>();
+            foreach (var (kind, amount) in lostResources)
+            {
+                if (amount > 0)
+                    lostParts.Add($"{amount} {kind}");
+            }
+            if (lostParts.Count > 0)
+            {
+                entry.Write($"Resources lost in {zone.Name}: {string.Join(", ", lostParts)}");
+            }
+
             if (isControlledEvacuation)
             {
                 state.AddUnrest(GameBalance.EvacuationUnrestShock[zoneId], entry);

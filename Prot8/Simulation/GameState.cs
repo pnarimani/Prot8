@@ -13,8 +13,9 @@ public sealed class GameState
     {
         Random = seed.HasValue ? new Random(seed.Value) : new Random();
         RandomSeed = seed;
-        Resources = new ResourceState(GameBalance.StartingFood, GameBalance.StartingWater, GameBalance.StartingFuel,
-            GameBalance.StartingMedicine, GameBalance.StartingMaterials);
+        Zones = CreateZones();
+        var storages = CreateZoneStorages();
+        Resources = new ResourceState(storages);
         Population = new PopulationState
         {
             HealthyWorkers = GameBalance.StartingHealthyWorkers,
@@ -26,9 +27,15 @@ public sealed class GameState
         Unrest = GameBalance.StartingUnrest;
         Sickness = GameBalance.StartingSickness;
         SiegeIntensity = GameBalance.StartingSiegeIntensity;
-        Zones = CreateZones();
         Buildings = CreateBuildings();
         Allocation = new BuildingAllocation(Buildings);
+
+        // Distribute starting resources via Add (fills safest first)
+        Resources.Add(ResourceKind.Food, GameBalance.StartingFood);
+        Resources.Add(ResourceKind.Water, GameBalance.StartingWater);
+        Resources.Add(ResourceKind.Fuel, GameBalance.StartingFuel);
+        Resources.Add(ResourceKind.Medicine, GameBalance.StartingMedicine);
+        Resources.Add(ResourceKind.Materials, GameBalance.StartingMaterials);
 
         Population.EnqueueRecovery(Population.SickWorkers, GameBalance.ComputeRecoveryDays(Sickness));
     }
@@ -248,6 +255,16 @@ public sealed class GameState
             if (b.Zone == zone)
                 yield return b;
         }
+    }
+
+    static IReadOnlyList<ZoneStorageState> CreateZoneStorages()
+    {
+        var list = new List<ZoneStorageState>();
+        foreach (var template in GameBalance.ZoneTemplates)
+        {
+            list.Add(new ZoneStorageState(template.ZoneId));
+        }
+        return list;
     }
 
     static IReadOnlyList<ZoneState> CreateZones()

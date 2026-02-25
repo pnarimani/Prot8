@@ -54,6 +54,14 @@ public static class GameBalance
     public const int RecoveryPerClinicSlot = 2;
     public const int MedicinePerRecovery = 1;
 
+    // Storage system
+    public const int StorageBaseCapacity = 80;
+    public const int StorageCapacityPerUpgrade = 40;
+    public const int StorageMaxUpgradeLevel = 3;
+    public const int StorageUpgradeMaterialsCost = 25;
+    public const bool WasteExcessResources = true;
+    public const double EvacuationResourceSalvagePercent = 0.0;
+
     // Production penalty thresholds - penalties only apply after these values
     public const int MoraleProductionThreshold = 65;
     public const int UnrestProductionThreshold = 65;
