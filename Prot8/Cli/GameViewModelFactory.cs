@@ -1,7 +1,7 @@
+using Prot8.Buildings;
 using Prot8.Cli.ViewModels;
 using Prot8.Constants;
 using Prot8.Events;
-using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
 using Prot8.Mood;
@@ -63,7 +63,7 @@ public class GameViewModelFactory(GameState state)
             AvailableOrders = ToOrderViewModels(state),
             OrderCooldowns = ComputeOrderCooldowns(state),
             AvailableMissions = ToMissionViewModels(state),
-            Jobs = CreateJobViewModel(state),
+            Buildings = CreateBuildingViewModels(state),
             ThreatProjection = ComputeThreatProjection(state),
             ProductionForecast = ComputeProductionForecast(state),
             ZoneWarnings = ComputeZoneWarnings(state),
@@ -368,30 +368,36 @@ public class GameViewModelFactory(GameState state)
         return result;
     }
 
-    static Dictionary<JobType, JobViewModel> CreateJobViewModel(GameState state)
+    static IReadOnlyList<BuildingViewModel> CreateBuildingViewModels(GameState state)
     {
-        var jobs = ActionAvailability.GetJobTypes();
-        var result = new Dictionary<JobType, JobViewModel>();
+        var result = new List<BuildingViewModel>();
 
-        foreach (var job in jobs)
+        foreach (var building in state.Buildings)
         {
-            var workers = state.Allocation.Workers[job];
+            var workers = building.AssignedWorkers;
+            var zoneName = state.GetZone(building.Zone).Name;
 
-            var output = GameBalance.JobOutputs[job]
+            var output = building.Outputs
                 .Select(x => x with { Quantity = x.Quantity * workers })
                 .ToList();
 
-            var input = GameBalance.JobInputs[job]
+            var input = building.Inputs
                 .Select(x => x with { Quantity = x.Quantity * workers })
                 .ToList();
 
-            result.Add(job, new JobViewModel
+            result.Add(new BuildingViewModel
             {
+                Id = building.Id,
+                Name = building.Name,
+                Zone = building.Zone,
+                ZoneName = zoneName,
+                MaxWorkers = building.MaxWorkers,
+                IsDestroyed = building.IsDestroyed,
                 AssignedWorkers = workers,
                 CurrentOutput = output,
                 CurrentInput = input,
-                InputPerWorker = GameBalance.JobInputs[job],
-                OutputPerWorker = GameBalance.JobOutputs[job],
+                InputPerWorker = building.Inputs.ToList(),
+                OutputPerWorker = building.Outputs.ToList(),
             });
         }
 
@@ -458,23 +464,37 @@ public class GameViewModelFactory(GameState state)
         var foodNeed = (int)Math.Ceiling(pop * GameBalance.FoodPerPersonPerDay);
         var waterNeed = (int)Math.Ceiling(pop * GameBalance.WaterPerPersonPerDay);
 
-        var foodWorkers = state.Allocation.Workers[JobType.FoodProduction];
-        var waterWorkers = state.Allocation.Workers[JobType.WaterDrawing];
-        var foodOutput = GameBalance.JobOutputs[JobType.FoodProduction].FirstOrDefault();
-        var waterOutput = GameBalance.JobOutputs[JobType.WaterDrawing].FirstOrDefault();
-        var foodProd = (int)(foodWorkers * foodOutput.Quantity);
-        var waterProd = (int)(waterWorkers * waterOutput.Quantity);
+        var foodProd = 0.0;
+        var waterProd = 0.0;
+        var anyFoodWorkers = false;
+        var anyWaterWorkers = false;
+
+        foreach (var building in state.GetActiveBuildings())
+        {
+            if (building.AssignedWorkers <= 0) continue;
+            var output = building.Outputs.FirstOrDefault();
+            if (output.Resource == ResourceKind.Food)
+            {
+                foodProd += building.AssignedWorkers * output.Quantity;
+                anyFoodWorkers = true;
+            }
+            else if (output.Resource == ResourceKind.Water)
+            {
+                waterProd += building.AssignedWorkers * output.Quantity;
+                anyWaterWorkers = true;
+            }
+        }
 
         var parts = new List<string>();
-        if (foodWorkers > 0 || foodNeed > 0)
+        if (anyFoodWorkers || foodNeed > 0)
         {
-            var delta = foodProd - foodNeed;
+            var delta = (int)foodProd - foodNeed;
             parts.Add($"Food {(delta >= 0 ? "+" : "")}{delta}/day");
         }
 
-        if (waterWorkers > 0 || waterNeed > 0)
+        if (anyWaterWorkers || waterNeed > 0)
         {
-            var delta = waterProd - waterNeed;
+            var delta = (int)waterProd - waterNeed;
             parts.Add($"Water {(delta >= 0 ? "+" : "")}{delta}/day");
         }
 

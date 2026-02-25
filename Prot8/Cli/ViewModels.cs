@@ -1,5 +1,5 @@
+using Prot8.Buildings;
 using Prot8.Events;
-using Prot8.Jobs;
 using Prot8.Resources;
 using Prot8.Simulation;
 using Prot8.Zones;
@@ -31,7 +31,7 @@ public sealed class DayStartViewModel
     public IReadOnlyList<OrderViewModel> AvailableOrders { get; init; } = [];
     public IReadOnlyList<OrderCooldownViewModel> OrderCooldowns { get; init; } = [];
     public IReadOnlyList<MissionViewModel> AvailableMissions { get; init; } = [];
-    public Dictionary<JobType, JobViewModel> Jobs { get; init; } = [];
+    public IReadOnlyList<BuildingViewModel> Buildings { get; init; } = [];
     public PendingEvent? CurrentEvent { get; init; }
 
     public string? ThreatProjection { get; init; }
@@ -131,8 +131,14 @@ public sealed class MissionViewModel
     public int RequiredIdleWorkers { get; init; }
 }
 
-public sealed class JobViewModel
+public sealed class BuildingViewModel
 {
+    public required BuildingId Id { get; init; }
+    public required string Name { get; init; }
+    public required ZoneId Zone { get; init; }
+    public required string ZoneName { get; init; }
+    public required int MaxWorkers { get; init; }
+    public required bool IsDestroyed { get; init; }
     public required int AssignedWorkers { get; init; }
     public required List<ResourceQuantity> CurrentInput { get; init; }
     public required List<ResourceQuantity> CurrentOutput { get; init; }

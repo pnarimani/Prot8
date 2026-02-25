@@ -1,5 +1,4 @@
 using Prot8.Constants;
-using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
 using Prot8.Orders;
@@ -10,8 +9,6 @@ namespace Prot8.Cli;
 
 public static class ActionAvailability
 {
-    public static IReadOnlyList<JobType> GetJobTypes() => Enum.GetValues<JobType>();
-
     public static IReadOnlyList<ILaw> GetAvailableLaws(GameState state)
     {
         var available = new List<ILaw>();

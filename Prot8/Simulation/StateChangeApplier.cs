@@ -83,7 +83,23 @@ public static class StateChangeApplier
             state.ZoneLossOccurred = true;
 
             entry.Write($"Zone Lost: {zone.Name}");
-            entry.Write($"Active perimiter is now {state.ActivePerimeterZone.Name}");
+
+            var freedWorkers = state.Allocation.DestroyBuildingsInZone(zoneId);
+            var destroyedNames = new List<string>();
+            foreach (var b in state.GetBuildingsInZone(zoneId))
+            {
+                destroyedNames.Add(b.Name);
+            }
+            if (destroyedNames.Count > 0)
+            {
+                entry.Write($"Buildings destroyed: {string.Join(", ", destroyedNames)}");
+            }
+            if (freedWorkers > 0)
+            {
+                entry.Write($"{freedWorkers} workers freed from destroyed buildings.");
+            }
+
+            entry.Write($"Active perimeter is now {state.ActivePerimeterZone.Name}");
 
             if (isControlledEvacuation)
             {

@@ -1,5 +1,4 @@
 using Prot8.Constants;
-using Prot8.Jobs;
 using Prot8.Missions;
 using Prot8.Population;
 using Prot8.Resources;

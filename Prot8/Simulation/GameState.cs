@@ -1,5 +1,5 @@
+using Prot8.Buildings;
 using Prot8.Constants;
-using Prot8.Jobs;
 using Prot8.Missions;
 using Prot8.Population;
 using Prot8.Resources;
@@ -27,7 +27,8 @@ public sealed class GameState
         Sickness = GameBalance.StartingSickness;
         SiegeIntensity = GameBalance.StartingSiegeIntensity;
         Zones = CreateZones();
-        Allocation = new JobAllocation();
+        Buildings = CreateBuildings();
+        Allocation = new BuildingAllocation(Buildings);
 
         Population.EnqueueRecovery(Population.SickWorkers, GameBalance.ComputeRecoveryDays(Sickness));
     }
@@ -40,7 +41,9 @@ public sealed class GameState
 
     public IReadOnlyList<ZoneState> Zones { get; }
 
-    public JobAllocation Allocation { get; set; }
+    public IReadOnlyList<BuildingState> Buildings { get; }
+
+    public BuildingAllocation Allocation { get; set; }
 
     public int Morale { get; set; }
 
@@ -173,11 +176,11 @@ public sealed class GameState
     {
         get
         {
-            var sum = Allocation.Workers.Sum(x => x.Value);
+            var sum = Allocation.TotalAssigned();
             var allocation = AvailableHealthyWorkersForAllocation - sum;
             return allocation >= 0
                 ? allocation
-                : throw new InvalidOperationException("There are more workers assigned to jobs than available workers");
+                : throw new InvalidOperationException("There are more workers assigned to buildings than available workers");
         }
     }
 
@@ -219,6 +222,34 @@ public sealed class GameState
         return nonLostCount == 0 ? 0 : Population.TotalPopulation / nonLostCount;
     }
 
+    public BuildingState GetBuilding(BuildingId id)
+    {
+        foreach (var b in Buildings)
+        {
+            if (b.Id == id)
+                return b;
+        }
+        throw new KeyNotFoundException($"Building not found: {id}");
+    }
+
+    public IEnumerable<BuildingState> GetActiveBuildings()
+    {
+        foreach (var b in Buildings)
+        {
+            if (!b.IsDestroyed)
+                yield return b;
+        }
+    }
+
+    public IEnumerable<BuildingState> GetBuildingsInZone(ZoneId zone)
+    {
+        foreach (var b in Buildings)
+        {
+            if (b.Zone == zone)
+                yield return b;
+        }
+    }
+
     static IReadOnlyList<ZoneState> CreateZones()
     {
         var list = new List<ZoneState>();
@@ -228,6 +259,16 @@ public sealed class GameState
                 template.StartingCapacity));
         }
 
+        return list;
+    }
+
+    static IReadOnlyList<BuildingState> CreateBuildings()
+    {
+        var list = new List<BuildingState>();
+        foreach (var def in GameBalance.BuildingDefinitions)
+        {
+            list.Add(new BuildingState(def));
+        }
         return list;
     }
 

@@ -1,4 +1,4 @@
-using Prot8.Jobs;
+using Prot8.Buildings;
 using Prot8.Resources;
 using Prot8.Zones;
 
@@ -68,45 +68,57 @@ public static class GameBalance
         new(ZoneId.Keep, "Keep", 60, 25, 0.6),
     };
 
-    public static readonly IReadOnlyDictionary<JobType, ZoneId> JobZoneMap = new Dictionary<JobType, ZoneId>
-    {
-        [JobType.FoodProduction] = ZoneId.OuterFarms,
-        [JobType.WaterDrawing] = ZoneId.OuterResidential,
-        [JobType.MaterialsCrafting] = ZoneId.ArtisanQuarter,
-        [JobType.Repairs] = ZoneId.Keep,
-        [JobType.ClinicStaff] = ZoneId.InnerDistrict,
-        [JobType.FuelScavenging] = ZoneId.OuterResidential,
-    };
+    public static readonly IReadOnlyList<BuildingDefinition> BuildingDefinitions =
+    [
+        // OUTER FARMS (lost first)
+        new(BuildingId.Farm, "Farm", ZoneId.OuterFarms, 10,
+            [new ResourceQuantity(ResourceKind.Fuel, 1)],
+            [new ResourceQuantity(ResourceKind.Food, 3)]),
+        new(BuildingId.HerbGarden, "Herb Garden", ZoneId.OuterFarms, 6,
+            [],
+            [new ResourceQuantity(ResourceKind.Medicine, 1)]),
 
-    public static readonly Dictionary<JobType, List<ResourceQuantity>> JobInputs = new()
-    {
-        [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Fuel, 1)],
-        [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Fuel, 1)],
-        [JobType.MaterialsCrafting] = [],
-        [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Materials, 3)],
-        [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Medicine, 1)],
-        [JobType.FuelScavenging] = [],
-    };
+        // OUTER RESIDENTIAL (lost second)
+        new(BuildingId.Well, "Well", ZoneId.OuterResidential, 10,
+            [new ResourceQuantity(ResourceKind.Fuel, 1)],
+            [new ResourceQuantity(ResourceKind.Water, 3)]),
+        new(BuildingId.FuelStore, "Fuel Store", ZoneId.OuterResidential, 8,
+            [],
+            [new ResourceQuantity(ResourceKind.Fuel, 2)]),
+        new(BuildingId.FieldKitchen, "Field Kitchen", ZoneId.OuterResidential, 6,
+            [new ResourceQuantity(ResourceKind.Fuel, 1)],
+            [new ResourceQuantity(ResourceKind.Food, 2)]),
 
-    public static readonly Dictionary<JobType, List<ResourceQuantity>> JobOutputs = new()
-    {
-        [JobType.FoodProduction] = [new ResourceQuantity(ResourceKind.Food, 3)],
-        [JobType.WaterDrawing] = [new ResourceQuantity(ResourceKind.Water, 3)],
-        [JobType.MaterialsCrafting] = [new ResourceQuantity(ResourceKind.Materials, 2)],
-        [JobType.Repairs] = [new ResourceQuantity(ResourceKind.Integrity, 1d )],
-        [JobType.ClinicStaff] = [new ResourceQuantity(ResourceKind.Care, 1)],
-        [JobType.FuelScavenging] = [new ResourceQuantity(ResourceKind.Fuel, 2)],
-    };
+        // ARTISAN QUARTER (lost third)
+        new(BuildingId.Workshop, "Workshop", ZoneId.ArtisanQuarter, 8,
+            [],
+            [new ResourceQuantity(ResourceKind.Materials, 2)]),
+        new(BuildingId.Smithy, "Smithy", ZoneId.ArtisanQuarter, 6,
+            [new ResourceQuantity(ResourceKind.Materials, 2)],
+            [new ResourceQuantity(ResourceKind.Integrity, 1)]),
+        new(BuildingId.Cistern, "Cistern", ZoneId.ArtisanQuarter, 6,
+            [],
+            [new ResourceQuantity(ResourceKind.Water, 1)]),
 
-    public static readonly Dictionary<JobType, double> LostZoneJobMultipliers = new()
-    {
-        [JobType.FoodProduction] = 0.35,
-        [JobType.WaterDrawing] = 0.6,
-        [JobType.MaterialsCrafting] = 0.45,
-        [JobType.Repairs] = 1.0,
-        [JobType.ClinicStaff] = 0.65,
-        [JobType.FuelScavenging] = 0.6,
-    };
+        // INNER DISTRICT (lost fourth)
+        new(BuildingId.Clinic, "Clinic", ZoneId.InnerDistrict, 8,
+            [new ResourceQuantity(ResourceKind.Medicine, 1)],
+            [new ResourceQuantity(ResourceKind.Care, 1)]),
+        new(BuildingId.Storehouse, "Storehouse", ZoneId.InnerDistrict, 6,
+            [],
+            [new ResourceQuantity(ResourceKind.Fuel, 1)]),
+        new(BuildingId.RootCellar, "Root Cellar", ZoneId.InnerDistrict, 4,
+            [],
+            [new ResourceQuantity(ResourceKind.Food, 1)]),
+
+        // KEEP (never lost)
+        new(BuildingId.RepairYard, "Repair Yard", ZoneId.Keep, 8,
+            [new ResourceQuantity(ResourceKind.Materials, 3)],
+            [new ResourceQuantity(ResourceKind.Integrity, 1)]),
+        new(BuildingId.RationingPost, "Rationing Post", ZoneId.Keep, 4,
+            [],
+            [new ResourceQuantity(ResourceKind.Water, 1)]),
+    ];
 
     public static readonly IReadOnlyDictionary<ZoneId, int> NaturalLossUnrestShock = new Dictionary<ZoneId, int>
     {

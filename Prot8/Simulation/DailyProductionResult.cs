@@ -1,4 +1,3 @@
-using Prot8.Jobs;
 using Prot8.Resources;
 
 namespace Prot8.Simulation;

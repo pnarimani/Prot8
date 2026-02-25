@@ -28,7 +28,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                 BuildHeader(vm),
                 new Columns(BuildResourcesTable(vm), BuildPopulationTable(vm)),
                 BuildStatusWarnings(vm),
-                new Columns(BuildJobsTable(vm), BuildZonesTable(vm)),
+                new Columns(BuildBuildingsTable(vm), BuildZonesTable(vm)),
                 new Rule { Style = Style.Parse("grey") },
                 BuildStateSection(vm),
                 new Rule { Style = Style.Parse("grey") },
@@ -217,30 +217,48 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         return table;
     }
 
-    static IRenderable BuildJobsTable(DayStartViewModel vm)
+    static IRenderable BuildBuildingsTable(DayStartViewModel vm)
     {
         var table = new Table
         {
             Border = TableBorder.Horizontal,
             Expand = true,
-            Title = new TableTitle("[bold]Jobs[/]"),
+            Title = new TableTitle("[bold]Buildings[/]"),
         };
-        table.AddColumn("Job");
+        table.AddColumn("Zone");
+        table.AddColumn("Building");
         table.AddColumn(new TableColumn("Workers").RightAligned());
-        table.AddColumn("Current Input");
-        table.AddColumn("Current Output");
+        table.AddColumn("Input");
+        table.AddColumn("Output");
         table.AddColumn("+Per Worker");
 
-        foreach (var (jobType, jvm) in vm.Jobs)
+        string? lastZone = null;
+        foreach (var bvm in vm.Buildings)
         {
-            var inputs = string.Join(", ", jvm.CurrentInput.Select(x => x.ToString()));
-            var outputs = string.Join(", ", jvm.CurrentOutput.Select(x => x.ToString()));
-            var perWorker = string.Join(", ", jvm.OutputPerWorker.Select(x => x.ToString()));
-            var inputStr = inputs.Length > 0 ? $"{Esc(inputs)}" : " ";
+            var zoneName = bvm.ZoneName == lastZone ? "" : bvm.ZoneName;
+            lastZone = bvm.ZoneName;
+
+            if (bvm.IsDestroyed)
+            {
+                table.AddRow(
+                    $"[red]{Esc(zoneName)}[/]",
+                    $"[red]{Esc(bvm.Name)} (DESTROYED)[/]",
+                    "[red]-[/]",
+                    "[red]-[/]",
+                    "[red]-[/]",
+                    "[red]-[/]");
+                continue;
+            }
+
+            var inputs = string.Join(", ", bvm.CurrentInput.Select(x => x.ToString()));
+            var outputs = string.Join(", ", bvm.CurrentOutput.Select(x => x.ToString()));
+            var perWorker = string.Join(", ", bvm.OutputPerWorker.Select(x => x.ToString()));
+            var inputStr = inputs.Length > 0 ? Esc(inputs) : " ";
             table.AddRow(
-                Esc(jobType.ToString()),
-                jvm.AssignedWorkers.ToString(),
-                $"{inputStr}",
+                Esc(zoneName),
+                Esc(bvm.Name),
+                $"{bvm.AssignedWorkers}/{bvm.MaxWorkers}",
+                inputStr,
                 Esc(outputs),
                 $"+{Esc(perWorker)}");
         }
@@ -472,7 +490,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
     {
         return new Panel(
             new Markup(
-                "[bold]assign[/] [grey]<Job> <N>[/]  [grey]|[/]  " +
+                "[bold]assign[/] [grey]<Building> <N>[/]  [grey]|[/]  " +
                 "[bold]enact[/] [grey]<LawId>[/]  [grey]|[/]  " +
                 "[bold]order[/] [grey]<OrderId>[/]  [grey]|[/]  " +
                 "[bold]mission[/] [grey]<MissionId>[/]  [grey]|[/]  " +
@@ -509,7 +527,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
                     BuildHeader(dayStartVm),
                     new Columns(BuildResourcesTable(dayStartVm), BuildPopulationTable(dayStartVm)),
                     BuildStatusWarnings(dayStartVm),
-                    new Columns(BuildJobsTable(dayStartVm), BuildZonesTable(dayStartVm)),
+                    new Columns(BuildBuildingsTable(dayStartVm), BuildZonesTable(dayStartVm)),
                     new Rule { Style = Style.Parse("grey") },
                     BuildStateSection(dayStartVm)
                 )

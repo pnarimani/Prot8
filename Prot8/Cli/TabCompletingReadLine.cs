@@ -1,5 +1,4 @@
 using Prot8.Cli.ViewModels;
-using Prot8.Jobs;
 
 namespace Prot8.Cli.Input;
 
@@ -218,8 +217,10 @@ public static class TabCompletingReadLine
                 .Select(m => m.Id)
                 .ToArray(),
 
-            "assign" => Enum.GetNames<JobType>()
-                .Where(j => j.StartsWith(argPartial, StringComparison.OrdinalIgnoreCase))
+            "assign" => vm.Buildings
+                .Where(b => !b.IsDestroyed)
+                .Where(b => b.Id.ToString().StartsWith(argPartial, StringComparison.OrdinalIgnoreCase))
+                .Select(b => b.Id.ToString())
                 .ToArray(),
 
             "view" => ViewTabNames

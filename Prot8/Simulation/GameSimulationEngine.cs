@@ -1,6 +1,6 @@
+using Prot8.Buildings;
 using Prot8.Constants;
 using Prot8.Events;
-using Prot8.Jobs;
 using Prot8.Laws;
 using Prot8.Missions;
 using Prot8.Orders;
@@ -366,61 +366,38 @@ public sealed class GameSimulationEngine(GameState state)
         var globalMultiplier = Math.Clamp(statMult.Value, 0.25, 1.3) *
                                state.DailyEffects.ProductionMultiplier.Value;
 
-        foreach (var job in Enum.GetValues<JobType>())
+        foreach (var building in state.GetActiveBuildings())
         {
-            var workers = state.Allocation.Workers[job];
+            var workers = building.AssignedWorkers;
             if (workers <= 0)
             {
                 continue;
             }
 
-            var zoneMultiplier = 1.0;
-            if (job != JobType.Repairs)
-            {
-                var mappedZone = GameBalance.JobZoneMap[job];
-                if (state.IsZoneLost(mappedZone))
-                {
-                    zoneMultiplier *= GameBalance.LostZoneJobMultipliers[job];
-                }
+            var resourceMultiplier = 1.0;
 
-                if (state.DailyEffects.QuarantineZone.HasValue && state.DailyEffects.QuarantineZone.Value == mappedZone)
-                {
-                    zoneMultiplier *= 0.5;
-                }
+            if (state.DailyEffects.QuarantineZone.HasValue && state.DailyEffects.QuarantineZone.Value == building.Zone)
+            {
+                resourceMultiplier *= 0.5;
             }
 
-            if (job == JobType.WaterDrawing)
-            {
-                zoneMultiplier *= state.DailyEffects.WaterProductionMultiplier.Value;
-            }
-            else if (job == JobType.FoodProduction)
-            {
-                zoneMultiplier *= state.DailyEffects.FoodProductionMultiplier.Value;
-            }
-            else if (job == JobType.MaterialsCrafting)
-            {
-                zoneMultiplier *= state.DailyEffects.MaterialsProductionMultiplier.Value;
-            }
-            else if (job == JobType.Repairs)
-            {
-                zoneMultiplier *= state.DailyEffects.RepairProductionMultiplier.Value;
-            }
+            resourceMultiplier *= GetResourceProductionMultiplier(state, building);
 
-            var nominalCycles = workers * globalMultiplier * zoneMultiplier;
+            var nominalCycles = workers * globalMultiplier * resourceMultiplier;
             if (nominalCycles <= 0)
             {
                 continue;
             }
 
             var scale = 1.0;
-            var inputs = GameBalance.JobInputs[job];
+            var inputs = building.Inputs;
             var hasInput = inputs.Count > 0;
             if (hasInput)
             {
                 foreach (var pair in inputs)
                 {
                     var perCycle = pair.Quantity;
-                    if (job == JobType.ClinicStaff && pair.Resource == ResourceKind.Medicine)
+                    if (building.Id == BuildingId.Clinic && pair.Resource == ResourceKind.Medicine)
                     {
                         perCycle *= state.DailyEffects.MedicineUsageMultiplier.Value;
                     }
@@ -459,7 +436,7 @@ public sealed class GameSimulationEngine(GameState state)
                 foreach (var pair in inputs)
                 {
                     var perCycle = pair.Quantity;
-                    if (job == JobType.ClinicStaff && pair.Resource == ResourceKind.Medicine)
+                    if (building.Id == BuildingId.Clinic && pair.Resource == ResourceKind.Medicine)
                     {
                         perCycle *= state.DailyEffects.MedicineUsageMultiplier.Value;
                     }
@@ -468,8 +445,8 @@ public sealed class GameSimulationEngine(GameState state)
                     if (spend > 0)
                     {
                         state.Resources.Consume(pair.Resource, spend);
-                        entry.Write($"{job}: consumed {spend} {pair.Resource}.");
-                        if (job == JobType.ClinicStaff && pair.Resource == ResourceKind.Medicine)
+                        entry.Write($"{building.Name}: consumed {spend} {pair.Resource}.");
+                        if (building.Id == BuildingId.Clinic && pair.Resource == ResourceKind.Medicine)
                         {
                             result.ClinicMedicineSpent += spend;
                         }
@@ -477,8 +454,7 @@ public sealed class GameSimulationEngine(GameState state)
                 }
             }
 
-            var outputs = GameBalance.JobOutputs[job];
-            var outputResource = outputs.FirstOrDefault();
+            var outputResource = building.Outputs.FirstOrDefault();
             var produced = (int)Math.Floor(effectiveCycles * outputResource.Quantity);
             if (produced <= 0)
             {
@@ -489,14 +465,14 @@ public sealed class GameSimulationEngine(GameState state)
             {
                 state.Resources.Add(outputResource.Resource, produced);
                 result.AddResourceProduction(outputResource.Resource, produced);
-                entry.Write($"{job}: +{produced} {outputResource.Resource}.");
+                entry.Write($"{building.Name}: +{produced} {outputResource.Resource}.");
             }
-            else if (job == JobType.Repairs)
+            else if (outputResource.Resource == ResourceKind.Integrity)
             {
                 result.RepairPoints += produced;
-                entry.Write($"Repair teams prepared {produced} integrity points.");
+                entry.Write($"{building.Name} prepared {produced} integrity points.");
             }
-            else if (job == JobType.ClinicStaff)
+            else if (building.Id == BuildingId.Clinic)
             {
                 result.ClinicCarePoints += produced;
                 result.ClinicSlotsUsed += (int)Math.Max(1, Math.Floor(effectiveCycles));
@@ -505,6 +481,19 @@ public sealed class GameSimulationEngine(GameState state)
         }
 
         return result;
+    }
+
+    static double GetResourceProductionMultiplier(GameState state, BuildingState building)
+    {
+        var outputResource = building.Outputs.FirstOrDefault().Resource;
+        return outputResource switch
+        {
+            ResourceKind.Food => state.DailyEffects.FoodProductionMultiplier.Value,
+            ResourceKind.Water => state.DailyEffects.WaterProductionMultiplier.Value,
+            ResourceKind.Materials => state.DailyEffects.MaterialsProductionMultiplier.Value,
+            ResourceKind.Integrity => state.DailyEffects.RepairProductionMultiplier.Value,
+            _ => 1.0,
+        };
     }
 
     static void ApplyConsumption(GameState state, DayResolutionReport report, ResolutionEntry entry)

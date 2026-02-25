@@ -17,10 +17,10 @@ public static class Agents
             You may only choose one of Orders, Laws and Missions to activate on one day.
             For example: You CANNOT activate an order and a law on the same day.
             
-            You may not assign more workers to a job than `IdleWorkersForAssignment`
-            If you want to move workers between jobs:
-            1. Remove workers from one job with negative delta_workers
-            2. Assign workers to another job with positive delta_workers
+            You may not assign more workers to a building than its max capacity or `IdleWorkersForAssignment`
+            If you want to move workers between buildings:
+            1. Remove workers from one building with negative delta_workers
+            2. Assign workers to another building with positive delta_workers
             
             The required workers for a mission need to be IDLE WORKERS BEFORE YOU ACTIVATE A MISSION.
             
@@ -31,8 +31,8 @@ public static class Agents
             Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects. 
             Each command object has a "type" discriminator field and the command's own fields:
             ```
-                { "type": "add_workers",       "job_id": "<JobType>", "delta_workers": <positive delta> }
-                { "type": "remove_workers",    "job_id": "<JobType>", "delta_workers": <positive delta> }
+                { "type": "add_workers",       "building_id": "<BuildingId>", "delta_workers": <positive delta> }
+                { "type": "remove_workers",    "building_id": "<BuildingId>", "delta_workers": <positive delta> }
                 { "type": "enact_law",         "law_id": "<LawId>" }
                 { "type": "issue_order",       "order_id": "<OrderId>" }
                 { "type": "start_mission",     "mission_id": "<MissionId>" }
@@ -152,8 +152,8 @@ public static class Agents
         - Do not invent mechanics, rules, commands, or hidden information.
         - Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects.
           Each command object has a "type" discriminator field and the command's own fields:
-            { "type": "add_workers",       "job_id": "<JobType>", "delta_workers": <positive int> }
-            { "type": "remove_workers",    "job_id": "<JobType>", "delta_workers": <positive int> }
+            { "type": "add_workers",       "building_id": "<BuildingId>", "delta_workers": <positive int> }
+            { "type": "remove_workers",    "building_id": "<BuildingId>", "delta_workers": <positive int> }
             { "type": "enact_law",         "law_id": "<LawId>" }
             { "type": "issue_order",       "order_id": "<OrderId>" }
             { "type": "start_mission",     "mission_id": "<MissionId>" }
@@ -227,20 +227,20 @@ public static class Agents
                                 "type": "object",
                                 "properties": {
                                   "type": { "const": "add_workers" },
-                                  "job_id": { "type": "string" },
+                                  "building_id": { "type": "string" },
                                   "delta_workers": { "type": "integer" }
                                 },
-                                "required": ["type", "job_id", "delta_workers"],
+                                "required": ["type", "building_id", "delta_workers"],
                                 "additionalProperties": false
                               },
                               {
                                   "type": "object",
                                   "properties": {
                                     "type": { "const": "remove_workers" },
-                                    "job_id": { "type": "string" },
+                                    "building_id": { "type": "string" },
                                     "delta_workers": { "type": "integer" }
                                   },
-                                  "required": ["type", "job_id", "delta_workers"],
+                                  "required": ["type", "building_id", "delta_workers"],
                                   "additionalProperties": false
                                 },
                               {

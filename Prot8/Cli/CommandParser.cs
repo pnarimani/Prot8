@@ -23,7 +23,7 @@ public class CommandParser
             case "assign":
                 if (parts.Length != 3)
                 {
-                    error = "Usage: assign <JobType> <Workers>.";
+                    error = "Usage: assign <Building> <Workers>.";
                     return false;
                 }
 
@@ -35,7 +35,7 @@ public class CommandParser
 
                 command = new AssignCommand
                 {
-                    JobId = parts[1],
+                    BuildingIdStr = parts[1],
                     DeltaWorkers = workers,
                 };
                 return true;
