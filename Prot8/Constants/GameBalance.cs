@@ -77,6 +77,13 @@ public static class GameBalance
     public const double BuildingUpgradeBonusPerLevel = 0.5;
     public const int BuildingUpgradeDelayDays = 1;
 
+    // Black Market Event
+    public static bool EnableBlackMarketEvent => true;
+    public const int BlackMarketMinDay = 5;
+    public const int BlackMarketRecurrenceMin = 5;
+    public const int BlackMarketRecurrenceMax = 7;
+    public const int BlackMarketHaggleUnrest = 5;
+
     // Clinic Specialization
     public static bool EnableClinicSpecialization => true;
     public const double HospitalRecoveryBonus = 0.5;
@@ -254,6 +261,7 @@ public static class GameBalance
         ["narrative_letter"] = 0,
         ["narrative_burning_farms"] = 0,
         ["narrative_horns"] = 0,
+        ["black_market_trading"] = 5,
     };
 
     public static int ComputeRecoveryDays(int sickness)
