@@ -77,6 +77,12 @@ public static class GameBalance
     public const double BuildingUpgradeBonusPerLevel = 0.5;
     public const int BuildingUpgradeDelayDays = 1;
 
+    // Clinic Specialization
+    public static bool EnableClinicSpecialization => true;
+    public const double HospitalRecoveryBonus = 0.5;
+    public const int QuarantineWardSicknessReduction = 5;
+    public const int ClinicSpecializationMaterialsCost = 25;
+
     // Fortifications
     public static bool EnableFortifications => true;
     public const int FortificationMaxLevel = 3;

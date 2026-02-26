@@ -174,6 +174,19 @@ public class CommandParser
                 };
                 return true;
 
+            case "specialize_clinic":
+                if (parts.Length != 2)
+                {
+                    error = "Usage: specialize_clinic <hospital|quarantine_ward>.";
+                    return false;
+                }
+
+                command = new SpecializeClinicCommand
+                {
+                    SpecializationStr = parts[1],
+                };
+                return true;
+
             case "fortify":
                 if (parts.Length != 2)
                 {

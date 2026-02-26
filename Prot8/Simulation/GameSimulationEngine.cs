@@ -665,6 +665,11 @@ public sealed class GameSimulationEngine(GameState state)
         sicknessDelta -= state.DailyEffects.QuarantineSicknessReduction;
         sicknessDelta -= production.ClinicCarePoints / 3;
 
+        if (GameBalance.EnableClinicSpecialization && state.ClinicSpecialization == ClinicSpecialization.QuarantineWard)
+        {
+            sicknessDelta -= GameBalance.QuarantineWardSicknessReduction;
+        }
+
         if (state.DailyEffects.FuelConsumptionMultiplier.Value > 1.0)
         {
             sicknessDelta += 2;
@@ -705,7 +710,10 @@ public sealed class GameSimulationEngine(GameState state)
             entry.Write("Recovery timers advanced.");
 
             var ready = state.Population.ReadyToRecoverCount();
-            var clinicCap = production.ClinicSlotsUsed * GameBalance.RecoveryPerClinicSlot;
+            var baseClinicCap = production.ClinicSlotsUsed * GameBalance.RecoveryPerClinicSlot;
+            var clinicCap = GameBalance.EnableClinicSpecialization && state.ClinicSpecialization == ClinicSpecialization.Hospital
+                ? (int)Math.Floor(baseClinicCap * (1 + GameBalance.HospitalRecoveryBonus))
+                : baseClinicCap;
             var medicinePerRecovery = GameBalance.MedicinePerRecovery * state.DailyEffects.MedicineUsageMultiplier.Value;
             var medicineCap = medicinePerRecovery <= 0
                 ? ready

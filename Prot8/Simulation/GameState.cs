@@ -120,6 +120,8 @@ public sealed class GameState
 
     public List<ResourceKind> ResourcePriority { get; set; } = new(GameBalance.DefaultResourcePriority);
 
+    public ClinicSpecialization ClinicSpecialization { get; set; } = ClinicSpecialization.None;
+
     public bool FinalAssaultActive { get; set; }
 
     public string? ActiveDisruption { get; set; }
