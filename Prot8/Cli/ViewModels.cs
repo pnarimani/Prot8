@@ -165,6 +165,7 @@ public sealed class BuildingViewModel
     public int UpgradeLevel { get; init; }
     public int UpgradeDaysRemaining { get; init; }
     public int MaxUpgradeLevel { get; init; }
+    public string? Specialization { get; init; }
 }
 
 public sealed class ZoneStorageViewModel

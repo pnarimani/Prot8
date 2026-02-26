@@ -125,6 +125,11 @@ public sealed class GameSimulationEngine(GameState state)
             }
         }
 
+        if (GameBalance.EnableBuildingSpecializations)
+        {
+            ApplyBuildingSpecializationPassives(state, report);
+        }
+
         var consumptionEntry = new ResolutionEntry { Title = "Consumption" };
         ApplyConsumption(state, report, consumptionEntry);
         if (consumptionEntry.Messages.Count > 0)
@@ -525,6 +530,17 @@ public sealed class GameSimulationEngine(GameState state)
                 continue;
             }
 
+            // Building specialization override
+            if (GameBalance.EnableBuildingSpecializations)
+            {
+                var spec = state.GetBuildingSpec(building.Id);
+                if (spec != BuildingSpecialization.None
+                    && ApplySpecializedProduction(state, building, workers, globalMultiplier, spec, result, entry))
+                {
+                    continue;
+                }
+            }
+
             var resourceMultiplier = 1.0;
 
             if (state.DailyEffects.QuarantineZone.HasValue && state.DailyEffects.QuarantineZone.Value == building.Zone)
@@ -710,8 +726,208 @@ public sealed class GameSimulationEngine(GameState state)
         }
     }
 
+    static bool ApplySpecializedProduction(GameState state, BuildingState building, int workers,
+        double globalMultiplier, BuildingSpecialization spec, DailyProductionResult result, ResolutionEntry entry)
+    {
+        switch (spec)
+        {
+            case BuildingSpecialization.GrainSilos:
+                ProduceSimple(state, building, workers, globalMultiplier, ResourceKind.Food, GameBalance.GrainSilosFoodPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.MedicinalHerbs:
+                ProduceSimple(state, building, workers, globalMultiplier, ResourceKind.Food, GameBalance.MedicinalHerbsFoodPerWorker, result, entry);
+                var medProduced = (int)Math.Floor(workers * globalMultiplier * GameBalance.MedicinalHerbsMedicinePerWorker);
+                if (medProduced > 0)
+                {
+                    var added = state.Resources.Add(ResourceKind.Medicine, medProduced);
+                    result.AddResourceProduction(ResourceKind.Medicine, added);
+                    entry.Write($"{building.Name}: +{added} Medicine.");
+                }
+                return true;
+
+            case BuildingSpecialization.ApothecaryLab:
+                ProduceWithInput(state, building, workers, globalMultiplier, ResourceKind.Fuel, GameBalance.ApothecaryLabFuelInput,
+                    ResourceKind.Medicine, GameBalance.ApothecaryLabMedicinePerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.DeepBoring:
+                ProduceWithInput(state, building, workers, globalMultiplier, ResourceKind.Fuel, GameBalance.DeepBoringFuelInput,
+                    ResourceKind.Water, GameBalance.DeepBoringWaterPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.CoalPits:
+                ProduceSimple(state, building, workers, globalMultiplier, ResourceKind.Fuel, GameBalance.CoalPitsFuelPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.RationedDistribution:
+                ProduceSimple(state, building, workers, globalMultiplier, ResourceKind.Fuel, GameBalance.RationedDistributionFuelPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.SoupLine:
+                ProduceWithInput(state, building, workers, globalMultiplier, ResourceKind.Fuel, 1,
+                    ResourceKind.Food, GameBalance.SoupLineFoodPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.ArmsFoundry:
+                ProduceWithInput(state, building, workers, globalMultiplier, ResourceKind.Fuel, GameBalance.ArmsFoundryFuelInput,
+                    ResourceKind.Materials, GameBalance.ArmsFoundryMaterialsPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.WarSmith:
+                ProduceIntegrityWithInput(state, building, workers, globalMultiplier, ResourceKind.Materials, GameBalance.WarSmithMaterialsInput,
+                    GameBalance.WarSmithIntegrityPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.SiegeWorkshop:
+                ProduceIntegrityWithInput(state, building, workers, globalMultiplier, ResourceKind.Materials, GameBalance.SiegeWorkshopMaterialsInput,
+                    GameBalance.SiegeWorkshopIntegrityPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.RainCollection:
+                var rainMult = state.DailyEffects.FoodProductionMultiplier.Entries.Any(e => e.Source == "Heavy Rains")
+                    ? GameBalance.RainCollectionHeavyRainsMultiplier : 1.0;
+                ProduceSimple(state, building, workers, globalMultiplier * rainMult, ResourceKind.Water,
+                    GameBalance.RainCollectionWaterPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.PreservedStores:
+                ProduceSimple(state, building, workers, globalMultiplier, ResourceKind.Food, GameBalance.PreservedStoresFoodPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.MushroomFarm:
+                ProduceSimple(state, building, workers, globalMultiplier, ResourceKind.Food, GameBalance.MushroomFarmFoodPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.DistributionHub:
+                ProduceSimple(state, building, workers, globalMultiplier, ResourceKind.Water, GameBalance.DistributionHubWaterPerWorker, result, entry);
+                return true;
+
+            case BuildingSpecialization.PropagandaPost:
+                // No resource output — passive effects handled in ApplyUnrestProgression/morale
+                return true;
+
+            case BuildingSpecialization.WeaponCache:
+                // No fuel output — passive effects handled in ApplyUnrestProgression
+                return true;
+
+            default:
+                // Specs like HealersRefuge, PurificationBasin, FortifiedKitchen, SalvageYard,
+                // ArmorWorks, EmergencyReserve, EmergencySupplies, EngineerCorps — use default production
+                return false;
+        }
+    }
+
+    static void ProduceSimple(GameState state, BuildingState building, int workers, double globalMultiplier,
+        ResourceKind output, double outputPerWorker, DailyProductionResult result, ResolutionEntry entry)
+    {
+        var produced = (int)Math.Floor(workers * globalMultiplier * outputPerWorker);
+        if (produced <= 0) return;
+        var added = state.Resources.Add(output, produced);
+        result.AddResourceProduction(output, added);
+        entry.Write($"{building.Name}: +{added} {output}.");
+    }
+
+    static void ProduceWithInput(GameState state, BuildingState building, int workers, double globalMultiplier,
+        ResourceKind inputKind, double inputPerWorker, ResourceKind outputKind, double outputPerWorker,
+        DailyProductionResult result, ResolutionEntry entry)
+    {
+        var nominalCycles = workers * globalMultiplier;
+        var inputNeeded = nominalCycles * inputPerWorker;
+        var available = state.Resources[inputKind];
+        var scale = inputNeeded > available && inputNeeded > 0 ? available / inputNeeded : 1.0;
+        var effectiveCycles = nominalCycles * scale;
+        if (effectiveCycles <= 0) return;
+
+        var inputSpend = Math.Min((int)Math.Ceiling(effectiveCycles * inputPerWorker), state.Resources[inputKind]);
+        if (inputSpend > 0)
+        {
+            state.Resources.Consume(inputKind, inputSpend);
+            entry.Write($"{building.Name}: consumed {inputSpend} {inputKind}.");
+        }
+
+        var produced = (int)Math.Floor(effectiveCycles * outputPerWorker);
+        if (produced <= 0) return;
+        var added = state.Resources.Add(outputKind, produced);
+        result.AddResourceProduction(outputKind, added);
+        entry.Write($"{building.Name}: +{added} {outputKind}.");
+    }
+
+    static void ProduceIntegrityWithInput(GameState state, BuildingState building, int workers, double globalMultiplier,
+        ResourceKind inputKind, double inputPerWorker, double integrityPerWorker,
+        DailyProductionResult result, ResolutionEntry entry)
+    {
+        var nominalCycles = workers * globalMultiplier;
+        var inputNeeded = nominalCycles * inputPerWorker;
+        var available = state.Resources[inputKind];
+        var scale = inputNeeded > available && inputNeeded > 0 ? available / inputNeeded : 1.0;
+        var effectiveCycles = nominalCycles * scale;
+        if (effectiveCycles <= 0) return;
+
+        var inputSpend = Math.Min((int)Math.Ceiling(effectiveCycles * inputPerWorker), state.Resources[inputKind]);
+        if (inputSpend > 0)
+        {
+            state.Resources.Consume(inputKind, inputSpend);
+            entry.Write($"{building.Name}: consumed {inputSpend} {inputKind}.");
+        }
+
+        var produced = (int)Math.Floor(effectiveCycles * integrityPerWorker);
+        if (produced > 0)
+        {
+            result.RepairPoints += produced;
+            entry.Write($"{building.Name} prepared {produced} integrity points.");
+        }
+    }
+
+    static void ApplyBuildingSpecializationPassives(GameState state, DayResolutionReport report)
+    {
+        // SalvageYard daily random resource
+        if (state.GetBuildingSpec(BuildingId.Workshop) == BuildingSpecialization.SalvageYard
+            && !state.GetBuilding(BuildingId.Workshop).IsDestroyed
+            && state.GetBuilding(BuildingId.Workshop).AssignedWorkers > 0)
+        {
+            if (state.RollPercent() <= GameBalance.SalvageYardChance)
+            {
+                var specEntry = new ResolutionEntry { Title = "Salvage Yard" };
+                var resourceKinds = new[] { ResourceKind.Food, ResourceKind.Water, ResourceKind.Fuel, ResourceKind.Materials, ResourceKind.Medicine };
+                var kind = resourceKinds[state.Random.Next(0, resourceKinds.Length)];
+                state.AddResource(kind, GameBalance.SalvageYardAmount, specEntry);
+                specEntry.Write($"Salvage crews recovered {GameBalance.SalvageYardAmount} {kind} from the ruins.");
+                report.Entries.Add(specEntry);
+            }
+        }
+
+        // EmergencyReserve water-zero auto-release
+        if (state.GetBuildingSpec(BuildingId.Cistern) == BuildingSpecialization.EmergencyReserve
+            && !state.GetBuilding(BuildingId.Cistern).IsDestroyed
+            && !state.EmergencyWaterReserveUsed
+            && state.Resources[ResourceKind.Water] == 0)
+        {
+            var specEntry = new ResolutionEntry { Title = "Emergency Reserve" };
+            state.Resources.Add(ResourceKind.Water, 10);
+            state.EmergencyWaterReserveUsed = true;
+            specEntry.Write("Emergency water reserves released! +10 water.");
+            report.Entries.Add(specEntry);
+        }
+    }
+
     static void ApplyConsumption(GameState state, DayResolutionReport report, ResolutionEntry entry)
     {
+        if (GameBalance.EnableBuildingSpecializations)
+        {
+            if (state.GetBuildingSpec(BuildingId.FuelStore) == BuildingSpecialization.RationedDistribution
+                && !state.GetBuilding(BuildingId.FuelStore).IsDestroyed)
+                state.DailyEffects.FuelConsumptionMultiplier.Apply("Rationed Distribution", GameBalance.RationedDistributionFuelConsumptionMultiplier);
+
+            if (state.GetBuildingSpec(BuildingId.RootCellar) == BuildingSpecialization.PreservedStores
+                && !state.GetBuilding(BuildingId.RootCellar).IsDestroyed)
+                state.DailyEffects.FoodConsumptionMultiplier.Apply("Preserved Stores", GameBalance.PreservedStoresFoodConsumptionMultiplier);
+
+            if (state.GetBuildingSpec(BuildingId.RationingPost) == BuildingSpecialization.DistributionHub
+                && !state.GetBuilding(BuildingId.RationingPost).IsDestroyed)
+                state.DailyEffects.FoodConsumptionMultiplier.Apply("Distribution Hub", GameBalance.DistributionHubFoodConsumptionMultiplier);
+        }
+
         var population = state.Population.TotalPopulation;
 
         var foodNeed = (int)Math.Ceiling(population * GameBalance.FoodPerPersonPerDay *
@@ -848,6 +1064,27 @@ public sealed class GameSimulationEngine(GameState state)
             sicknessDelta -= GameBalance.QuarantineWardSicknessReduction;
         }
 
+        if (GameBalance.EnableBuildingSpecializations)
+        {
+            if (state.GetBuildingSpec(BuildingId.HerbGarden) == BuildingSpecialization.HealersRefuge
+                && !state.GetBuilding(BuildingId.HerbGarden).IsDestroyed)
+                sicknessDelta -= GameBalance.HealersRefugeSicknessReduction;
+
+            if (state.GetBuildingSpec(BuildingId.Well) == BuildingSpecialization.PurificationBasin
+                && !state.GetBuilding(BuildingId.Well).IsDestroyed)
+                sicknessDelta -= GameBalance.PurificationBasinSicknessReduction;
+
+            if (state.GetBuildingSpec(BuildingId.FuelStore) == BuildingSpecialization.CoalPits
+                && !state.GetBuilding(BuildingId.FuelStore).IsDestroyed
+                && state.GetBuilding(BuildingId.FuelStore).AssignedWorkers > 0)
+                sicknessDelta += GameBalance.CoalPitsDailySickness;
+
+            if (state.GetBuildingSpec(BuildingId.RootCellar) == BuildingSpecialization.MushroomFarm
+                && !state.GetBuilding(BuildingId.RootCellar).IsDestroyed
+                && state.GetBuilding(BuildingId.RootCellar).AssignedWorkers > 0)
+                sicknessDelta += GameBalance.MushroomFarmDailySickness;
+        }
+
         if (state.DailyEffects.FuelConsumptionMultiplier.Value > 1.0)
         {
             sicknessDelta += 2;
@@ -941,15 +1178,36 @@ public sealed class GameSimulationEngine(GameState state)
             unrestDelta += 2;
         }
 
+        var moraleBonusFromSpecs = 0;
+        if (GameBalance.EnableBuildingSpecializations)
+        {
+            if (state.GetBuildingSpec(BuildingId.Storehouse) == BuildingSpecialization.WeaponCache
+                && !state.GetBuilding(BuildingId.Storehouse).IsDestroyed)
+                unrestDelta -= GameBalance.WeaponCacheUnrestReduction;
+
+            if (state.GetBuildingSpec(BuildingId.RationingPost) == BuildingSpecialization.PropagandaPost
+                && !state.GetBuilding(BuildingId.RationingPost).IsDestroyed)
+            {
+                unrestDelta += GameBalance.PropagandaPostDailyUnrest;
+                moraleBonusFromSpecs += GameBalance.PropagandaPostDailyMorale;
+            }
+
+            if (state.GetBuildingSpec(BuildingId.FieldKitchen) == BuildingSpecialization.SoupLine
+                && !state.GetBuilding(BuildingId.FieldKitchen).IsDestroyed
+                && state.GetBuilding(BuildingId.FieldKitchen).AssignedWorkers > 0)
+                moraleBonusFromSpecs += GameBalance.SoupLineDailyMorale;
+        }
+
         if (unrestDelta != 0)
         {
             state.AddUnrest(unrestDelta, entry);
         }
 
         var moraleDeltaTracked = StatModifiers.ComputeMoraleDrift(state);
-        if (moraleDeltaTracked.Value != 0)
+        var moraleTotal = moraleDeltaTracked.Value + moraleBonusFromSpecs;
+        if (moraleTotal != 0)
         {
-            state.AddMorale(moraleDeltaTracked.Value, entry);
+            state.AddMorale(moraleTotal, entry);
         }
     }
 

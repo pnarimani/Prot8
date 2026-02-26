@@ -176,6 +176,15 @@ public sealed class GameState
     public bool AreGuardsCommitted =>
         CurrentPosture is DefensivePosture.ActiveDefense or DefensivePosture.AggressivePatrols;
 
+    public Dictionary<Buildings.BuildingId, BuildingSpecialization> BuildingSpecializations { get; } = new();
+
+    public bool EmergencyWaterReserveUsed { get; set; }
+
+    public BuildingSpecialization GetBuildingSpec(Buildings.BuildingId id)
+    {
+        return BuildingSpecializations.TryGetValue(id, out var spec) ? spec : BuildingSpecialization.None;
+    }
+
     public ZoneState ActivePerimeterZone
     {
         get

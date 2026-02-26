@@ -157,6 +157,71 @@ public static class GameBalance
     public static bool WasteExcessResources => true;
     public const double EvacuationResourceSalvagePercent = 0.0;
 
+    // Building Specializations
+    public static bool EnableBuildingSpecializations => true;
+    public const int BuildingSpecializationMaterialsCost = 25;
+
+    // Farm specs
+    public const double GrainSilosFoodPerWorker = 4;
+    public const double MedicinalHerbsFoodPerWorker = 2;
+    public const double MedicinalHerbsMedicinePerWorker = 0.5;
+
+    // HerbGarden specs
+    public const double ApothecaryLabMedicinePerWorker = 1.5;
+    public const int ApothecaryLabFuelInput = 1;
+    public const int HealersRefugeSicknessReduction = 3;
+
+    // Well specs
+    public const double DeepBoringWaterPerWorker = 4;
+    public const int DeepBoringFuelInput = 2;
+    public const int PurificationBasinSicknessReduction = 2;
+
+    // FuelStore specs
+    public const double CoalPitsFuelPerWorker = 3;
+    public const int CoalPitsDailySickness = 1;
+    public const double RationedDistributionFuelPerWorker = 1.5;
+    public const double RationedDistributionFuelConsumptionMultiplier = 0.85;
+
+    // FieldKitchen specs
+    public const double SoupLineFoodPerWorker = 3;
+    public const int SoupLineDailyMorale = -3;
+
+    // Workshop specs
+    public const double ArmsFoundryMaterialsPerWorker = 3;
+    public const int ArmsFoundryFuelInput = 1;
+    public const int SalvageYardChance = 10;
+    public const int SalvageYardAmount = 5;
+
+    // Smithy specs
+    public const double WarSmithIntegrityPerWorker = 2;
+    public const int WarSmithMaterialsInput = 3;
+    public const double SmithyDefaultIntegrityPerWorker = 1;
+
+    // Cistern specs
+    public const double RainCollectionWaterPerWorker = 1.5;
+    public const double RainCollectionHeavyRainsMultiplier = 2.0;
+
+    // Storehouse specs
+    public const int WeaponCacheUnrestReduction = 5;
+    public const double EmergencySuppliesSalvagePercent = 0.50;
+
+    // RootCellar specs
+    public const double PreservedStoresFoodPerWorker = 1.5;
+    public const double PreservedStoresFoodConsumptionMultiplier = 0.90;
+    public const double MushroomFarmFoodPerWorker = 2;
+    public const int MushroomFarmDailySickness = 1;
+
+    // RepairYard specs
+    public const double SiegeWorkshopIntegrityPerWorker = 2;
+    public const int SiegeWorkshopMaterialsInput = 4;
+    public const double EngineerCorpsFortificationCostMultiplier = 0.50;
+
+    // RationingPost specs
+    public const double DistributionHubWaterPerWorker = 1.5;
+    public const double DistributionHubFoodConsumptionMultiplier = 0.95;
+    public const int PropagandaPostDailyMorale = 3;
+    public const int PropagandaPostDailyUnrest = -2;
+
     // Defensive Posture System
     public static bool EnableDefensivePosture => true;
     public static bool EnableDefensivePostureGuardOverride => false;

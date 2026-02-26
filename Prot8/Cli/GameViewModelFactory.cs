@@ -415,6 +415,9 @@ public class GameViewModelFactory(GameState state)
                 UpgradeLevel = building.UpgradeLevel,
                 UpgradeDaysRemaining = building.UpgradeDaysRemaining,
                 MaxUpgradeLevel = GameBalance.BuildingMaxUpgradeLevel,
+                Specialization = GameBalance.EnableBuildingSpecializations && state.GetBuildingSpec(building.Id) != BuildingSpecialization.None
+                    ? state.GetBuildingSpec(building.Id).ToString()
+                    : null,
             });
         }
 
