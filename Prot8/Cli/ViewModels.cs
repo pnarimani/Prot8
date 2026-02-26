@@ -6,6 +6,7 @@ using Prot8.Simulation;
 using Prot8.Zones;
 
 
+
 namespace Prot8.Cli.ViewModels;
 
 public sealed class DayStartViewModel
@@ -64,6 +65,9 @@ public sealed class DayStartViewModel
 
     public IReadOnlyList<ResourceKind> ResourcePriority { get; init; } = [];
     public WorkerAllocationMode AllocationMode { get; init; }
+
+    public string CurrentPosture { get; init; } = "None";
+    public bool AreGuardsCommitted { get; init; }
 }
 
 public sealed class ResourceViewModel

@@ -98,6 +98,8 @@ public class GameViewModelFactory(GameState state)
             ResourcePriority = state.ResourcePriority,
             AllocationMode = GameBalance.AllocationMode,
             CurrentEvent = GetCurrentEvent(),
+            CurrentPosture = state.CurrentPosture.ToString(),
+            AreGuardsCommitted = state.AreGuardsCommitted,
         };
     }
 

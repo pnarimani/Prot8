@@ -167,6 +167,15 @@ public sealed class GameState
 
     public int DeathsAtStartOfDay { get; set; }
 
+    public DefensivePosture CurrentPosture { get; set; } = DefensivePosture.None;
+
+    public Dictionary<Zones.ZoneId, bool> ScorchedPerimeterUsed { get; } = new();
+
+    public int ScorchedPerimeterDamageReductionDays { get; set; }
+
+    public bool AreGuardsCommitted =>
+        CurrentPosture is DefensivePosture.ActiveDefense or DefensivePosture.AggressivePatrols;
+
     public ZoneState ActivePerimeterZone
     {
         get

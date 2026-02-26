@@ -21,6 +21,7 @@ namespace Prot8.Cli.Commands;
 [JsonDerivedType(typeof(BuildDefenseCommand), "build_defense")]
 [JsonDerivedType(typeof(AssignArcherPostCommand), "assign_archers")]
 [JsonDerivedType(typeof(SetRecipeCommand), "set_recipe")]
+[JsonDerivedType(typeof(SetPostureCommand), "set_posture")]
 public interface ICommand
 {
     CommandResult Execute(CommandContext context);

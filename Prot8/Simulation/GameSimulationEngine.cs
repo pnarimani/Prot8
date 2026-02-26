@@ -89,6 +89,11 @@ public sealed class GameSimulationEngine(GameState state)
 
     public void ResolveDay(TurnActionChoice action, DayResolutionReport report)
     {
+        if (GameBalance.EnableDefensivePosture)
+        {
+            ApplyDefensivePosture(state, report);
+        }
+
         ApplyPlayerAction(state, action, report);
         ApplyLawPassives(state, report);
         ApplyEmergencyOrderEffects(state, report);
@@ -226,6 +231,63 @@ public sealed class GameSimulationEngine(GameState state)
         }
     }
 
+    static void ApplyDefensivePosture(GameState state, DayResolutionReport report)
+    {
+        if (state.CurrentPosture == DefensivePosture.None)
+            return;
+
+        var entry = new ResolutionEntry { Title = "Defensive Posture" };
+
+        switch (state.CurrentPosture)
+        {
+            case DefensivePosture.OpenGates:
+                state.AddMorale(GameBalance.OpenGatesMorale, entry);
+                if (state.RollPercent() <= GameBalance.OpenGatesRefugeeChance)
+                {
+                    var refugees = state.Random.Next(GameBalance.OpenGatesRefugeeMin, GameBalance.OpenGatesRefugeeMax);
+                    state.Population.HealthyWorkers += refugees;
+                    entry.Write($"{refugees} refugees arrive through the open gates.");
+                }
+                if (state.RollPercent() <= GameBalance.OpenGatesInfiltratorChance)
+                {
+                    state.AddUnrest(GameBalance.OpenGatesInfiltratorUnrest, entry);
+                    state.AddSickness(GameBalance.OpenGatesInfiltratorSickness, entry);
+                    entry.Write("Infiltrators slipped in among the refugees, sowing chaos and disease.");
+                }
+                break;
+
+            case DefensivePosture.AggressivePatrols:
+                state.AddUnrest(-GameBalance.AggressivePatrolsUnrest, entry);
+                if (state.RollPercent() <= GameBalance.AggressivePatrolsInterceptChance)
+                {
+                    var resourceKinds = new[] { ResourceKind.Food, ResourceKind.Water, ResourceKind.Fuel, ResourceKind.Materials, ResourceKind.Medicine };
+                    var kind = resourceKinds[state.Random.Next(0, resourceKinds.Length)];
+                    var amount = state.Random.Next(GameBalance.AggressivePatrolsResourceMin, GameBalance.AggressivePatrolsResourceMax);
+                    state.AddResource(kind, amount, entry);
+                    entry.Write($"Patrol intercepted enemy supplies: +{amount} {kind}.");
+                }
+                entry.Write("Guard patrols maintain order in the streets.");
+                break;
+
+            case DefensivePosture.ScorchedPerimeter:
+                var perimeter = state.ActivePerimeterZone;
+                if (!state.ScorchedPerimeterUsed.ContainsKey(perimeter.Id))
+                {
+                    state.ScorchedPerimeterUsed[perimeter.Id] = true;
+                    perimeter.Integrity = Math.Max(0, perimeter.Integrity - GameBalance.ScorchedPerimeterIntegrityDamage);
+                    state.ScorchedPerimeterDamageReductionDays = GameBalance.ScorchedPerimeterDuration;
+                    state.AddMorale(GameBalance.ScorchedPerimeterMorale, entry);
+                    state.Flags.Tyranny.Add(GameBalance.ScorchedPerimeterTyranny);
+                    entry.Write($"The perimeter of {perimeter.Name} is set ablaze. -{GameBalance.ScorchedPerimeterIntegrityDamage} integrity, but siege damage reduced for {GameBalance.ScorchedPerimeterDuration} days.");
+                }
+                state.CurrentPosture = DefensivePosture.None;
+                break;
+        }
+
+        if (entry.Messages.Count > 0)
+            report.Entries.Add(entry);
+    }
+
     static void ApplyPlayerAction(GameState state, TurnActionChoice action, DayResolutionReport report)
     {
         if (!string.IsNullOrWhiteSpace(action.LawId))
@@ -319,6 +381,14 @@ public sealed class GameSimulationEngine(GameState state)
 
         if (!string.IsNullOrWhiteSpace(action.MissionId))
         {
+            if (GameBalance.EnableDefensivePosture && state.CurrentPosture == DefensivePosture.HunkerDown)
+            {
+                var failEntry = new ResolutionEntry { Title = "Mission Action" };
+                failEntry.Write("Cannot start missions while in Hunker Down posture.");
+                report.Entries.Add(failEntry);
+                return;
+            }
+
             var mission = MissionCatalog.Find(action.MissionId);
             if (mission is null)
             {
@@ -386,6 +456,18 @@ public sealed class GameSimulationEngine(GameState state)
             var law = LawCatalog.Find(lawId);
             if (law is null)
             {
+                continue;
+            }
+
+            if (GameBalance.EnableDefensivePosture && state.AreGuardsCommitted
+                && (law.Id == "mandatory_guard_service" || law.Id == "garrison_mandate"))
+            {
+                if (!GameBalance.EnableDefensivePostureGuardOverride)
+                {
+                    var skipEntry = new ResolutionEntry { Title = $"Law: {law.Name}" };
+                    skipEntry.Write($"{law.Name} daily effects suppressed — guards committed to defensive posture.");
+                    report.Entries.Add(skipEntry);
+                }
                 continue;
             }
 
@@ -927,6 +1009,24 @@ public sealed class GameSimulationEngine(GameState state)
         var damage = (int)Math.Ceiling((GameBalance.PerimeterScalingBase + state.SiegeIntensity) * perimeterFactor *
                                        state.SiegeDamageMultiplier * finalAssaultMultiplier * dustStormMultiplier);
 
+        if (GameBalance.EnableDefensivePosture)
+        {
+            if (state.CurrentPosture == DefensivePosture.HunkerDown)
+            {
+                damage = Math.Max(1, (int)Math.Floor(damage * (1 - GameBalance.HunkerDownSiegeReduction)));
+            }
+            else if (state.CurrentPosture == DefensivePosture.ActiveDefense)
+            {
+                damage = Math.Max(1, (int)Math.Floor(damage * (1 - GameBalance.ActiveDefenseSiegeReduction)));
+            }
+
+            if (state.ScorchedPerimeterDamageReductionDays > 0)
+            {
+                damage = Math.Max(1, (int)Math.Floor(damage * (1 - GameBalance.ScorchedPerimeterSiegeReduction)));
+                state.ScorchedPerimeterDamageReductionDays -= 1;
+            }
+        }
+
         if (GameBalance.EnableFortifications && perimeter.FortificationLevel > 0)
         {
             damage = Math.Max(1, damage - perimeter.FortificationLevel * GameBalance.FortificationDamageReductionPerLevel);
@@ -936,7 +1036,10 @@ public sealed class GameSimulationEngine(GameState state)
         {
             var defenses = state.GetZoneDefenses(perimeter.Id);
 
-            if (defenses.HasArcherPost && defenses.ArcherPostGuardsAssigned >= GameBalance.ArcherPostGuardsRequired)
+            var archerPostActive = defenses.HasArcherPost
+                && defenses.ArcherPostGuardsAssigned >= GameBalance.ArcherPostGuardsRequired
+                && !(GameBalance.EnableDefensivePosture && state.AreGuardsCommitted);
+            if (archerPostActive)
             {
                 damage = Math.Max(1, (int)Math.Floor(damage * (1 - GameBalance.ArcherPostDamageReduction)));
             }

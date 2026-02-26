@@ -157,6 +157,29 @@ public static class GameBalance
     public static bool WasteExcessResources => true;
     public const double EvacuationResourceSalvagePercent = 0.0;
 
+    // Defensive Posture System
+    public static bool EnableDefensivePosture => true;
+    public static bool EnableDefensivePostureGuardOverride => false;
+    public const int DefensivePostureGuardMinimum = 3;
+    public const double HunkerDownSiegeReduction = 0.25;
+    public const double ActiveDefenseSiegeReduction = 0.35;
+    public const int AggressivePatrolsUnrest = 5;
+    public const int AggressivePatrolsInterceptChance = 15;
+    public const int AggressivePatrolsResourceMin = 1;
+    public const int AggressivePatrolsResourceMax = 6;
+    public const int OpenGatesMorale = 5;
+    public const int OpenGatesRefugeeChance = 20;
+    public const int OpenGatesRefugeeMin = 3;
+    public const int OpenGatesRefugeeMax = 6;
+    public const int OpenGatesInfiltratorChance = 10;
+    public const int OpenGatesInfiltratorUnrest = 8;
+    public const int OpenGatesInfiltratorSickness = 3;
+    public const int ScorchedPerimeterIntegrityDamage = 10;
+    public const double ScorchedPerimeterSiegeReduction = 0.40;
+    public const int ScorchedPerimeterDuration = 2;
+    public const int ScorchedPerimeterMorale = -10;
+    public const int ScorchedPerimeterTyranny = 1;
+
     // Morale Emergency Orders
     public static bool EnableMoraleOrders => true;
 
