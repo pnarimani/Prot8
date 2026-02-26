@@ -23,6 +23,8 @@ namespace Prot8.Cli.Commands;
 [JsonDerivedType(typeof(SetRecipeCommand), "set_recipe")]
 [JsonDerivedType(typeof(SetPostureCommand), "set_posture")]
 [JsonDerivedType(typeof(SpecializeBuildingCommand), "specialize_building")]
+[JsonDerivedType(typeof(ActivateDiplomacyCommand), "activate_diplomacy")]
+[JsonDerivedType(typeof(DeactivateDiplomacyCommand), "deactivate_diplomacy")]
 public interface ICommand
 {
     CommandResult Execute(CommandContext context);

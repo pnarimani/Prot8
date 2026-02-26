@@ -1,4 +1,5 @@
 using Prot8.Constants;
+using Prot8.Diplomacy;
 using Prot8.Laws;
 using Prot8.Missions;
 using Prot8.Orders;
@@ -63,6 +64,22 @@ public static class ActionAvailability
                 available.Add(order);
         }
 
+        return available;
+    }
+
+    public static IReadOnlyList<IDiplomaticAction> GetAvailableDiplomacy(GameState state)
+    {
+        if (!GameBalance.EnableDiplomacy)
+            return [];
+
+        var available = new List<IDiplomaticAction>();
+        foreach (var action in DiplomacyCatalog.GetAll())
+        {
+            if (state.ActiveDiplomacyIds.Contains(action.Id))
+                continue;
+            if (action.CanActivate(state))
+                available.Add(action);
+        }
         return available;
     }
 }

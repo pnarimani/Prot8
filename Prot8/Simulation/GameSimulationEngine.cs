@@ -1,5 +1,6 @@
 using Prot8.Buildings;
 using Prot8.Constants;
+using Prot8.Diplomacy;
 using Prot8.Events;
 using Prot8.Laws;
 using Prot8.Missions;
@@ -97,6 +98,11 @@ public sealed class GameSimulationEngine(GameState state)
         ApplyPlayerAction(state, action, report);
         ApplyLawPassives(state, report);
         ApplyEmergencyOrderEffects(state, report);
+
+        if (GameBalance.EnableDiplomacy)
+        {
+            ApplyDiplomacyEffects(state, report);
+        }
 
         var productionEntry = new ResolutionEntry { Title = "Production" };
         var production = CalculateProduction(state, productionEntry);
@@ -503,6 +509,21 @@ public sealed class GameSimulationEngine(GameState state)
         if (orderEntry.Messages.Count > 0)
         {
             report.Entries.Add(orderEntry);
+        }
+    }
+
+    static void ApplyDiplomacyEffects(GameState state, DayResolutionReport report)
+    {
+        foreach (var actionId in state.ActiveDiplomacyIds)
+        {
+            var action = DiplomacyCatalog.Find(actionId);
+            if (action is null)
+                continue;
+
+            var entry = new ResolutionEntry { Title = $"Diplomacy: {action.Name}" };
+            action.ApplyDaily(state, entry);
+            if (entry.Messages.Count > 0)
+                report.Entries.Add(entry);
         }
     }
 
@@ -1264,8 +1285,10 @@ public sealed class GameSimulationEngine(GameState state)
         var perimeterFactor = ZoneRules.PerimeterFactor(state);
         var finalAssaultMultiplier = state.FinalAssaultActive ? 1.5 : 1.0;
         var dustStormMultiplier = state.DailyEffects.DustStormActive ? 0.8 : 1.0;
+        var diplomaticSiegeMultiplier = state.DailyEffects.SiegeDamageMultiplier;
         var damage = (int)Math.Ceiling((GameBalance.PerimeterScalingBase + state.SiegeIntensity) * perimeterFactor *
-                                       state.SiegeDamageMultiplier * finalAssaultMultiplier * dustStormMultiplier);
+                                       state.SiegeDamageMultiplier * finalAssaultMultiplier * dustStormMultiplier *
+                                       diplomaticSiegeMultiplier);
 
         if (GameBalance.EnableDefensivePosture)
         {

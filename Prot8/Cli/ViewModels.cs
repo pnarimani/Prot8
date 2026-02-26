@@ -68,6 +68,18 @@ public sealed class DayStartViewModel
 
     public string CurrentPosture { get; init; } = "None";
     public bool AreGuardsCommitted { get; init; }
+
+    public IReadOnlyList<DiplomacyViewModel> AvailableDiplomacy { get; init; } = [];
+    public IReadOnlyList<string> ActiveDiplomacyNames { get; init; } = [];
+}
+
+public sealed class DiplomacyViewModel
+{
+    public string Id { get; init; } = "";
+    public string Name { get; init; } = "";
+    public string Tooltip { get; init; } = "";
+    public bool IsActive { get; init; }
+    public bool CanDeactivate { get; init; }
 }
 
 public sealed class ResourceViewModel

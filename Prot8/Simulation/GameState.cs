@@ -185,6 +185,10 @@ public sealed class GameState
         return BuildingSpecializations.TryGetValue(id, out var spec) ? spec : BuildingSpecialization.None;
     }
 
+    public List<string> ActiveDiplomacyIds { get; } = new();
+
+    public int HostageExchangeDayCounter { get; set; }
+
     public ZoneState ActivePerimeterZone
     {
         get

@@ -1,6 +1,7 @@
 using Prot8.Buildings;
 using Prot8.Cli.ViewModels;
 using Prot8.Constants;
+using Prot8.Diplomacy;
 using Prot8.Events;
 using Prot8.Laws;
 using Prot8.Missions;
@@ -100,6 +101,8 @@ public class GameViewModelFactory(GameState state)
             CurrentEvent = GetCurrentEvent(),
             CurrentPosture = state.CurrentPosture.ToString(),
             AreGuardsCommitted = state.AreGuardsCommitted,
+            AvailableDiplomacy = ToDiplomacyViewModels(state),
+            ActiveDiplomacyNames = state.ActiveDiplomacyIds.Select(id => DiplomacyCatalog.Find(id)?.Name ?? id).ToList(),
         };
     }
 
@@ -654,6 +657,43 @@ public class GameViewModelFactory(GameState state)
         var tracked = StatModifiers.ComputeSicknessFromEnvironment(state);
         breakdown = tracked.Entries;
         return tracked.Value;
+    }
+
+    static IReadOnlyList<DiplomacyViewModel> ToDiplomacyViewModels(GameState state)
+    {
+        if (!GameBalance.EnableDiplomacy)
+            return [];
+
+        var result = new List<DiplomacyViewModel>();
+
+        foreach (var actionId in state.ActiveDiplomacyIds)
+        {
+            var action = DiplomacyCatalog.Find(actionId);
+            if (action is null) continue;
+            result.Add(new DiplomacyViewModel
+            {
+                Id = action.Id,
+                Name = action.Name,
+                Tooltip = action.GetTooltip(state),
+                IsActive = true,
+                CanDeactivate = action.CanDeactivate,
+            });
+        }
+
+        var available = ActionAvailability.GetAvailableDiplomacy(state);
+        foreach (var action in available)
+        {
+            result.Add(new DiplomacyViewModel
+            {
+                Id = action.Id,
+                Name = action.Name,
+                Tooltip = action.GetTooltip(state),
+                IsActive = false,
+                CanDeactivate = action.CanDeactivate,
+            });
+        }
+
+        return result;
     }
 
     static IReadOnlyList<ZoneStorageViewModel> CreateZoneStorageViewModels(GameState state)

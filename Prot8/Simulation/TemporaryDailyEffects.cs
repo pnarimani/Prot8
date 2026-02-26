@@ -32,4 +32,6 @@ public sealed class TemporaryDailyEffects
     public int QuarantineSicknessReduction { get; set; }
 
     public Zones.ZoneId? QuarantineZone { get; set; }
+
+    public double SiegeDamageMultiplier { get; set; } = 1.0;
 }

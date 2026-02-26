@@ -157,6 +157,36 @@ public static class GameBalance
     public static bool WasteExcessResources => true;
     public const double EvacuationResourceSalvagePercent = 0.0;
 
+    // Diplomacy & Negotiation
+    public static bool EnableDiplomacy => true;
+    public const int BribeFoodCost = 8;
+    public const int BribeMaterialsCost = 5;
+    public const int BribeFoodCostTyranny = 5;
+    public const int BribeMaterialsCostTyranny = 3;
+    public const double BribeSiegeDamageMultiplier = 0.80;
+    public const int BribeInterceptionChance = 5;
+    public const int BribeInterceptionUnrest = 10;
+
+    public const int HostageFoodCost = 3;
+    public const int HostageMedicineCost = 2;
+    public const int HostageDailyMorale = -2;
+
+    public const int TributeFoodCost = 10;
+    public const int TributeWaterCost = 10;
+    public const int TributeDailyMorale = -5;
+
+    public const int CorrespondenceMaterialsCost = 3;
+    public const int CorrespondenceDailyMorale = 2;
+    public const int CorrespondenceIntelChance = 10;
+    public const int CorrespondenceIntelResourceAmount = 5;
+
+    public const int BetrayalFood = 30;
+    public const int BetrayalWater = 30;
+    public const int BetrayalMaterials = 20;
+    public const int BetrayalUnrest = 15;
+    public const int BetrayalMorale = -15;
+    public const int BetrayalRetaliationChance = 10;
+
     // Building Specializations
     public static bool EnableBuildingSpecializations => true;
     public const int BuildingSpecializationMaterialsCost = 25;
