@@ -174,6 +174,19 @@ public class CommandParser
                 };
                 return true;
 
+            case "set_recipe":
+                if (parts.Length != 2)
+                {
+                    error = "Usage: set_recipe <normal|gruel|feast>.";
+                    return false;
+                }
+
+                command = new SetRecipeCommand
+                {
+                    RecipeStr = parts[1],
+                };
+                return true;
+
             case "build_defense":
                 if (parts.Length != 3)
                 {

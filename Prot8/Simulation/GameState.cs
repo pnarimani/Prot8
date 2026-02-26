@@ -123,6 +123,8 @@ public sealed class GameState
 
     public ClinicSpecialization ClinicSpecialization { get; set; } = ClinicSpecialization.None;
 
+    public KitchenRecipe ActiveKitchenRecipe { get; set; } = KitchenRecipe.Normal;
+
     public int IntelBuffDaysRemaining { get; set; }
 
     public bool IntelWarningPending { get; set; }

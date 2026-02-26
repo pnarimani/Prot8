@@ -77,6 +77,14 @@ public static class GameBalance
     public const double BuildingUpgradeBonusPerLevel = 0.5;
     public const int BuildingUpgradeDelayDays = 1;
 
+    // Kitchen Recipes
+    public static bool EnableKitchenRecipes => true;
+    public const double GruelFoodPerWorker = 1.5;
+    public const int GruelSicknessPerDay = 1;
+    public const double FeastFuelPerWorker = 2;
+    public const double FeastFoodPerWorker = 3.0;
+    public const int FeastMoralePerDay = 3;
+
     // Sortie Mission
     public static bool EnableSortieMission => true;
     public const int SortieGuardCost = 5;

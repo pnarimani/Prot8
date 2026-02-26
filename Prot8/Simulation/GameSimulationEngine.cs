@@ -100,6 +100,26 @@ public sealed class GameSimulationEngine(GameState state)
             report.Entries.Add(productionEntry);
         }
 
+        if (GameBalance.EnableKitchenRecipes && state.ActiveKitchenRecipe != KitchenRecipe.Normal)
+        {
+            var kitchenHasWorkers = state.GetBuilding(BuildingId.FieldKitchen) is { IsDestroyed: false, AssignedWorkers: > 0 };
+            if (kitchenHasWorkers)
+            {
+                var recipeEntry = new ResolutionEntry { Title = "Kitchen Recipe Effects" };
+                if (state.ActiveKitchenRecipe == KitchenRecipe.Gruel)
+                {
+                    state.AddSickness(GameBalance.GruelSicknessPerDay, recipeEntry);
+                    recipeEntry.Write("Gruel rations are taking a toll on health.");
+                }
+                else if (state.ActiveKitchenRecipe == KitchenRecipe.Feast)
+                {
+                    state.AddMorale(GameBalance.FeastMoralePerDay, recipeEntry);
+                    recipeEntry.Write("The feast lifts spirits across the city.");
+                }
+                report.Entries.Add(recipeEntry);
+            }
+        }
+
         var consumptionEntry = new ResolutionEntry { Title = "Consumption" };
         ApplyConsumption(state, report, consumptionEntry);
         if (consumptionEntry.Messages.Count > 0)
@@ -412,6 +432,14 @@ public sealed class GameSimulationEngine(GameState state)
                 continue;
             }
 
+            // Kitchen recipe override for Field Kitchen
+            if (GameBalance.EnableKitchenRecipes && building.Id == BuildingId.FieldKitchen &&
+                state.ActiveKitchenRecipe != KitchenRecipe.Normal)
+            {
+                ApplyKitchenRecipeProduction(state, building, workers, globalMultiplier, result, entry);
+                continue;
+            }
+
             var resourceMultiplier = 1.0;
 
             if (state.DailyEffects.QuarantineZone.HasValue && state.DailyEffects.QuarantineZone.Value == building.Zone)
@@ -553,6 +581,48 @@ public sealed class GameSimulationEngine(GameState state)
             ResourceKind.Integrity => state.DailyEffects.RepairProductionMultiplier.Value,
             _ => 1.0,
         };
+    }
+
+    static void ApplyKitchenRecipeProduction(GameState state, BuildingState building, int workers,
+        double globalMultiplier, DailyProductionResult result, ResolutionEntry entry)
+    {
+        var recipe = state.ActiveKitchenRecipe;
+
+        if (recipe == KitchenRecipe.Gruel)
+        {
+            // Gruel: no fuel input, output = workers * globalMult * GruelFoodPerWorker
+            var produced = (int)Math.Floor(workers * globalMultiplier * GameBalance.GruelFoodPerWorker);
+            if (produced > 0)
+            {
+                var actualAdded = state.Resources.Add(ResourceKind.Food, produced);
+                result.AddResourceProduction(ResourceKind.Food, actualAdded);
+                entry.Write($"{building.Name} (Gruel): +{actualAdded} Food (no fuel used).");
+            }
+        }
+        else if (recipe == KitchenRecipe.Feast)
+        {
+            // Feast: fuel input = FeastFuelPerWorker per worker, output = workers * globalMult * FeastFoodPerWorker
+            var fuelNeeded = (int)Math.Ceiling(workers * GameBalance.FeastFuelPerWorker);
+            var fuelAvailable = state.Resources[ResourceKind.Fuel];
+            var scale = fuelNeeded > fuelAvailable && fuelNeeded > 0
+                ? (double)fuelAvailable / fuelNeeded
+                : 1.0;
+
+            var fuelSpend = (int)Math.Ceiling(fuelNeeded * scale);
+            if (fuelSpend > 0)
+            {
+                state.Resources.Consume(ResourceKind.Fuel, fuelSpend);
+                entry.Write($"{building.Name} (Feast): consumed {fuelSpend} Fuel.");
+            }
+
+            var produced = (int)Math.Floor(workers * globalMultiplier * scale * GameBalance.FeastFoodPerWorker);
+            if (produced > 0)
+            {
+                var actualAdded = state.Resources.Add(ResourceKind.Food, produced);
+                result.AddResourceProduction(ResourceKind.Food, actualAdded);
+                entry.Write($"{building.Name} (Feast): +{actualAdded} Food.");
+            }
+        }
     }
 
     static void ApplyConsumption(GameState state, DayResolutionReport report, ResolutionEntry entry)
