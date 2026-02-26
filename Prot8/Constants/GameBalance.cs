@@ -59,7 +59,7 @@ public static class GameBalance
 
     public const double FoodPerPersonPerDay = 0.45;
     public const double WaterPerPersonPerDay = 0.40;
-    public const double FuelPerPersonPerDay = 0.08;
+    public const double FuelPerPersonPerDay = 0.15;
 
     public const double PerimeterScalingBase = 5.0;
 
