@@ -1,6 +1,7 @@
 using Prot8.Cli.ViewModels;
 using Prot8.Constants;
 using Prot8.Events;
+using Prot8.Resources;
 using Prot8.Simulation;
 using Prot8.Zones;
 using Spectre.Console;
@@ -222,6 +223,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     static IRenderable BuildBuildingsTable(DayStartViewModel vm)
     {
+        var showStatus = vm.AllocationMode == WorkerAllocationMode.BuildingActivation;
         var table = new Table
         {
             Border = TableBorder.Horizontal,
@@ -230,6 +232,7 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         };
         table.AddColumn("Zone");
         table.AddColumn("Building");
+        if (showStatus) table.AddColumn("Status");
         table.AddColumn(new TableColumn("Workers").RightAligned());
         table.AddColumn("Input");
         table.AddColumn("Output");
@@ -243,13 +246,14 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
             if (bvm.IsDestroyed)
             {
-                table.AddRow(
+                var destroyedCells = new List<string>
+                {
                     $"[red]{Esc(zoneName)}[/]",
                     $"[red]{Esc(bvm.Name)} (DESTROYED)[/]",
-                    "[red]-[/]",
-                    "[red]-[/]",
-                    "[red]-[/]",
-                    "[red]-[/]");
+                };
+                if (showStatus) destroyedCells.Add("[red]-[/]");
+                destroyedCells.AddRange(["[red]-[/]", "[red]-[/]", "[red]-[/]", "[red]-[/]"]);
+                table.AddRow(destroyedCells.ToArray());
                 continue;
             }
 
@@ -257,13 +261,21 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             var outputs = string.Join(", ", bvm.CurrentOutput.Select(x => x.ToString()));
             var perWorker = string.Join(", ", bvm.OutputPerWorker.Select(x => x.ToString()));
             var inputStr = inputs.Length > 0 ? Esc(inputs) : " ";
-            table.AddRow(
+
+            var cells = new List<string>
+            {
                 Esc(zoneName),
                 Esc(bvm.Name),
+            };
+            if (showStatus)
+                cells.Add(bvm.IsActive ? "[green]Active[/]" : "[grey]Inactive[/]");
+            cells.AddRange([
                 $"{bvm.AssignedWorkers}/{bvm.MaxWorkers}",
                 inputStr,
                 Esc(outputs),
-                $"+{Esc(perWorker)}");
+                $"+{Esc(perWorker)}",
+            ]);
+            table.AddRow(cells.ToArray());
         }
 
         return table;
@@ -348,6 +360,13 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
     static IRenderable BuildStateSection(DayStartViewModel vm)
     {
         var items = new List<IRenderable>();
+
+        // Resource priority (PriorityQueue mode)
+        if (vm.AllocationMode == WorkerAllocationMode.PriorityQueue && vm.ResourcePriority.Count > 0)
+        {
+            var order = string.Join(" > ", vm.ResourcePriority.Select(k => k.ToString()));
+            items.Add(new Markup($"[bold]Resource Priority[/]  {Esc(order)}"));
+        }
 
         // Active missions
         if (vm.ActiveMissions.Count == 0)
@@ -527,14 +546,24 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
     static IRenderable BuildCommandPanel()
     {
+        var allocationCommands = GameBalance.AllocationMode switch
+        {
+            WorkerAllocationMode.ManualAssignment =>
+                "[bold]assign[/] [grey]<Building> <N>[/]  [grey]|[/]  [bold]clear_assignments[/]  [grey]|[/]  ",
+            WorkerAllocationMode.PriorityQueue =>
+                "[bold]priority[/] [grey]<Resource1> <Resource2> ...[/]  [grey]|[/]  ",
+            WorkerAllocationMode.BuildingActivation =>
+                "[bold]toggle[/] [grey]<Building>[/]  [grey]|[/]  ",
+            _ => "", // AutoAllocation — no allocation commands
+        };
+
         return new Panel(
             new Markup(
-                "[bold]assign[/] [grey]<Building> <N>[/]  [grey]|[/]  " +
+                allocationCommands +
                 "[bold]enact[/] [grey]<LawId>[/]  [grey]|[/]  " +
                 "[bold]order[/] [grey]<OrderId>[/]  [grey]|[/]  " +
                 "[bold]mission[/] [grey]<MissionId>[/]  [grey]|[/]  " +
                 "[bold]upgrade[/] [grey]<Zone>[/]  [grey]|[/]  " +
-                "[bold]clear_assignments[/]  [grey]|[/]  " +
                 "[bold]clear_action[/]  [grey]|[/]  " +
                 "[bold]end_day[/]  [grey]|[/]  " +
                 "[bold]view[/] [grey]<tab>[/]  [grey]|[/]"))

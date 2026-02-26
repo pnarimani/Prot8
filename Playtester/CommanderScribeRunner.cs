@@ -2,8 +2,10 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Prot8.Buildings;
 using Prot8.Cli;
 using Prot8.Cli.Commands;
+using Prot8.Constants;
 using Prot8.Events;
 using Prot8.Simulation;
 using Prot8.Telemetry;
@@ -53,11 +55,13 @@ public class CommanderScribeRunner
                 string? commanderValidationErrors = null;
 
                 var report = engine.StartDay();
+                WorkerAllocationStrategy.ApplyAutomaticAllocation(state);
 
                 for (var attempt = 1; attempt <= maxCommanderRetries; attempt++)
                 {
                     // Reset allocation and action for this attempt
-                    state.Allocation.Clear();
+                    if (GameBalance.AllocationMode == WorkerAllocationMode.ManualAssignment)
+                        state.Allocation.Clear();
                     action = new TurnActionChoice();
                     executedCommands.Clear();
 

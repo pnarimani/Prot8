@@ -88,6 +88,8 @@ public class GameViewModelFactory(GameState state)
             UnrestDeltaBreakdown = unrestDeltaBreakdown,
             SicknessDelta = ComputeSicknessDelta(state, out var sicknessDeltaBreakdown),
             SicknessDeltaBreakdown = sicknessDeltaBreakdown,
+            ResourcePriority = state.ResourcePriority,
+            AllocationMode = GameBalance.AllocationMode,
             CurrentEvent = GetCurrentEvent(),
         };
     }
@@ -393,6 +395,7 @@ public class GameViewModelFactory(GameState state)
                 Zone = building.Zone,
                 ZoneName = zoneName,
                 MaxWorkers = building.MaxWorkers,
+                IsActive = building.IsActive,
                 IsDestroyed = building.IsDestroyed,
                 AssignedWorkers = workers,
                 CurrentOutput = output,

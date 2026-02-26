@@ -1,14 +1,36 @@
 using Prot8.Cli.ViewModels;
+using Prot8.Constants;
+using Prot8.Resources;
 
 namespace Prot8.Cli.Input;
 
 public static class TabCompletingReadLine
 {
-    static readonly string[] CommandNames =
-    [
-        "assign", "clear_action", "clear_assignments",
-        "enact", "end_day", "help", "mission", "order", "upgrade", "view"
-    ];
+    static string[] BuildCommandNames()
+    {
+        var names = new List<string>();
+
+        switch (GameBalance.AllocationMode)
+        {
+            case WorkerAllocationMode.ManualAssignment:
+                names.Add("assign");
+                names.Add("clear_assignments");
+                break;
+            case WorkerAllocationMode.PriorityQueue:
+                names.Add("priority");
+                break;
+            case WorkerAllocationMode.BuildingActivation:
+                names.Add("toggle");
+                break;
+            // AutoAllocation: no allocation commands
+        }
+
+        names.AddRange(["clear_action", "enact", "end_day", "help", "mission", "order", "upgrade", "view"]);
+        names.Sort(StringComparer.Ordinal);
+        return names.ToArray();
+    }
+
+    static readonly string[] CommandNames = BuildCommandNames();
 
     static readonly string[] ViewTabNames = ["laws", "orders", "missions"];
 
@@ -231,6 +253,16 @@ public static class TabCompletingReadLine
 
             "view" => ViewTabNames
                 .Where(t => t.StartsWith(argPartial, StringComparison.OrdinalIgnoreCase))
+                .ToArray(),
+
+            "priority" => Enum.GetNames<ResourceKind>()
+                .Where(r => r.StartsWith(argPartial, StringComparison.OrdinalIgnoreCase))
+                .ToArray(),
+
+            "toggle" => vm.Buildings
+                .Where(b => !b.IsDestroyed)
+                .Where(b => b.Id.ToString().StartsWith(argPartial, StringComparison.OrdinalIgnoreCase))
+                .Select(b => b.Id.ToString())
                 .ToArray(),
 
             _ => []

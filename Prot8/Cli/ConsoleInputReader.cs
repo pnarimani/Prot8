@@ -1,6 +1,8 @@
+using Prot8.Buildings;
 using Prot8.Cli.Commands;
 using Prot8.Cli.Output;
 using Prot8.Cli.ViewModels;
+using Prot8.Constants;
 using Prot8.Events;
 using Prot8.Simulation;
 
@@ -15,11 +17,18 @@ public sealed class ConsoleInputReader(GameState state, GameViewModelFactory vmF
         var allocation = state.Allocation;
 
         // Auto-adjust allocation if workers were lost
-        var totalAssigned = allocation.TotalAssigned();
-        var available = state.AvailableHealthyWorkersForAllocation;
-        if (totalAssigned > available)
+        if (GameBalance.AllocationMode == WorkerAllocationMode.ManualAssignment)
         {
-            allocation.RemoveWorkersProportionally(totalAssigned - available);
+            var totalAssigned = allocation.TotalAssigned();
+            var available = state.AvailableHealthyWorkersForAllocation;
+            if (totalAssigned > available)
+            {
+                allocation.RemoveWorkersProportionally(totalAssigned - available);
+            }
+        }
+        else
+        {
+            WorkerAllocationStrategy.ApplyAutomaticAllocation(state);
         }
 
         var action = new TurnActionChoice();

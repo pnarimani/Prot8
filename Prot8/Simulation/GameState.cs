@@ -118,6 +118,8 @@ public sealed class GameState
 
     public int TaintedWellDaysRemaining { get; set; }
 
+    public List<ResourceKind> ResourcePriority { get; set; } = new(GameBalance.DefaultResourcePriority);
+
     public bool FinalAssaultActive { get; set; }
 
     public string? ActiveDisruption { get; set; }

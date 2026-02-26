@@ -1,3 +1,5 @@
+using Prot8.Constants;
+
 namespace Playtester;
 
 public static class Agents
@@ -140,25 +142,86 @@ public static class Agents
 
     // ── Commander ────────────────────────────────────────────────────────────
 
-    public const string CommanderSystem =
-        """
-        You are playing a siege survival city manager through a CLI interface.
+    public static string CommanderSystem => GameBalance.AllocationMode switch
+    {
+        WorkerAllocationMode.AutoAllocation =>
+            """
+            You are playing a siege survival city manager through a CLI interface.
 
-        Your objective is to survive until Day 40.
+            Your objective is to survive until Day 40.
 
-        Rules:
-        - Total assigned workers must not exceed the available workers shown.
-        - Each day, You may select to queue ONLY one of Emergency Order, Law or Mission. 
-        - Do not invent mechanics, rules, commands, or hidden information.
-        - Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects.
-          Each command object has a "type" discriminator field and the command's own fields:
-            { "type": "add_workers",       "building_id": "<BuildingId>", "delta_workers": <positive int> }
-            { "type": "remove_workers",    "building_id": "<BuildingId>", "delta_workers": <positive int> }
-            { "type": "enact_law",         "law_id": "<LawId>" }
-            { "type": "issue_order",       "order_id": "<OrderId>" }
-            { "type": "start_mission",     "mission_id": "<MissionId>" }
-            { "type": "end_day" }  — must be the last command.
-        """;
+            Workers are automatically allocated to buildings proportionally. You do not need to manage worker assignments.
+
+            Rules:
+            - Each day, You may select to queue ONLY one of Emergency Order, Law or Mission.
+            - Do not invent mechanics, rules, commands, or hidden information.
+            - Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects.
+              Each command object has a "type" discriminator field and the command's own fields:
+                { "type": "enact_law",         "law_id": "<LawId>" }
+                { "type": "issue_order",       "order_id": "<OrderId>" }
+                { "type": "start_mission",     "mission_id": "<MissionId>" }
+                { "type": "end_day" }  — must be the last command.
+            """,
+        WorkerAllocationMode.PriorityQueue =>
+            """
+            You are playing a siege survival city manager through a CLI interface.
+
+            Your objective is to survive until Day 40.
+
+            Workers are automatically allocated based on resource priority order. You set the priority of resources, and workers fill buildings producing the highest-priority resources first.
+
+            Rules:
+            - Each day, You may select to queue ONLY one of Emergency Order, Law or Mission.
+            - You can change resource priority with the set_priority command.
+            - Do not invent mechanics, rules, commands, or hidden information.
+            - Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects.
+              Each command object has a "type" discriminator field and the command's own fields:
+                { "type": "set_priority",      "priorities": ["Food", "Water", ...] }
+                { "type": "enact_law",         "law_id": "<LawId>" }
+                { "type": "issue_order",       "order_id": "<OrderId>" }
+                { "type": "start_mission",     "mission_id": "<MissionId>" }
+                { "type": "end_day" }  — must be the last command.
+            """,
+        WorkerAllocationMode.BuildingActivation =>
+            """
+            You are playing a siege survival city manager through a CLI interface.
+
+            Your objective is to survive until Day 40.
+
+            Workers are automatically allocated to active buildings. You toggle buildings on/off, and active buildings receive workers proportionally.
+
+            Rules:
+            - Each day, You may select to queue ONLY one of Emergency Order, Law or Mission.
+            - You can toggle buildings on/off with the toggle_building command.
+            - Do not invent mechanics, rules, commands, or hidden information.
+            - Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects.
+              Each command object has a "type" discriminator field and the command's own fields:
+                { "type": "toggle_building",   "building_id": "<BuildingId>" }
+                { "type": "enact_law",         "law_id": "<LawId>" }
+                { "type": "issue_order",       "order_id": "<OrderId>" }
+                { "type": "start_mission",     "mission_id": "<MissionId>" }
+                { "type": "end_day" }  — must be the last command.
+            """,
+        _ => // ManualAssignment
+            """
+            You are playing a siege survival city manager through a CLI interface.
+
+            Your objective is to survive until Day 40.
+
+            Rules:
+            - Total assigned workers must not exceed the available workers shown.
+            - Each day, You may select to queue ONLY one of Emergency Order, Law or Mission.
+            - Do not invent mechanics, rules, commands, or hidden information.
+            - Respond with a JSON object. The "commands" field is an ordered array of JSON-serialized command objects.
+              Each command object has a "type" discriminator field and the command's own fields:
+                { "type": "add_workers",       "building_id": "<BuildingId>", "delta_workers": <positive int> }
+                { "type": "remove_workers",    "building_id": "<BuildingId>", "delta_workers": <positive int> }
+                { "type": "enact_law",         "law_id": "<LawId>" }
+                { "type": "issue_order",       "order_id": "<OrderId>" }
+                { "type": "start_mission",     "mission_id": "<MissionId>" }
+                { "type": "end_day" }  — must be the last command.
+            """,
+    };
 
     public static string CommanderUser(string daySnapshot, string notebook, string previousRunLearnings,
         string? validationErrors = null)
@@ -203,89 +266,127 @@ public static class Agents
     }
 
 
-    public const string CommanderResponseFormat =
-        """
+    public static string CommanderResponseFormat
+    {
+        get
         {
-            "type": "json_schema",
-            "json_schema": {
-                "name": "commander_response",
-                "strict": true,
-                "schema": {
-                    "type": "object",
-                    "properties": {
-                        "strategy": {
-                          "type": "string",
-                          "description": "High-level description of the strategy guiding today's commands"
-                        },
-                        "commands": {
-                          "type": "array",
-                          "minItems": 1,
-                          "description": "Ordered command objects. Last entry must have type=\"end_day\".",
-                          "items": {
-                            "oneOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "type": { "const": "add_workers" },
-                                  "building_id": { "type": "string" },
-                                  "delta_workers": { "type": "integer" }
-                                },
-                                "required": ["type", "building_id", "delta_workers"],
-                                "additionalProperties": false
-                              },
-                              {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": { "const": "remove_workers" },
-                                    "building_id": { "type": "string" },
-                                    "delta_workers": { "type": "integer" }
+            var modeCommands = GameBalance.AllocationMode switch
+            {
+                WorkerAllocationMode.AutoAllocation => "",
+                WorkerAllocationMode.PriorityQueue =>
+                    """
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": { "const": "set_priority" },
+                                      "priorities": { "type": "array", "items": { "type": "string" } }
+                                    },
+                                    "required": ["type", "priorities"],
+                                    "additionalProperties": false
                                   },
-                                  "required": ["type", "building_id", "delta_workers"],
-                                  "additionalProperties": false
+                    """,
+                WorkerAllocationMode.BuildingActivation =>
+                    """
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": { "const": "toggle_building" },
+                                      "building_id": { "type": "string" }
+                                    },
+                                    "required": ["type", "building_id"],
+                                    "additionalProperties": false
+                                  },
+                    """,
+                _ => // ManualAssignment
+                    """
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": { "const": "add_workers" },
+                                      "building_id": { "type": "string" },
+                                      "delta_workers": { "type": "integer" }
+                                    },
+                                    "required": ["type", "building_id", "delta_workers"],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": { "const": "remove_workers" },
+                                        "building_id": { "type": "string" },
+                                        "delta_workers": { "type": "integer" }
+                                      },
+                                      "required": ["type", "building_id", "delta_workers"],
+                                      "additionalProperties": false
+                                    },
+                    """,
+            };
+
+            return $$"""
+                {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "commander_response",
+                        "strict": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "strategy": {
+                                  "type": "string",
+                                  "description": "High-level description of the strategy guiding today's commands"
                                 },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "type": { "const": "enact_law" },
-                                  "law_id": { "type": "string" }
-                                },
-                                "required": ["type", "law_id"],
-                                "additionalProperties": false
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "type": { "const": "issue_order" },
-                                  "order_id": { "type": "string" }
-                                },
-                                "required": ["type", "order_id"],
-                                "additionalProperties": false
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "type": { "const": "start_mission" },
-                                  "mission_id": { "type": "string" }
-                                },
-                                "required": ["type", "mission_id"],
-                                "additionalProperties": false
-                              },
-                              {
-                                "type": "object",
-                                "properties": { "type": { "const": "end_day" } },
-                                "required": ["type"],
-                                "additionalProperties": false
-                              }
-                            ]
-                          }
+                                "commands": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "description": "Ordered command objects. Last entry must have type=\"end_day\".",
+                                  "items": {
+                                    "oneOf": [
+                {{modeCommands}}
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": { "const": "enact_law" },
+                                          "law_id": { "type": "string" }
+                                        },
+                                        "required": ["type", "law_id"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": { "const": "issue_order" },
+                                          "order_id": { "type": "string" }
+                                        },
+                                        "required": ["type", "order_id"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": { "const": "start_mission" },
+                                          "mission_id": { "type": "string" }
+                                        },
+                                        "required": ["type", "mission_id"],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": { "type": { "const": "end_day" } },
+                                        "required": ["type"],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                }
+                            },
+                            "required": ["commands", "strategy"],
+                            "additionalProperties": false
                         }
-                    },
-                    "required": ["commands", "strategy"],
-                    "additionalProperties": false
+                    }
                 }
-            }
+                """;
         }
-        """;
+    }
 
     // ── Scribe ───────────────────────────────────────────────────────────────
 

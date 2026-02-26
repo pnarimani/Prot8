@@ -1,4 +1,5 @@
 using Prot8.Cli.Commands;
+using Prot8.Constants;
 
 namespace Prot8.Cli.Input;
 
@@ -21,6 +22,12 @@ public class CommandParser
         switch (name)
         {
             case "assign":
+                if (GameBalance.AllocationMode != WorkerAllocationMode.ManualAssignment)
+                {
+                    error = "Manual assignment is disabled in the current allocation mode.";
+                    return false;
+                }
+
                 if (parts.Length != 3)
                 {
                     error = "Usage: assign <Building> <Workers>.";
@@ -61,6 +68,12 @@ public class CommandParser
                 return true;
 
             case "clear_assignments":
+                if (GameBalance.AllocationMode != WorkerAllocationMode.ManualAssignment)
+                {
+                    error = "Manual assignment is disabled in the current allocation mode.";
+                    return false;
+                }
+
                 if (parts.Length != 1)
                 {
                     error = "clear_assignments takes no parameters.";
@@ -140,6 +153,44 @@ public class CommandParser
                 }
 
                 command = new UpgradeStorageCommand { ZoneIdStr = parts[1] };
+                return true;
+
+            case "priority":
+                if (GameBalance.AllocationMode != WorkerAllocationMode.PriorityQueue)
+                {
+                    error = "Priority command is only available in PriorityQueue allocation mode.";
+                    return false;
+                }
+
+                if (parts.Length < 2)
+                {
+                    error = "Usage: priority <Resource1> <Resource2> ...";
+                    return false;
+                }
+
+                command = new PriorityCommand
+                {
+                    Priorities = parts[1..].ToList(),
+                };
+                return true;
+
+            case "toggle":
+                if (GameBalance.AllocationMode != WorkerAllocationMode.BuildingActivation)
+                {
+                    error = "Toggle command is only available in BuildingActivation allocation mode.";
+                    return false;
+                }
+
+                if (parts.Length != 2)
+                {
+                    error = "Usage: toggle <Building>";
+                    return false;
+                }
+
+                command = new ToggleBuildingCommand
+                {
+                    BuildingId = parts[1],
+                };
                 return true;
 
             default:

@@ -1,4 +1,5 @@
 using Prot8.Buildings;
+using Prot8.Constants;
 using Prot8.Events;
 using Prot8.Resources;
 using Prot8.Simulation;
@@ -60,6 +61,9 @@ public sealed class DayStartViewModel
     public int MoraleDelta { get; init; }
     public int UnrestDelta { get; init; }
     public int SicknessDelta { get; init; }
+
+    public IReadOnlyList<ResourceKind> ResourcePriority { get; init; } = [];
+    public WorkerAllocationMode AllocationMode { get; init; }
 }
 
 public sealed class ResourceViewModel
@@ -140,6 +144,7 @@ public sealed class BuildingViewModel
     public required string ZoneName { get; init; }
     public required int MaxWorkers { get; init; }
     public required bool IsDestroyed { get; init; }
+    public required bool IsActive { get; init; }
     public required int AssignedWorkers { get; init; }
     public required List<ResourceQuantity> CurrentInput { get; init; }
     public required List<ResourceQuantity> CurrentOutput { get; init; }

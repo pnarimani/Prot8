@@ -4,8 +4,24 @@ using Prot8.Zones;
 
 namespace Prot8.Constants;
 
+public enum WorkerAllocationMode
+{
+    ManualAssignment,
+    AutoAllocation,
+    PriorityQueue,
+    BuildingActivation,
+}
+
 public static class GameBalance
 {
+    public static WorkerAllocationMode AllocationMode => WorkerAllocationMode.ManualAssignment;
+
+    public static readonly IReadOnlyList<ResourceKind> DefaultResourcePriority =
+    [
+        ResourceKind.Food, ResourceKind.Water, ResourceKind.Fuel,
+        ResourceKind.Materials, ResourceKind.Integrity, ResourceKind.Medicine, ResourceKind.Care,
+    ];
+
     public const int TargetSurvivalDay = 40;
 
     public const int StartingHealthyWorkers = 60;
