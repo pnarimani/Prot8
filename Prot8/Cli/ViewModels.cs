@@ -71,6 +71,16 @@ public sealed class DayStartViewModel
 
     public IReadOnlyList<DiplomacyViewModel> AvailableDiplomacy { get; init; } = [];
     public IReadOnlyList<string> ActiveDiplomacyNames { get; init; } = [];
+
+    public TradeViewModel? Trading { get; init; }
+}
+
+public sealed class TradeViewModel
+{
+    public bool TradingPostBuilt { get; init; }
+    public int TradingPostWorkers { get; init; }
+    public double CurrentRate { get; init; }
+    public IReadOnlyList<string> StandingTrades { get; init; } = [];
 }
 
 public sealed class DiplomacyViewModel

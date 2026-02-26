@@ -189,6 +189,12 @@ public sealed class GameState
 
     public int HostageExchangeDayCounter { get; set; }
 
+    public bool TradingPostBuilt { get; set; }
+
+    public List<Trading.TradeOffer> StandingTrades { get; } = new();
+
+    public int TradingPostTradeCount { get; set; }
+
     public ZoneState ActivePerimeterZone
     {
         get
@@ -347,7 +353,12 @@ public sealed class GameState
         var list = new List<BuildingState>();
         foreach (var def in GameBalance.BuildingDefinitions)
         {
-            list.Add(new BuildingState(def));
+            var building = new BuildingState(def);
+            if (def.Id == Prot8.Buildings.BuildingId.TradingPost)
+            {
+                building.IsActive = false;
+            }
+            list.Add(building);
         }
         return list;
     }

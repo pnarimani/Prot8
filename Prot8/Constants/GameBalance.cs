@@ -157,6 +157,19 @@ public static class GameBalance
     public static bool WasteExcessResources => true;
     public const double EvacuationResourceSalvagePercent = 0.0;
 
+    // Trading Post
+    public static bool EnableTradingPost => true;
+    public const int TradingPostBuildCost = 40;
+    public const double TradingPostBaseRate = 2.0;
+    public const double TradingPostHighSiegeRate = 3.0;
+    public const double TradingPostFluctuationRange = 0.30;
+    public const int TradingPostInterceptionBase = 5;
+    public const double TradingPostTyrannyRate = 1.5;
+    public const int TradingPostTyrannyUnrestInterval = 3;
+    public const int TradingPostTyrannyUnrest = 5;
+    public const int TradingPostFaithBonusChance = 15;
+    public const int TradingPostFaithBonusAmount = 3;
+
     // Diplomacy & Negotiation
     public static bool EnableDiplomacy => true;
     public const int BribeFoodCost = 8;
@@ -392,6 +405,11 @@ public static class GameBalance
         new(BuildingId.RationingPost, "Rationing Post", ZoneId.Keep, 4,
             [],
             [new ResourceQuantity(ResourceKind.Water, 1)]),
+
+        // INNER DISTRICT - constructable (starts inactive)
+        new(BuildingId.TradingPost, "Trading Post", ZoneId.InnerDistrict, 4,
+            [],
+            []),
     ];
 
     public static readonly IReadOnlyDictionary<ZoneId, int> NaturalLossUnrestShock = new Dictionary<ZoneId, int>

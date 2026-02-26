@@ -6,6 +6,7 @@ using Prot8.Laws;
 using Prot8.Missions;
 using Prot8.Orders;
 using Prot8.Resources;
+using Prot8.Trading;
 using Prot8.Zones;
 
 namespace Prot8.Simulation;
@@ -135,6 +136,8 @@ public sealed class GameSimulationEngine(GameState state)
         {
             ApplyBuildingSpecializationPassives(state, report);
         }
+
+        TradingEngine.ResolveTrades(state, report);
 
         var consumptionEntry = new ResolutionEntry { Title = "Consumption" };
         ApplyConsumption(state, report, consumptionEntry);

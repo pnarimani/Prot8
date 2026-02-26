@@ -9,6 +9,7 @@ using Prot8.Mood;
 using Prot8.Orders;
 using Prot8.Resources;
 using Prot8.Simulation;
+using Prot8.Trading;
 
 namespace Prot8.Cli;
 
@@ -103,6 +104,7 @@ public class GameViewModelFactory(GameState state)
             AreGuardsCommitted = state.AreGuardsCommitted,
             AvailableDiplomacy = ToDiplomacyViewModels(state),
             ActiveDiplomacyNames = state.ActiveDiplomacyIds.Select(id => DiplomacyCatalog.Find(id)?.Name ?? id).ToList(),
+            Trading = GameBalance.EnableTradingPost ? CreateTradeViewModel(state) : null,
         };
     }
 
@@ -657,6 +659,27 @@ public class GameViewModelFactory(GameState state)
         var tracked = StatModifiers.ComputeSicknessFromEnvironment(state);
         breakdown = tracked.Entries;
         return tracked.Value;
+    }
+
+    static TradeViewModel CreateTradeViewModel(GameState state)
+    {
+        var workers = 0;
+        if (state.TradingPostBuilt)
+        {
+            var tp = state.GetBuilding(BuildingId.TradingPost);
+            if (!tp.IsDestroyed)
+                workers = tp.AssignedWorkers;
+        }
+
+        return new TradeViewModel
+        {
+            TradingPostBuilt = state.TradingPostBuilt,
+            TradingPostWorkers = workers,
+            CurrentRate = state.TradingPostBuilt ? TradingEngine.GetBaseRate(state) : 0,
+            StandingTrades = state.StandingTrades
+                .Select(t => $"{t.Amount} {t.TargetResource} from {t.SourceResource}")
+                .ToList(),
+        };
     }
 
     static IReadOnlyList<DiplomacyViewModel> ToDiplomacyViewModels(GameState state)

@@ -14,5 +14,6 @@ public enum BuildingId
     Storehouse,
     RootCellar,
     RepairYard,
-    RationingPost
+    RationingPost,
+    TradingPost,
 }
