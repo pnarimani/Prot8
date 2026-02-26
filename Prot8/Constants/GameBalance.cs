@@ -77,6 +77,18 @@ public static class GameBalance
     public const double BuildingUpgradeBonusPerLevel = 0.5;
     public const int BuildingUpgradeDelayDays = 1;
 
+    // Sortie Mission
+    public static bool EnableSortieMission => true;
+    public const int SortieGuardCost = 5;
+    public const int SortieSuccessChance = 30;
+    public const int SortiePartialChance = 35;
+    public const int SortieSuccessSiegeReduction = 1;
+    public const int SortieSuccessEscalationDelay = 3;
+    public const double SortiePartialDamageMultiplier = 0.8;
+    public const int SortiePartialDurationDays = 3;
+    public const int SortieFailGuardDeaths = 3;
+    public const int SortieFailUnrest = 10;
+
     // Defenses
     public static bool EnableDefenses => true;
     public const int BarricadeMaterialsCost = 15;

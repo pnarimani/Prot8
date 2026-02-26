@@ -191,6 +191,20 @@ public sealed class GameState
         }
     }
 
+    public int ReservedGuardsForMissions
+    {
+        get
+        {
+            var reserved = 0;
+            foreach (var mission in ActiveMissions)
+            {
+                reserved += mission.GuardCost;
+            }
+
+            return reserved;
+        }
+    }
+
     public int AvailableHealthyWorkersForAllocation
     {
         get

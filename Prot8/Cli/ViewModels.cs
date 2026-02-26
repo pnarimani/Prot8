@@ -107,6 +107,7 @@ public sealed class ActiveMissionViewModel
     public string MissionName { get; init; } = "";
     public int DaysRemaining { get; init; }
     public int WorkerCost { get; init; }
+    public int GuardCost { get; init; }
 }
 
 public sealed class LawViewModel
@@ -140,6 +141,7 @@ public sealed class MissionViewModel
     public string Tooltip { get; init; } = "";
     public int DurationDays { get; init; }
     public int RequiredIdleWorkers { get; init; }
+    public int GuardCost { get; init; }
 }
 
 public sealed class BuildingViewModel

@@ -334,6 +334,19 @@ public sealed class GameSimulationEngine(GameState state)
                 return;
             }
 
+            if (mission.GuardCost > 0)
+            {
+                var availableGuards = state.Population.Guards - state.ReservedGuardsForMissions;
+                if (availableGuards < mission.GuardCost)
+                {
+                    var failEntry = new ResolutionEntry { Title = $"Mission: {mission.Name}" };
+                    failEntry.Write(
+                        $"Cannot start mission {mission.Name}: not enough available guards (need {mission.GuardCost}, have {availableGuards}).");
+                    report.Entries.Add(failEntry);
+                    return;
+                }
+            }
+
             state.ActiveMissions.Add(new ActiveMission(mission));
             state.MissionCooldowns[mission.Id] = state.Day;
             var missionEntry = new ResolutionEntry { Title = $"Mission Started: {mission.Name}" };

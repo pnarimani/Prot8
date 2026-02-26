@@ -9,4 +9,6 @@ public sealed class ActiveMission(IMissionDefinition mission)
     public int DaysRemaining { get; set; } = mission.DurationDays;
 
     public int WorkerCost => mission.WorkerCost;
+
+    public int GuardCost => mission.GuardCost;
 }

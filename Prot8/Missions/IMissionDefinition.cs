@@ -11,6 +11,8 @@ public interface IMissionDefinition
     int DurationDays { get; }
 
     int WorkerCost { get; }
+
+    int GuardCost => 0;
     
     string GetTooltip(GameState state);
 

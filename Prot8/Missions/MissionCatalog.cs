@@ -11,7 +11,8 @@ public static class MissionCatalog
         new SearchAbandonedHomesMission(),
         new NegotiateBlackMarketeersMission(),
         new SabotageEnemySuppliesMission(),
-        new ScoutingMission()
+        new ScoutingMission(),
+        new SortieMission()
     };
 
     public static IReadOnlyList<IMissionDefinition> GetAll() => AllMissions;

@@ -64,6 +64,7 @@ public class GameViewModelFactory(GameState state)
                 MissionName = m.MissionName,
                 DaysRemaining = m.DaysRemaining,
                 WorkerCost = m.WorkerCost,
+                GuardCost = m.GuardCost,
             }).ToList(),
             AvailableLaws = ToLawViewModels(state),
             AvailableOrders = ToOrderViewModels(state),
@@ -371,6 +372,7 @@ public class GameViewModelFactory(GameState state)
                 Tooltip = mission.GetTooltip(state),
                 DurationDays = mission.DurationDays,
                 RequiredIdleWorkers = mission.WorkerCost,
+                GuardCost = mission.GuardCost,
             });
         }
 
