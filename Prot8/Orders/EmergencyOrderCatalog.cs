@@ -20,6 +20,11 @@ public static class EmergencyOrderCatalog
         new PublicConfessionOrder(),
         new InspireThePeopleOrder(),
         new ReinforceTheWallsOrder(),
+        new HoldAFeastOrder(),
+        new DayOfRemembranceOrder(),
+        new PublicTrialOrder(),
+        new StorytellingNightOrder(),
+        new DistributeLuxuriesOrder(),
     ];
 
     public static IReadOnlyList<IEmergencyOrder> GetAll() => _allOrders;

@@ -157,6 +157,44 @@ public static class GameBalance
     public static bool WasteExcessResources => true;
     public const double EvacuationResourceSalvagePercent = 0.0;
 
+    // Morale Emergency Orders
+    public static bool EnableMoraleOrders => true;
+
+    public const int HoldAFeastFoodCost = 15;
+    public const int HoldAFeastFuelCost = 5;
+    public const int HoldAFeastMoraleGain = 20;
+    public const int HoldAFeastUnrest = -10;
+    public const int HoldAFeastFoodGate = 30;
+    public const int HoldAFeastCooldown = 5;
+
+    public const int DayOfRemembranceMoraleGain = 25;
+    public const int DayOfRemembranceUnrest = -8;
+    public const int DayOfRemembranceSickness = -5;
+    public const int DayOfRemembranceFaithGain = 2;
+    public const int DayOfRemembranceMoraleGate = 30;
+    public const int DayOfRemembranceCooldown = 8;
+
+    public const int PublicTrialDeaths = 2;
+    public const int PublicTrialTyrannyUnrest = -25;
+    public const int PublicTrialTyrannyMorale = -10;
+    public const int PublicTrialFaithMorale = 10;
+    public const int PublicTrialFaithUnrest = -10;
+    public const int PublicTrialCooldown = 4;
+
+    public const int StorytellingNightMoraleGain = 8;
+    public const int StorytellingNightMoraleMin = 20;
+    public const int StorytellingNightMoraleMax = 60;
+    public const int StorytellingNightCooldown = 3;
+
+    public const int DistributeLuxuriesFuelCost = 10;
+    public const int DistributeLuxuriesMaterialsCost = 10;
+    public const int DistributeLuxuriesMoraleGain = 15;
+    public const int DistributeLuxuriesUnrest = -5;
+    public const int DistributeLuxuriesSickness = -3;
+    public const int DistributeLuxuriesMaterialsGate = 20;
+    public const int DistributeLuxuriesFuelGate = 15;
+    public const int DistributeLuxuriesCooldown = 5;
+
     // Cannibalism Law
     public static bool EnableCannibalismLaw => true;
     public const int CannibalismFoodThreshold = 5;
