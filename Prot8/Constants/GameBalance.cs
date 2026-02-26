@@ -58,7 +58,7 @@ public static class GameBalance
     public const int MissionCooldownDays = 4;
 
     public const double FoodPerPersonPerDay = 0.45;
-    public const double WaterPerPersonPerDay = 0.55;
+    public const double WaterPerPersonPerDay = 0.40;
     public const double FuelPerPersonPerDay = 0.08;
 
     public const double PerimeterScalingBase = 5.0;
