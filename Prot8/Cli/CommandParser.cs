@@ -174,6 +174,19 @@ public class CommandParser
                 };
                 return true;
 
+            case "fortify":
+                if (parts.Length != 2)
+                {
+                    error = "Usage: fortify <Zone>.";
+                    return false;
+                }
+
+                command = new FortifyCommand
+                {
+                    ZoneIdStr = parts[1],
+                };
+                return true;
+
             case "upgrade_building":
                 if (parts.Length != 2)
                 {

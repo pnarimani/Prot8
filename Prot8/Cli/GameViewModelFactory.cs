@@ -52,6 +52,8 @@ public class GameViewModelFactory(GameState state)
                 Capacity = zone.Capacity,
                 Population = zone.IsLost ? 0 : state.GetZonePopulation(),
                 IsLost = zone.IsLost,
+                FortificationLevel = zone.FortificationLevel,
+                MaxFortificationLevel = GameBalance.FortificationMaxLevel,
             }).ToList(),
             ActiveMissions = state.ActiveMissions.Select(m => new ActiveMissionViewModel
             {

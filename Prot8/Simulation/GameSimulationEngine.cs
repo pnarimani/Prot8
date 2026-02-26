@@ -823,6 +823,11 @@ public sealed class GameSimulationEngine(GameState state)
         var damage = (int)Math.Ceiling((GameBalance.PerimeterScalingBase + state.SiegeIntensity) * perimeterFactor *
                                        state.SiegeDamageMultiplier * finalAssaultMultiplier * dustStormMultiplier);
 
+        if (GameBalance.EnableFortifications && perimeter.FortificationLevel > 0)
+        {
+            damage = Math.Max(1, damage - perimeter.FortificationLevel * GameBalance.FortificationDamageReductionPerLevel);
+        }
+
         perimeter.Integrity -= damage;
         entry.Write($"Siege struck {perimeter.Name}: -{damage} integrity.");
 

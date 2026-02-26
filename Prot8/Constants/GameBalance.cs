@@ -77,6 +77,12 @@ public static class GameBalance
     public const double BuildingUpgradeBonusPerLevel = 0.5;
     public const int BuildingUpgradeDelayDays = 1;
 
+    // Fortifications
+    public static bool EnableFortifications => true;
+    public const int FortificationMaxLevel = 3;
+    public const int FortificationMaterialsCost = 20;
+    public const int FortificationDamageReductionPerLevel = 2;
+
     // Storage system
     public const int StorageBaseCapacity = 80;
     public const int StorageCapacityPerUpgrade = 40;

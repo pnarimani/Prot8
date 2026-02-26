@@ -11,6 +11,9 @@ public sealed class ZoneState(ZoneId id, string name, int integrity, int capacit
     public int Capacity { get; set; } = capacity;
 
     public bool IsLost { get; set; }
+
+    public int FortificationLevel { get; set; }
+
     public override string ToString()
     {
         return Name;

@@ -94,6 +94,8 @@ public sealed class ZoneViewModel
     public int Capacity { get; init; }
     public int Population { get; init; }
     public bool IsLost { get; init; }
+    public int FortificationLevel { get; init; }
+    public int MaxFortificationLevel { get; init; }
 }
 
 public sealed class ActiveMissionViewModel
