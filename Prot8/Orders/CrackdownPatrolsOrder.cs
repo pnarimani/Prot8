@@ -18,6 +18,18 @@ public sealed class CrackdownPatrolsOrder : IEmergencyOrder
 
     public bool CanIssue(GameState state, out string reason)
     {
+        if (state.Flags.Faith >= 5)
+        {
+            reason = "The faithful will not permit such violence.";
+            return false;
+        }
+
+        if (state.Flags.Tyranny < 1)
+        {
+            reason = "Requires an authoritarian mandate.";
+            return false;
+        }
+
         if (state.Unrest <= UnrestThreshold)
         {
             reason = $"Requires unrest above {UnrestThreshold}.";
@@ -30,6 +42,8 @@ public sealed class CrackdownPatrolsOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(1);
+        state.Flags.FearLevel.Add(1);
         entry.Write("Patrols sweep through the streets with steel. Dissent is crushed, but blood is spilled. The city is quiet — the quiet of fear.");
         state.AddUnrest(-UnrestReduction, entry);
         state.ApplyDeath(Deaths, entry);

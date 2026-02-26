@@ -18,6 +18,18 @@ public sealed class MedicalTriageLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
+        if (state.Flags.PeopleFirst)
+        {
+            reason = "The people's covenant forbids abandoning the sick.";
+            return false;
+        }
+
+        if (state.Flags.Tyranny < 2)
+        {
+            reason = "Requires a hardened resolve.";
+            return false;
+        }
+
         if (state.Resources[ResourceKind.Medicine] < MedicineThreshold)
         {
             reason = string.Empty;
@@ -30,6 +42,8 @@ public sealed class MedicalTriageLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(2);
+        state.Flags.MercyDenied.Set();
         entry.Write("The sick ward becomes a sorting ground. Doctors must choose who receives medicine and who is left to die.");
     }
 

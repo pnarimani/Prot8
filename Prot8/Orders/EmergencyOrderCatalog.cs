@@ -17,6 +17,9 @@ public static class EmergencyOrderCatalog
         new SacrificeTheSickOrder(),
         new FortifyTheGateOrder(),
         new RationMedicineOrder(),
+        new PublicConfessionOrder(),
+        new InspireThePeopleOrder(),
+        new ReinforceTheWallsOrder(),
     ];
 
     public static IReadOnlyList<IEmergencyOrder> GetAll() => _allOrders;

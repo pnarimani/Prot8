@@ -188,6 +188,8 @@ public sealed class GameSimulationEngine(GameState state)
         state.WaterDeficitToday = false;
         state.FuelDeficitToday = false;
 
+        state.Flags.TickDay();
+
         if (state.SiegeDamageReductionDaysRemaining > 0)
         {
             state.SiegeDamageReductionDaysRemaining -= 1;

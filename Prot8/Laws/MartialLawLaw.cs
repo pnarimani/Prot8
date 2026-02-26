@@ -18,9 +18,21 @@ public sealed class MartialLawLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
+        if (state.Flags.Faith >= 5)
+        {
+            reason = "The faithful reject military rule.";
+            return false;
+        }
+
         if (state.ActiveLawIds.Contains("curfew"))
         {
             reason = "Incompatible with Curfew.";
+            return false;
+        }
+
+        if (state.Flags.Tyranny < 2)
+        {
+            reason = "Requires deeper commitment to authority.";
             return false;
         }
 
@@ -36,6 +48,9 @@ public sealed class MartialLawLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(3);
+        state.Flags.FearLevel.Add(1);
+        state.Flags.MartialState.Set();
         entry.Write("The garrison takes control. Soldiers patrol every street. Dissent will be answered with steel.");
     }
 

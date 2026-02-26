@@ -140,6 +140,9 @@ public static class GameBalance
     public const int QuarantineWardSicknessReduction = 5;
     public const int ClinicSpecializationMaterialsCost = 25;
 
+    // Flag System
+    public static bool EnableFlagSystem => true;
+
     // Fortifications
     public static bool EnableFortifications => true;
     public const int FortificationMaxLevel = 3;
@@ -314,6 +317,11 @@ public static class GameBalance
         ["black_market_trading"] = 5,
         ["spy_selling_intel"] = 5,
         ["intel_siege_warning"] = 0,
+        ["dissidents_discovered"] = 5,
+        ["childrens_plea"] = 5,
+        ["tyrants_reckoning"] = 0,
+        ["siege_engineers_arrive"] = 5,
+        ["crisis_of_faith"] = 0,
     };
 
     public static int ComputeRecoveryDays(int sickness)

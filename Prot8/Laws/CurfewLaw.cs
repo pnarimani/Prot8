@@ -32,6 +32,7 @@ public sealed class CurfewLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Fortification.Add(1);
         entry.Write("No one may walk the streets after sunset. The city becomes a prison at dusk.");
     }
 

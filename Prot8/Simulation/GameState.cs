@@ -99,6 +99,8 @@ public sealed class GameState
 
     public bool Survived { get; set; }
 
+    public FlagState Flags { get; } = new();
+
     public TemporaryDailyEffects DailyEffects { get; set; } = new();
 
     public List<string> ActiveLawIds { get; } = new();

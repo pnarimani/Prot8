@@ -17,6 +17,12 @@ public sealed class QuarantineDistrictOrder : IEmergencyOrder
 
     public bool CanIssue(GameState state, out string reason)
     {
+        if (state.Flags.MercyDenied)
+        {
+            reason = "Mercy has already been forsaken.";
+            return false;
+        }
+
         if (state.Sickness <= SicknessThreshold)
         {
             reason = $"Requires sickness above {SicknessThreshold}.";
@@ -29,6 +35,7 @@ public sealed class QuarantineDistrictOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Faith.Add(1);
         var zone = state.ActivePerimeterZone;
         state.DailyEffects.QuarantineZone = zone.Id;
         state.DailyEffects.QuarantineSicknessReduction = SicknessReduction;

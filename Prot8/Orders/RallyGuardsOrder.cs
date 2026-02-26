@@ -37,6 +37,7 @@ public sealed class RallyGuardsOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Faith.Add(1);
         state.AddResource(ResourceKind.Food, -FoodCost, entry);
         state.AddUnrest(-UnrestReduction, entry);
         state.AddMorale(MoraleGain, entry);

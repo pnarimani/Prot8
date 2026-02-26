@@ -25,12 +25,20 @@ public sealed class SortieMission : IMissionDefinition
             return false;
         }
 
+        if (state.Flags.Fortification < 1)
+        {
+            reason = "Requires fortification commitment.";
+            return false;
+        }
+
         reason = "";
         return true;
     }
 
     public void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(1, lifetimeDays: 5);
+        state.Flags.Fortification.Add(1, lifetimeDays: 5);
         var roll = state.RollPercent();
 
         if (roll <= GameBalance.SortieSuccessChance)

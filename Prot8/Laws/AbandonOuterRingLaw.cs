@@ -15,6 +15,12 @@ public sealed class AbandonOuterRingLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
+        if (state.Flags.PeopleFirst)
+        {
+            reason = "The people's covenant forbids abandoning homes.";
+            return false;
+        }
+
         var outerFarms = state.GetZone(ZoneId.OuterFarms);
         if (outerFarms.IsLost)
         {
@@ -34,6 +40,7 @@ public sealed class AbandonOuterRingLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Fortification.Add(1);
         entry.Write("You order evacuation of the outer farms. Families are dragged from their homes, their livestock left behind to the enemy.");
         entry.Write("The perimeter contracts. Fewer walls to defend, but the lost land feeds fewer mouths.");
         state.SiegeDamageMultiplier *= SiegeDamageMultiplier;

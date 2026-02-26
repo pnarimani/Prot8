@@ -17,6 +17,12 @@ public sealed class FoodConfiscationLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
+        if (state.Flags.Faith >= 3)
+        {
+            reason = "The faithful share willingly — confiscation is unnecessary.";
+            return false;
+        }
+
         if (state.Resources[Resources.ResourceKind.Food] < FoodThreshold)
         {
             reason = string.Empty;
@@ -29,6 +35,7 @@ public sealed class FoodConfiscationLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(1);
         state.AddResource(Resources.ResourceKind.Food, FoodGain, entry);
         state.AddUnrest(UnrestHit, entry);
         state.AddMorale(-MoraleHit, entry);

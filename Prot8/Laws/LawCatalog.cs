@@ -19,7 +19,13 @@ public static class LawCatalog
         new AbandonOuterRingLaw(),
         new MartialLawLaw(),
         new ConscriptElderlyLaw(),
-        new BurnTheDeadLaw()
+        new BurnTheDeadLaw(),
+        new ShadowCouncilLaw(),
+        new PurgeTheDisloyalLaw(),
+        new OathOfMercyLaw(),
+        new CollectiveFarmsLaw(),
+        new GarrisonMandateLaw(),
+        new ScorchedEarthDoctrineLaw(),
     };
 
     public static IReadOnlyList<ILaw> GetAll() => AllLaws;

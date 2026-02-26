@@ -30,6 +30,7 @@ public sealed class MandatoryGuardServiceLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Fortification.Add(1);
         var converted = state.Population.ConvertHealthyToGuards(GuardConversion);
         entry.Write($"Workers are conscripted into the garrison. {converted} take up arms, leaving their trades behind.");
         state.AddMorale(-MoraleHit, entry);

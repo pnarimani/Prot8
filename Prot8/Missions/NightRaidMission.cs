@@ -32,6 +32,7 @@ public sealed class NightRaidMission : IMissionDefinition
 
     public void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry)
     {
+        state.Flags.Fortification.Add(1, lifetimeDays: 5);
         var (greatChance, okChance) = GetChances(state);
         var roll = state.RollPercent();
         if (roll <= greatChance)

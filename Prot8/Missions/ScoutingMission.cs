@@ -31,6 +31,7 @@ public sealed class ScoutingMission : IMissionDefinition
 
     public void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry)
     {
+        state.Flags.Fortification.Add(1, lifetimeDays: 5);
         var successChance = GetSuccessChance(state);
         var roll = state.RollPercent();
 

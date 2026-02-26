@@ -23,12 +23,19 @@ public sealed class SabotageEnemySuppliesMission : IMissionDefinition
 
     public bool CanStart(GameState state, out string reason)
     {
+        if (state.Flags.Tyranny < 2)
+        {
+            reason = "Requires ruthless authority.";
+            return false;
+        }
+
         reason = "";
         return true;
     }
 
     public void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(1, lifetimeDays: 5);
         var roll = state.RollPercent();
         if (roll <= SuccessChance)
         {

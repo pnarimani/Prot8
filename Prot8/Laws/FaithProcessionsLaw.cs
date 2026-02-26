@@ -17,6 +17,12 @@ public sealed class FaithProcessionsLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
+        if (state.Flags.IronFist)
+        {
+            reason = "The tyrant's shadow chills all devotion.";
+            return false;
+        }
+
         if (state.Morale < MoraleThreshold)
         {
             reason = string.Empty;
@@ -29,6 +35,8 @@ public sealed class FaithProcessionsLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Faith.Add(2);
+        state.Flags.FaithRisen.Set();
         state.AddMorale(MoraleGain, entry);
         state.AddResource(Resources.ResourceKind.Materials, -MaterialsCost, entry);
         state.AddUnrest(UnrestHit, entry);

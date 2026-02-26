@@ -20,6 +20,12 @@ public sealed class BurnTheDeadLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
+        if (state.Flags.FaithRisen)
+        {
+            reason = "The faithful demand proper burial rites.";
+            return false;
+        }
+
         if (state.Sickness > SicknessThreshold)
         {
             reason = string.Empty;
@@ -32,6 +38,8 @@ public sealed class BurnTheDeadLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(1);
+        state.Flags.MercyDenied.Set();
         entry.Write(
             "Pyres burn day and night. The stench of cremation fills the air. The dead find no proper burial, but at least they no longer spread plague.");
         state.AddMorale(-MoraleHit, entry);

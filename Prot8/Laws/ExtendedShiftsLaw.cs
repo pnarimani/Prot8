@@ -16,6 +16,12 @@ public sealed class ExtendedShiftsLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
+        if (state.Flags.Faith >= 4)
+        {
+            reason = "The faithful refuse to toil beyond their prayers.";
+            return false;
+        }
+
         if (state.Day >= MinimumDay)
         {
             reason = string.Empty;
@@ -28,6 +34,7 @@ public sealed class ExtendedShiftsLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(1);
         entry.Write("The factories and forges roar through the night. Sleep is a weakness the siege cannot afford.");
         state.AddMorale(-MoraleHit, entry);
     }

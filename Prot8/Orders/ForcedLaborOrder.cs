@@ -18,12 +18,19 @@ public sealed class ForcedLaborOrder : IEmergencyOrder
 
     public bool CanIssue(GameState state, out string reason)
     {
+        if (state.Flags.Faith >= 4)
+        {
+            reason = "The faithful refuse forced servitude.";
+            return false;
+        }
+
         reason = string.Empty;
         return true;
     }
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(1);
         state.AddResource(ResourceKind.Materials, MaterialsGain, entry);
         state.AddUnrest(UnrestGain, entry);
         state.ApplyDeath(Deaths, entry);

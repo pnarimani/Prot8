@@ -3,25 +3,23 @@ using Prot8.Simulation;
 
 namespace Prot8.Orders;
 
-public sealed class FortifyTheGateOrder : IEmergencyOrder
+public sealed class ReinforceTheWallsOrder : IEmergencyOrder
 {
-    private const int MaterialsCost = 8;
-    private const int IntegrityGain = 10;
-    private const int UnrestGain = 3;
-    private const int IntegrityThreshold = 70;
+    private const int IntegrityGain = 15;
+    private const int MaterialsCost = 15;
 
-    public string Id => "fortify_gate";
-    public string Name => "Fortify the Gate";
+    public string Id => "reinforce_walls";
+    public string Name => "Reinforce the Walls";
     public int CooldownDays => 3;
 
     public string GetTooltip(GameState state) =>
-        $"-{MaterialsCost} materials, +{IntegrityGain} integrity, +{UnrestGain} unrest. Requires perimeter integrity < {IntegrityThreshold}.";
+        $"+{IntegrityGain} integrity to perimeter, -{MaterialsCost} materials. Requires Fortification >= 2.";
 
     public bool CanIssue(GameState state, out string reason)
     {
-        if (state.ActivePerimeterZone.Integrity >= IntegrityThreshold)
+        if (state.Flags.Fortification < 2)
         {
-            reason = $"Requires perimeter integrity below {IntegrityThreshold}.";
+            reason = "Requires fortification commitment.";
             return false;
         }
 
@@ -37,13 +35,12 @@ public sealed class FortifyTheGateOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
-        state.Flags.Fortification.Add(1);
+        state.Flags.Fortification.Add(1, lifetimeDays: 3);
         state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
         var perimeter = state.ActivePerimeterZone;
         var before = perimeter.Integrity;
         perimeter.Integrity = Math.Min(100, perimeter.Integrity + IntegrityGain);
         var applied = perimeter.Integrity - before;
-        state.AddUnrest(UnrestGain, entry);
-        entry.Write($"Workers are pulled from their posts and forced to shore up the {perimeter.Name}. The walls hold firmer — but the people resent the forced labor.");
+        entry.Write($"Engineers reinforce the {perimeter.Name} walls. +{applied} integrity. The stone holds firm.");
     }
 }

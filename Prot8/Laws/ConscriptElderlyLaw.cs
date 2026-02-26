@@ -22,6 +22,18 @@ public sealed class ConscriptElderlyLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
+        if (state.Flags.PeopleFirst)
+        {
+            reason = "The people's covenant forbids this cruelty.";
+            return false;
+        }
+
+        if (state.Flags.Tyranny < 1)
+        {
+            reason = "Requires an authoritarian mandate.";
+            return false;
+        }
+
         if (state.Day < MinimumDay)
         {
             reason = $"Available from Day {MinimumDay}.";
@@ -40,6 +52,7 @@ public sealed class ConscriptElderlyLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(2);
         _converted = state.Population.Elderly;
         state.Population.Elderly = 0;
         state.Population.HealthyWorkers += _converted;

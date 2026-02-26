@@ -19,6 +19,18 @@ public sealed class SacrificeTheSickOrder : IEmergencyOrder
 
     public bool CanIssue(GameState state, out string reason)
     {
+        if (state.Flags.PeopleFirst)
+        {
+            reason = "The people's covenant forbids sacrificing the sick.";
+            return false;
+        }
+
+        if (state.Flags.Tyranny < 3)
+        {
+            reason = "Requires absolute authority.";
+            return false;
+        }
+
         if (state.Population.SickWorkers <= SickThreshold)
         {
             reason = $"Requires more than {SickThreshold} sick workers.";
@@ -31,6 +43,8 @@ public sealed class SacrificeTheSickOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Tyranny.Add(2);
+        state.Flags.MercyDenied.Set();
         var killed = Math.Min(SickKilled, state.Population.SickWorkers);
         state.Population.RemoveSickWorkers(killed);
         state.TotalDeaths += killed;

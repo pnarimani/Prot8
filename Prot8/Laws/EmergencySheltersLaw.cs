@@ -16,6 +16,12 @@ public sealed class EmergencySheltersLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
+        if (state.Flags.MartialState)
+        {
+            reason = "Martial authority has no room for shelters.";
+            return false;
+        }
+
         if (state.ZoneLossOccurred)
         {
             reason = string.Empty;
@@ -28,6 +34,8 @@ public sealed class EmergencySheltersLaw : ILaw
 
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Faith.Add(2);
+        state.Flags.PeopleFirst.Set();
         foreach (var zone in state.Zones)
         {
             if (!zone.IsLost)

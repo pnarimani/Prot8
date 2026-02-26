@@ -12,7 +12,10 @@ public static class MissionCatalog
         new NegotiateBlackMarketeersMission(),
         new SabotageEnemySuppliesMission(),
         new ScoutingMission(),
-        new SortieMission()
+        new SortieMission(),
+        new RaidCivilianFarmsMission(),
+        new DiplomaticEnvoyMission(),
+        new EngineerTunnelsMission(),
     };
 
     public static IReadOnlyList<IMissionDefinition> GetAll() => AllMissions;

@@ -15,6 +15,12 @@ public sealed class PublicExecutionsLaw : ILaw
 
     public bool CanEnact(GameState state, out string reason)
     {
+        if (state.Flags.Faith >= 4)
+        {
+            reason = "The faithful will not permit this.";
+            return false;
+        }
+
         if (state.Unrest > UnrestThreshold)
         {
             reason = string.Empty;
@@ -30,6 +36,9 @@ public sealed class PublicExecutionsLaw : ILaw
         state.AddUnrest(-UnrestReduction, entry);
         state.AddMorale(-MoraleHit, entry);
         state.ApplyDeath(Deaths, entry);
+        state.Flags.Tyranny.Add(2);
+        state.Flags.FearLevel.Add(2);
+        state.Flags.IronFist.Set();
         entry.Write("Five bodies hang from the gallows. The crowd watches in silence. Fear keeps the streets calm — for now.");
     }
 

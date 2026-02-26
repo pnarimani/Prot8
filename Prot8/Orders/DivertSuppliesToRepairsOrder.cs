@@ -36,6 +36,7 @@ public sealed class DivertSuppliesToRepairsOrder : IEmergencyOrder
 
     public void Apply(GameState state, ResolutionEntry entry)
     {
+        state.Flags.Fortification.Add(1);
         state.DailyEffects.RepairOutputMultiplier.Apply("Divert Supplies", RepairBoost);
         state.AddResource(ResourceKind.Materials, -MaterialsCost, entry);
         state.AddResource(ResourceKind.Fuel, -FuelCost, entry);
