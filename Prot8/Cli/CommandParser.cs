@@ -174,6 +174,40 @@ public class CommandParser
                 };
                 return true;
 
+            case "build_defense":
+                if (parts.Length != 3)
+                {
+                    error = "Usage: build_defense <type> <zone_id>.";
+                    return false;
+                }
+
+                command = new BuildDefenseCommand
+                {
+                    DefenseTypeStr = parts[1],
+                    ZoneIdStr = parts[2],
+                };
+                return true;
+
+            case "assign_archers":
+                if (parts.Length != 3)
+                {
+                    error = "Usage: assign_archers <zone_id> <count>.";
+                    return false;
+                }
+
+                if (!int.TryParse(parts[2], out var archerCount))
+                {
+                    error = $"Invalid count '{parts[2]}'. Must be an integer.";
+                    return false;
+                }
+
+                command = new AssignArcherPostCommand
+                {
+                    ZoneIdStr = parts[1],
+                    Count = archerCount,
+                };
+                return true;
+
             case "specialize_clinic":
                 if (parts.Length != 2)
                 {

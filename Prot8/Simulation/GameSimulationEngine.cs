@@ -846,6 +846,31 @@ public sealed class GameSimulationEngine(GameState state)
             damage = Math.Max(1, damage - perimeter.FortificationLevel * GameBalance.FortificationDamageReductionPerLevel);
         }
 
+        if (GameBalance.EnableDefenses)
+        {
+            var defenses = state.GetZoneDefenses(perimeter.Id);
+
+            if (defenses.HasArcherPost && defenses.ArcherPostGuardsAssigned >= GameBalance.ArcherPostGuardsRequired)
+            {
+                damage = Math.Max(1, (int)Math.Floor(damage * (1 - GameBalance.ArcherPostDamageReduction)));
+            }
+
+            if (defenses.HasOilCauldron)
+            {
+                defenses.HasOilCauldron = false;
+                entry.Write($"Oil cauldron poured on attackers in {perimeter.Name}! Siege damage negated for today.");
+                damage = 0;
+            }
+
+            if (damage > 0 && defenses.BarricadeBuffer > 0)
+            {
+                var absorbed = Math.Min(damage, defenses.BarricadeBuffer);
+                defenses.BarricadeBuffer -= absorbed;
+                damage -= absorbed;
+                entry.Write($"Barricades in {perimeter.Name} absorbed {absorbed} damage ({defenses.BarricadeBuffer} buffer remaining).");
+            }
+        }
+
         perimeter.Integrity -= damage;
         entry.Write($"Siege struck {perimeter.Name}: -{damage} integrity.");
 

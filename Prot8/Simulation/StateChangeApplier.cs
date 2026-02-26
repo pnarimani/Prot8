@@ -1,4 +1,5 @@
 using Prot8.Constants;
+using Prot8.Defenses;
 using Prot8.Resources;
 using Prot8.Zones;
 
@@ -100,6 +101,11 @@ public static class StateChangeApplier
             }
 
             entry.Write($"Active perimeter is now {state.ActivePerimeterZone.Name}");
+
+            if (state.ZoneDefenseMap.ContainsKey(zoneId))
+            {
+                state.ZoneDefenseMap[zoneId] = new ZoneDefenses();
+            }
 
             // Handle zone storage loss
             if (isControlledEvacuation && GameBalance.EvacuationResourceSalvagePercent > 0)

@@ -77,6 +77,16 @@ public static class GameBalance
     public const double BuildingUpgradeBonusPerLevel = 0.5;
     public const int BuildingUpgradeDelayDays = 1;
 
+    // Defenses
+    public static bool EnableDefenses => true;
+    public const int BarricadeMaterialsCost = 15;
+    public const int BarricadeBufferAmount = 15;
+    public const int OilCauldronFuelCost = 10;
+    public const int OilCauldronMaterialsCost = 10;
+    public const int ArcherPostMaterialsCost = 20;
+    public const int ArcherPostGuardsRequired = 2;
+    public const double ArcherPostDamageReduction = 0.15;
+
     // Scouting Mission
     public static bool EnableScoutingMission => true;
     public const int ScoutingSuccessChance = 55;

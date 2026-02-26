@@ -54,6 +54,10 @@ public class GameViewModelFactory(GameState state)
                 IsLost = zone.IsLost,
                 FortificationLevel = zone.FortificationLevel,
                 MaxFortificationLevel = GameBalance.FortificationMaxLevel,
+                BarricadeBuffer = state.GetZoneDefenses(zone.Id).BarricadeBuffer,
+                HasOilCauldron = state.GetZoneDefenses(zone.Id).HasOilCauldron,
+                HasArcherPost = state.GetZoneDefenses(zone.Id).HasArcherPost,
+                ArcherPostGuardsAssigned = state.GetZoneDefenses(zone.Id).ArcherPostGuardsAssigned,
             }).ToList(),
             ActiveMissions = state.ActiveMissions.Select(m => new ActiveMissionViewModel
             {

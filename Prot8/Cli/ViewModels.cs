@@ -96,6 +96,10 @@ public sealed class ZoneViewModel
     public bool IsLost { get; init; }
     public int FortificationLevel { get; init; }
     public int MaxFortificationLevel { get; init; }
+    public int BarricadeBuffer { get; init; }
+    public bool HasOilCauldron { get; init; }
+    public bool HasArcherPost { get; init; }
+    public int ArcherPostGuardsAssigned { get; init; }
 }
 
 public sealed class ActiveMissionViewModel

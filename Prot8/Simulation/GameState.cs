@@ -1,5 +1,6 @@
 using Prot8.Buildings;
 using Prot8.Constants;
+using Prot8.Defenses;
 using Prot8.Missions;
 using Prot8.Population;
 using Prot8.Resources;
@@ -125,6 +126,18 @@ public sealed class GameState
     public int IntelBuffDaysRemaining { get; set; }
 
     public bool IntelWarningPending { get; set; }
+
+    public Dictionary<ZoneId, ZoneDefenses> ZoneDefenseMap { get; } = new();
+
+    public ZoneDefenses GetZoneDefenses(ZoneId zoneId)
+    {
+        if (!ZoneDefenseMap.TryGetValue(zoneId, out var defenses))
+        {
+            defenses = new ZoneDefenses();
+            ZoneDefenseMap[zoneId] = defenses;
+        }
+        return defenses;
+    }
 
     public bool FinalAssaultActive { get; set; }
 
