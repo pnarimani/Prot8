@@ -122,6 +122,10 @@ public sealed class GameState
 
     public ClinicSpecialization ClinicSpecialization { get; set; } = ClinicSpecialization.None;
 
+    public int IntelBuffDaysRemaining { get; set; }
+
+    public bool IntelWarningPending { get; set; }
+
     public bool FinalAssaultActive { get; set; }
 
     public string? ActiveDisruption { get; set; }

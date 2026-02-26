@@ -77,6 +77,20 @@ public static class GameBalance
     public const double BuildingUpgradeBonusPerLevel = 0.5;
     public const int BuildingUpgradeDelayDays = 1;
 
+    // Spy Intel Event
+    public static bool EnableSpyIntelEvent => true;
+    public const int SpyIntelMinDay = 8;
+    public const int SpyIntelTriggerChance = 15;
+    public const int SpyIntelMaterialsCost = 15;
+    public const int SpyIntelFoodCost = 10;
+    public const int IntelBuffDurationDays = 5;
+    public const double IntelMissionSuccessBonus = 0.10;
+    public const int IntelInterceptGuardCost = 3;
+    public const int IntelInterceptGuardDeathRisk = 2;
+    public const double IntelInterceptSiegeDamageReduction = 0.7;
+    public const int IntelInterceptDurationDays = 3;
+    public const int IntelBraceIntegrityBonus = 10;
+
     // Black Market Event
     public static bool EnableBlackMarketEvent => true;
     public const int BlackMarketMinDay = 5;
@@ -262,6 +276,8 @@ public static class GameBalance
         ["narrative_burning_farms"] = 0,
         ["narrative_horns"] = 0,
         ["black_market_trading"] = 5,
+        ["spy_selling_intel"] = 5,
+        ["intel_siege_warning"] = 0,
     };
 
     public static int ComputeRecoveryDays(int sickness)

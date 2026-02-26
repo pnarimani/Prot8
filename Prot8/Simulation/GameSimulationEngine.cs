@@ -77,6 +77,11 @@ public sealed class GameSimulationEngine(GameState state)
             state.DailyEffects.WaterProductionMultiplier.Apply("Tainted Well", 0.6);
         }
 
+        if (state.IntelBuffDaysRemaining > 0)
+        {
+            state.DailyEffects.MissionSuccessBonus += GameBalance.IntelMissionSuccessBonus;
+        }
+
         TriggerEvents();
 
         return report;
@@ -175,6 +180,11 @@ public sealed class GameSimulationEngine(GameState state)
         if (state.TaintedWellDaysRemaining > 0)
         {
             state.TaintedWellDaysRemaining -= 1;
+        }
+
+        if (state.IntelBuffDaysRemaining > 0)
+        {
+            state.IntelBuffDaysRemaining -= 1;
         }
 
         if (GameBalance.EnableBuildingUpgrades)

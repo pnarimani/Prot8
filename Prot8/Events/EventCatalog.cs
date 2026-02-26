@@ -28,6 +28,8 @@ public static class EventCatalog
         new CouncilRevoltEvent(),
         new TotalCollapseEvent(),
         new BlackMarketTradingEvent(),
+        new SpySellingIntelEvent(),
+        new IntelSiegeWarningEvent(),
         new NarrativeSiegeBeatEvent("narrative_messenger", "Enemy Messenger",
             1, "A messenger arrives under white flag. \"Surrender the city, and your people will be spared.\" You send him back."),
         new NarrativeSiegeBeatEvent("narrative_towers", "Siege Towers Spotted",
