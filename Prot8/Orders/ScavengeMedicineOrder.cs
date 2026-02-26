@@ -17,15 +17,13 @@ public sealed class ScavengeMedicineOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"+{MedicineGain} medicine, +{SicknessHit} sickness, {Deaths} deaths. Requires medicine < {MedicineThreshold}.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Resources[ResourceKind.Medicine] >= MedicineThreshold)
         {
-            reason = $"Requires medicine below {MedicineThreshold}.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

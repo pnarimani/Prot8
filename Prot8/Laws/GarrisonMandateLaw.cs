@@ -18,21 +18,18 @@ public sealed class GarrisonMandateLaw : ILaw
     public string GetTooltip(GameState state) =>
         $"Convert {WorkersConverted} workers to guards on enact. +1 guard every {MilitiaTrainingInterval} days. -{DailyFoodCost} food/day, -{MoraleHit} morale on enact. Requires Fortification >= 4.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.PeopleFirst)
         {
-            reason = "The people's covenant rejects militarization.";
             return false;
         }
 
         if (state.Flags.Fortification < 4)
         {
-            reason = "Requires strong fortification commitment.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

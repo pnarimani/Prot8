@@ -17,21 +17,18 @@ public sealed class RallyGuardsOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"-{FoodCost} food, -{UnrestReduction} unrest, +{MoraleGain} morale. Requires guards >= {GuardThreshold}.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Population.Guards < GuardThreshold)
         {
-            reason = $"Requires at least {GuardThreshold} guards.";
             return false;
         }
 
         if (!state.Resources.Has(ResourceKind.Food, FoodCost))
         {
-            reason = $"Requires at least {FoodCost} food.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

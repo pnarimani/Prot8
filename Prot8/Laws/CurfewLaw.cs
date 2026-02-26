@@ -12,21 +12,18 @@ public sealed class CurfewLaw : ILaw
     public string Name => "Curfew";
     public string GetTooltip(GameState state) => $"-{DailyUnrestReduction} unrest/day, -{(1 - ProductionMultiplier) * 100}% production. Requires unrest > {UnrestThreshold}. Incompatible with Martial Law.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.ActiveLawIds.Contains("martial_law"))
         {
-            reason = "Incompatible with Martial Law.";
             return false;
         }
 
         if (state.Unrest > UnrestThreshold)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = $"Requires unrest above {UnrestThreshold}.";
         return false;
     }
 

@@ -15,27 +15,23 @@ public sealed class PublicConfessionOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"-{UnrestReduction} unrest, -{MoraleHit} morale, {Deaths} deaths. Requires Tyranny >= 4 and Fear Level >= 2.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Flags.FaithRisen)
         {
-            reason = "The faithful reject forced confessions.";
             return false;
         }
 
         if (state.Flags.Tyranny < 4)
         {
-            reason = "Requires deep tyrannical authority.";
             return false;
         }
 
         if (state.Flags.FearLevel < 2)
         {
-            reason = "The people do not fear enough to confess.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

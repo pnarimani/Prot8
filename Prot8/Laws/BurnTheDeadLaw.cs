@@ -18,21 +18,18 @@ public sealed class BurnTheDeadLaw : ILaw
         return $"-{SicknessReduction} sickness, -{FuelCost} fuel, -{MoraleHit} morale";
     }
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.FaithRisen)
         {
-            reason = "The faithful demand proper burial rites.";
             return false;
         }
 
         if (state.Sickness > SicknessThreshold)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = $"Requires sickness above {SicknessThreshold}.";
         return false;
     }
 

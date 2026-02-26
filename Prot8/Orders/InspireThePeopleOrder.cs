@@ -16,27 +16,23 @@ public sealed class InspireThePeopleOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"+{MoraleGain} morale, -{FoodCost} food, -{WaterCost} water (feast). Requires Faith >= 2.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Flags.Faith < 2)
         {
-            reason = "Requires a foundation of faith.";
             return false;
         }
 
         if (!state.Resources.Has(ResourceKind.Food, FoodCost))
         {
-            reason = $"Requires at least {FoodCost} food.";
             return false;
         }
 
         if (!state.Resources.Has(ResourceKind.Water, WaterCost))
         {
-            reason = $"Requires at least {WaterCost} water.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

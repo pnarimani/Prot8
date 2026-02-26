@@ -27,9 +27,8 @@ public sealed class SearchAbandonedHomesMission : IMissionDefinition
         return $"+{MaterialsGain} Materials, +{SuccessSickness} Sickness ({materialsChance}%) | +{MedicineGain} Medicine, +{SuccessSickness} Sickness ({medicineChance}%) | +{PlagueSickness} Sickness, {PlagueDeaths} Deaths ({failChance}%)";
     }
 
-    public bool CanStart(GameState state, out string reason)
+    public bool CanStart(GameState state)
     {
-        reason = "";
         return true;
     }
 

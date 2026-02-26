@@ -17,21 +17,18 @@ public sealed class RationMedicineOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"-{MedicineCost} medicine, -{SicknessReduction} sickness, +{UnrestGain} unrest. Requires sickness > {SicknessThreshold}.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Sickness <= SicknessThreshold)
         {
-            reason = $"Requires sickness above {SicknessThreshold}.";
             return false;
         }
 
         if (!state.Resources.Has(ResourceKind.Medicine, MedicineCost))
         {
-            reason = $"Requires at least {MedicineCost} medicine.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

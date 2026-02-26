@@ -15,21 +15,18 @@ public sealed class FaithProcessionsLaw : ILaw
     public string Name => "Faith Processions";
     public string GetTooltip(GameState state) => $"+{MoraleGain} morale on enact, -{MaterialsCost} materials, +{UnrestHit} unrest. Daily: +{DailyMorale} morale, +{DailySickness} sickness from gatherings. Requires morale < {MoraleThreshold}.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.IronFist)
         {
-            reason = "The tyrant's shadow chills all devotion.";
             return false;
         }
 
         if (state.Morale < MoraleThreshold)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = $"Requires morale below {MoraleThreshold}.";
         return false;
     }
 

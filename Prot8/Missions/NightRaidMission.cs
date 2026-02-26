@@ -24,9 +24,8 @@ public sealed class NightRaidMission : IMissionDefinition
         return $"Siege Delay +{GreatSiegeDelay} days ({greatChance}%) | Siege Delay +{OkSiegeDelay} ({okChance}%) | {FailDeaths} Deaths, +{FailUnrest} Unrest ({100 - greatChance - okChance}%)";
     }
 
-    public bool CanStart(GameState state, out string reason)
+    public bool CanStart(GameState state)
     {
-        reason = "";
         return true;
     }
 

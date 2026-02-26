@@ -16,15 +16,13 @@ public sealed class MandatoryGuardServiceLaw : ILaw
     public string GetTooltip(GameState state) =>
         $"Convert {Math.Min(GuardConversion, state.Population.HealthyWorkers)}/{GuardConversion} workers to guards, -{DailyFoodLoss} food/day, -{MoraleHit} morale. Requires unrest > {UnrestThreshold}.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Unrest > UnrestThreshold)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = $"Requires unrest above {UnrestThreshold}.";
         return false;
     }
 

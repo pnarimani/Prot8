@@ -15,21 +15,18 @@ public sealed class FoodConfiscationLaw : ILaw
     public string Name => "Food Confiscation";
     public string GetTooltip(GameState state) => $"+{FoodGain} food, +{UnrestHit} unrest, -{MoraleHit} morale, {Deaths} deaths, +{DailyUnrest} unrest/day. Requires food < {FoodThreshold}.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.Faith >= 3)
         {
-            reason = "The faithful share willingly — confiscation is unnecessary.";
             return false;
         }
 
         if (state.Resources[Resources.ResourceKind.Food] < FoodThreshold)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = $"Requires food below {FoodThreshold}.";
         return false;
     }
 

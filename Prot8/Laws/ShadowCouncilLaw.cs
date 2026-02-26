@@ -15,27 +15,23 @@ public sealed class ShadowCouncilLaw : ILaw
     public string GetTooltip(GameState state) =>
         $"-{DailyUnrestReduction} unrest/day, +5% production, 1 death/day (dissenters vanish). Morale capped at {MoraleCap}. Requires Tyranny >= 5 and Iron Fist.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.Faith >= 3)
         {
-            reason = "The faithful see through the shadows.";
             return false;
         }
 
         if (state.Flags.Tyranny < 5)
         {
-            reason = "Requires deeper tyrannical authority.";
             return false;
         }
 
         if (!state.Flags.IronFist)
         {
-            reason = "Requires the Iron Fist.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

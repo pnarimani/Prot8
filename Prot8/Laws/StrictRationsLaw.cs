@@ -13,9 +13,8 @@ public sealed class StrictRationsLaw : ILaw
     public string Name => "Strict Rations";
     public string GetTooltip(GameState state) => $"-{(1 - FoodConsumptionMultiplier) * 100}% food consumption, -{MoraleHit} morale on enact, +{DailyUnrest} unrest/day, +{DailySickness} sickness/day.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
-        reason = string.Empty;
         return true;
     }
 

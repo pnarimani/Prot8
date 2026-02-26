@@ -17,27 +17,23 @@ public sealed class SacrificeTheSickOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"Kill {SickKilled} sick workers, -{SicknessReduction} sickness, +{UnrestGain} unrest, -{MoraleHit} morale. Requires sick > {SickThreshold}.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Flags.PeopleFirst)
         {
-            reason = "The people's covenant forbids sacrificing the sick.";
             return false;
         }
 
         if (state.Flags.Tyranny < 3)
         {
-            reason = "Requires absolute authority.";
             return false;
         }
 
         if (state.Population.SickWorkers <= SickThreshold)
         {
-            reason = $"Requires more than {SickThreshold} sick workers.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

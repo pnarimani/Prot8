@@ -21,15 +21,13 @@ public sealed class SabotageEnemySuppliesMission : IMissionDefinition
     public string GetTooltip(GameState state) =>
         $"Siege damage x{SuccessDamageReduction} for {SuccessDuration}d ({SuccessChance}%) | x{PartialDamageReduction} for {PartialDuration}d ({PartialChance}%) | {FailDeaths} Deaths, +{FailUnrest} Unrest ({100 - SuccessChance - PartialChance}%)";
 
-    public bool CanStart(GameState state, out string reason)
+    public bool CanStart(GameState state)
     {
         if (state.Flags.Tyranny < 2)
         {
-            reason = "Requires ruthless authority.";
             return false;
         }
 
-        reason = "";
         return true;
     }
 

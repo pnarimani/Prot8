@@ -16,15 +16,13 @@ public sealed class ForcedLaborOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"+{MaterialsGain} materials, +{UnrestGain} unrest, {Deaths} deaths.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Flags.Faith >= 4)
         {
-            reason = "The faithful refuse forced servitude.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

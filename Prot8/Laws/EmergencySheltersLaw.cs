@@ -14,21 +14,18 @@ public sealed class EmergencySheltersLaw : ILaw
     public string Name => "Emergency Shelters";
     public string GetTooltip(GameState state) => $"+{CapacityGainPerZone} capacity to all non-lost zones, +{DailySickness} sickness/day, +{DailyUnrest} unrest/day, +{UnrestHit} unrest on enact. Requires first zone loss.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.MartialState)
         {
-            reason = "Martial authority has no room for shelters.";
             return false;
         }
 
         if (state.ZoneLossOccurred)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = "Requires first zone loss.";
         return false;
     }
 

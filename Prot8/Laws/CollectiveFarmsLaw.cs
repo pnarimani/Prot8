@@ -14,21 +14,18 @@ public sealed class CollectiveFarmsLaw : ILaw
     public string GetTooltip(GameState state) =>
         $"+30% food production, +{MoraleGain} morale on enact, +{DailyUnrest} unrest/day (arguments over sharing). Requires Faith >= 2.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.MartialState)
         {
-            reason = "Martial authority controls all production.";
             return false;
         }
 
         if (state.Flags.Faith < 2)
         {
-            reason = "Requires a foundation of faith.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

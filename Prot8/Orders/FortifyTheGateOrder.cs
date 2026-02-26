@@ -17,21 +17,18 @@ public sealed class FortifyTheGateOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"-{MaterialsCost} materials, +{IntegrityGain} integrity, +{UnrestGain} unrest. Requires perimeter integrity < {IntegrityThreshold}.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.ActivePerimeterZone.Integrity >= IntegrityThreshold)
         {
-            reason = $"Requires perimeter integrity below {IntegrityThreshold}.";
             return false;
         }
 
         if (!state.Resources.Has(ResourceKind.Materials, MaterialsCost))
         {
-            reason = $"Requires at least {MaterialsCost} materials.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

@@ -19,15 +19,13 @@ public sealed class DiplomaticEnvoyMission : IMissionDefinition
     public string GetTooltip(GameState state) =>
         $"Siege delay +{SuccessDelay}d ({SuccessChance}%) | +{PartialDelay}d ({PartialChance}%) | {FailDeaths} deaths, +{FailUnrest} unrest ({100 - SuccessChance - PartialChance}%). Requires Faith >= 3.";
 
-    public bool CanStart(GameState state, out string reason)
+    public bool CanStart(GameState state)
     {
         if (state.Flags.Faith < 3)
         {
-            reason = "Requires diplomatic standing through faith.";
             return false;
         }
 
-        reason = "";
         return true;
     }
 

@@ -15,21 +15,18 @@ public sealed class QuarantineDistrictOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"Quarantine the active perimeter zone: -50% production in that zone today, -{SicknessReduction} sickness, -{UnrestReduction} unrest. Requires sickness > {SicknessThreshold}.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Flags.MercyDenied)
         {
-            reason = "Mercy has already been forsaken.";
             return false;
         }
 
         if (state.Sickness <= SicknessThreshold)
         {
-            reason = $"Requires sickness above {SicknessThreshold}.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

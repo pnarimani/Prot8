@@ -17,15 +17,13 @@ public sealed class ScoutingMission : IMissionDefinition
         return $"Intel buff {GameBalance.IntelBuffDurationDays} days + Siege Warning ({successChance}%) | {GameBalance.ScoutingFailDeaths} Deaths, +{GameBalance.ScoutingFailUnrest} Unrest ({failChance}%)";
     }
 
-    public bool CanStart(GameState state, out string reason)
+    public bool CanStart(GameState state)
     {
         if (!GameBalance.EnableScoutingMission)
         {
-            reason = "Scouting missions are not enabled.";
             return false;
         }
 
-        reason = "";
         return true;
     }
 

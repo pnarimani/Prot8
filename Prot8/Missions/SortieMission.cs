@@ -17,21 +17,18 @@ public sealed class SortieMission : IMissionDefinition
         return $"Siege -1, +{GameBalance.SortieSuccessEscalationDelay}d delay ({GameBalance.SortieSuccessChance}%) | Damage x{GameBalance.SortiePartialDamageMultiplier} for {GameBalance.SortiePartialDurationDays}d ({GameBalance.SortiePartialChance}%) | {GameBalance.SortieFailGuardDeaths} guard deaths, +{GameBalance.SortieFailUnrest} Unrest ({failChance}%)";
     }
 
-    public bool CanStart(GameState state, out string reason)
+    public bool CanStart(GameState state)
     {
         if (!GameBalance.EnableSortieMission)
         {
-            reason = "Sortie missions are not enabled.";
             return false;
         }
 
         if (state.Flags.Fortification < 1)
         {
-            reason = "Requires fortification commitment.";
             return false;
         }
 
-        reason = "";
         return true;
     }
 

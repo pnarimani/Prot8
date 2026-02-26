@@ -257,10 +257,10 @@ public sealed class GameSimulationEngine(GameState state)
                 return;
             }
 
-            if (!law.CanEnact(state, out var reason))
+            if (!law.CanEnact(state))
             {
                 var failEntry = new ResolutionEntry { Title = $"Law: {law.Name}" };
-                failEntry.Write($"Cannot enact {law.Name}: {reason}");
+                failEntry.Write($"Cannot enact {law.Name}.");
                 report.Entries.Add(failEntry);
                 return;
             }
@@ -300,10 +300,10 @@ public sealed class GameSimulationEngine(GameState state)
                 return;
             }
 
-            if (!order.CanIssue(state, out var reason))
+            if (!order.CanIssue(state))
             {
                 var failEntry = new ResolutionEntry { Title = $"Order: {order.Name}" };
-                failEntry.Write($"Cannot issue {order.Name}: {reason}");
+                failEntry.Write($"Cannot issue {order.Name}.");
                 report.Entries.Add(failEntry);
                 return;
             }
@@ -339,10 +339,10 @@ public sealed class GameSimulationEngine(GameState state)
                 }
             }
 
-            if (!mission.CanStart(state, out var reason))
+            if (!mission.CanStart(state))
             {
                 var failEntry = new ResolutionEntry { Title = $"Mission: {mission.Name}" };
-                failEntry.Write($"Cannot start mission {mission.Name}: {reason}");
+                failEntry.Write($"Cannot start mission {mission.Name}.");
                 report.Entries.Add(failEntry);
                 return;
             }

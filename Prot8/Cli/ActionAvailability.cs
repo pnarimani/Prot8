@@ -23,7 +23,7 @@ public static class ActionAvailability
             if (state.ActiveLawIds.Contains(law.Id))
                 continue;
 
-            if (law.CanEnact(state, out _))
+            if (law.CanEnact(state))
                 available.Add(law);
         }
 
@@ -42,7 +42,7 @@ public static class ActionAvailability
                     continue;
             }
 
-            if (mission.CanStart(state, out _))
+            if (mission.CanStart(state))
                 available.Add(mission);
         }
 
@@ -59,7 +59,7 @@ public static class ActionAvailability
                 && state.Day - lastDay < order.CooldownDays)
                 continue;
 
-            if (order.CanIssue(state, out _))
+            if (order.CanIssue(state))
                 available.Add(order);
         }
 

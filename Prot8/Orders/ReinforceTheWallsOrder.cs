@@ -15,21 +15,18 @@ public sealed class ReinforceTheWallsOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"+{IntegrityGain} integrity to perimeter, -{MaterialsCost} materials. Requires Fortification >= 2.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Flags.Fortification < 2)
         {
-            reason = "Requires fortification commitment.";
             return false;
         }
 
         if (!state.Resources.Has(ResourceKind.Materials, MaterialsCost))
         {
-            reason = $"Requires at least {MaterialsCost} materials.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

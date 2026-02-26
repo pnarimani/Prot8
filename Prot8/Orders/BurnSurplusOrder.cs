@@ -16,15 +16,13 @@ public sealed class BurnSurplusOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"-{MaterialsCost} materials, -{SicknessReduction} sickness, +{MoraleGain} morale.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (!state.Resources.Has(ResourceKind.Materials, MaterialsCost))
         {
-            reason = $"Requires at least {MaterialsCost} materials.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

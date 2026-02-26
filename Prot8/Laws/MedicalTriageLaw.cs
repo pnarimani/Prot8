@@ -16,27 +16,23 @@ public sealed class MedicalTriageLaw : ILaw
     public string GetTooltip(GameState state) =>
         $"-{(1 - MedicineUsageMultiplier) * 100}% medicine usage, {DailySickDeaths} sick deaths/day, -{DailyMoraleHit} morale/day. Requires medicine < {MedicineThreshold}.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.PeopleFirst)
         {
-            reason = "The people's covenant forbids abandoning the sick.";
             return false;
         }
 
         if (state.Flags.Tyranny < 2)
         {
-            reason = "Requires a hardened resolve.";
             return false;
         }
 
         if (state.Resources[ResourceKind.Medicine] < MedicineThreshold)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = $"Requires medicine below {MedicineThreshold}.";
         return false;
     }
 

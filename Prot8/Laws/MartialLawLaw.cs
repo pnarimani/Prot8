@@ -16,33 +16,28 @@ public sealed class MartialLawLaw : ILaw
 
     public string GetTooltip(GameState state) => $"Unrest cannot exceed {UnrestCap}, morale capped at {MoraleCap}. {DailyDeaths} executions/day, -{DailyFoodCost} food/day. Requires unrest > {UnrestThreshold}. Incompatible with Curfew.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.Faith >= 5)
         {
-            reason = "The faithful reject military rule.";
             return false;
         }
 
         if (state.ActiveLawIds.Contains("curfew"))
         {
-            reason = "Incompatible with Curfew.";
             return false;
         }
 
         if (state.Flags.Tyranny < 2)
         {
-            reason = "Requires deeper commitment to authority.";
             return false;
         }
 
         if (state.Unrest > UnrestThreshold)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = $"Requires unrest above {UnrestThreshold}.";
         return false;
     }
 

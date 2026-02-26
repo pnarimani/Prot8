@@ -16,7 +16,7 @@ public interface IMissionDefinition
     
     string GetTooltip(GameState state);
 
-    bool CanStart(GameState state, out string reason);
+    bool CanStart(GameState state);
 
     void ResolveOutcome(GameState state, ActiveMission mission, ResolutionEntry entry);
 }

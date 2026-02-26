@@ -19,15 +19,13 @@ public sealed class RaidCivilianFarmsMission : IMissionDefinition
     public string GetTooltip(GameState state) =>
         $"+{SuccessFood} food ({SuccessChance}%) | +{PartialFood} food, +{PartialUnrest} unrest, {PartialDeaths} deaths ({100 - SuccessChance}%). Requires Tyranny >= 3.";
 
-    public bool CanStart(GameState state, out string reason)
+    public bool CanStart(GameState state)
     {
         if (state.Flags.Tyranny < 3)
         {
-            reason = "Requires ruthless authority.";
             return false;
         }
 
-        reason = "";
         return true;
     }
 

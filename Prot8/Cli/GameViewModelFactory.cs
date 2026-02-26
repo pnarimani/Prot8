@@ -339,7 +339,7 @@ public class GameViewModelFactory(GameState state)
                 }
             }
 
-            if (onCooldown || !order.CanIssue(state, out _))
+            if (onCooldown || !order.CanIssue(state))
             {
                 continue;
             }

@@ -13,21 +13,18 @@ public sealed class PublicExecutionsLaw : ILaw
     public string Name => "Public Executions";
     public string GetTooltip(GameState state) => $"-{UnrestReduction} unrest instantly, -{MoraleHit} morale, {Deaths} deaths. Requires unrest > {UnrestThreshold}.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.Faith >= 4)
         {
-            reason = "The faithful will not permit this.";
             return false;
         }
 
         if (state.Unrest > UnrestThreshold)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = $"Requires unrest above {UnrestThreshold}.";
         return false;
     }
 

@@ -14,21 +14,18 @@ public sealed class ExtendedShiftsLaw : ILaw
     public string Name => "Extended Shifts";
     public string GetTooltip(GameState state) => $"+{(ProductionMultiplier - 1) * 100}% production, +{DailySickness} sickness/day, {DeathChancePercent}% chance of 1 death/day, -{MoraleHit} morale on enact. Day {MinimumDay}+.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.Faith >= 4)
         {
-            reason = "The faithful refuse to toil beyond their prayers.";
             return false;
         }
 
         if (state.Day >= MinimumDay)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = $"Available from Day {MinimumDay}.";
         return false;
     }
 

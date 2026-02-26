@@ -13,28 +13,24 @@ public sealed class AbandonOuterRingLaw : ILaw
     public string Name => "Abandon Outer Ring";
     public string GetTooltip(GameState state) => $"Immediately lose Outer Farms, x{SiegeDamageMultiplier} daily siege damage (-{(1 - SiegeDamageMultiplier) * 100}%), +{UnrestHit} unrest. Requires Outer Farms integrity < {IntegrityThreshold}.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.PeopleFirst)
         {
-            reason = "The people's covenant forbids abandoning homes.";
             return false;
         }
 
         var outerFarms = state.GetZone(ZoneId.OuterFarms);
         if (outerFarms.IsLost)
         {
-            reason = "Outer Farms already lost.";
             return false;
         }
 
         if (outerFarms.Integrity < IntegrityThreshold)
         {
-            reason = string.Empty;
             return true;
         }
 
-        reason = $"Requires Outer Farms integrity below {IntegrityThreshold}.";
         return false;
     }
 

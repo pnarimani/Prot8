@@ -16,27 +16,23 @@ public sealed class CrackdownPatrolsOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"-{UnrestReduction} unrest, {Deaths} deaths, -{MoraleHit} morale. Requires unrest > {UnrestThreshold}.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Flags.Faith >= 5)
         {
-            reason = "The faithful will not permit such violence.";
             return false;
         }
 
         if (state.Flags.Tyranny < 1)
         {
-            reason = "Requires an authoritarian mandate.";
             return false;
         }
 
         if (state.Unrest <= UnrestThreshold)
         {
-            reason = $"Requires unrest above {UnrestThreshold}.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

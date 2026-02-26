@@ -24,9 +24,8 @@ public sealed class NegotiateBlackMarketeersMission : IMissionDefinition
         return $"+{WaterGain} Water, +{SuccessUnrest} Unrest ({WaterChance}%) | +{FoodGain} Food, +{SuccessUnrest} Unrest ({FoodChance}%) | +{BetrayalUnrest} Unrest, {BetrayalDeaths} Deaths ({failChance}%)";
     }
 
-    public bool CanStart(GameState state, out string reason)
+    public bool CanStart(GameState state)
     {
-        reason = "";
         return true;
     }
 

@@ -16,21 +16,18 @@ public sealed class DivertSuppliesToRepairsOrder : IEmergencyOrder
     public string GetTooltip(GameState state) =>
         $"+{(RepairBoost - 1) * 100}% repair output today, -{MaterialsCost} materials, -{FuelCost} fuel.";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (!state.Resources.Has(ResourceKind.Materials, MaterialsCost))
         {
-            reason = $"Requires at least {MaterialsCost} materials.";
             return false;
         }
 
         if (!state.Resources.Has(ResourceKind.Fuel, FuelCost))
         {
-            reason = $"Requires at least {FuelCost} fuel.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

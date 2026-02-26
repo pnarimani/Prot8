@@ -5,20 +5,16 @@ namespace Prot8.Simulation;
 
 public static class ZoneRules
 {
-    public static bool CanEvacuate(GameState state, ZoneId zoneId, out string reason)
+    public static bool CanEvacuate(GameState state, ZoneId zoneId)
     {
-        reason = string.Empty;
-
         if (zoneId == ZoneId.Keep)
         {
-            reason = "Keep cannot be evacuated.";
             return false;
         }
 
         var zone = state.GetZone(zoneId);
         if (zone.IsLost)
         {
-            reason = $"{zone.Name} is already lost.";
             return false;
         }
 
@@ -52,7 +48,6 @@ public static class ZoneRules
             return true;
         }
 
-        reason = $"Evacuation locked: requires all outer zones lost, {zone.Name} integrity < {GameBalance.EvacIntegrityThreshold}, or siege intensity >= {GameBalance.EvacSiegeThreshold}.";
         return false;
     }
 

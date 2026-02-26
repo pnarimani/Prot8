@@ -14,27 +14,23 @@ public sealed class PurgeTheDisloyalLaw : ILaw
     public string GetTooltip(GameState state) =>
         $"-{UnrestReduction} unrest, -{MoraleHit} morale, {Deaths} deaths. One-time. Requires Tyranny >= 7 and Martial State.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.PeopleFirst)
         {
-            reason = "The people's covenant forbids such atrocity.";
             return false;
         }
 
         if (state.Flags.Tyranny < 7)
         {
-            reason = "Requires absolute tyrannical control.";
             return false;
         }
 
         if (!state.Flags.MartialState)
         {
-            reason = "Requires Martial State.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

@@ -15,27 +15,23 @@ public sealed class ScorchedEarthDoctrineLaw : ILaw
     public string GetTooltip(GameState state) =>
         $"Siege damage -30% permanently. -{MaterialsCost} materials on enact. +{DailyUnrest} unrest/day. Outer zones cannot be evacuated. Requires Fortification >= 6 and Garrison State.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.Faith >= 4)
         {
-            reason = "The faithful refuse to destroy what they hold sacred.";
             return false;
         }
 
         if (state.Flags.Fortification < 6)
         {
-            reason = "Requires deep fortification commitment.";
             return false;
         }
 
         if (!state.Flags.GarrisonState)
         {
-            reason = "Requires Garrison State.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

@@ -10,7 +10,7 @@ public interface ILaw
 
     string GetTooltip(GameState state);
 
-    bool CanEnact(GameState state, out string reason);
+    bool CanEnact(GameState state);
 
     void OnEnact(GameState state, ResolutionEntry entry);
 

@@ -10,15 +10,14 @@ public sealed class VoluntaryEvacuationOrder : IEmergencyOrder
 
     public string GetTooltip(GameState state) => "Evacuate the active perimeter zone if eligible (irreversible).";
 
-    public bool CanIssue(GameState state, out string reason)
+    public bool CanIssue(GameState state)
     {
         if (state.Flags.MartialState)
         {
-            reason = "Martial authority forbids voluntary retreat.";
             return false;
         }
 
-        return ZoneRules.CanEvacuate(state, state.ActivePerimeterZone.Id, out reason);
+        return ZoneRules.CanEvacuate(state, state.ActivePerimeterZone.Id);
     }
 
     public void Apply(GameState state, ResolutionEntry entry)

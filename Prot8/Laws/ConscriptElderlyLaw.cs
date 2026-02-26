@@ -20,33 +20,28 @@ public sealed class ConscriptElderlyLaw : ILaw
             $"Convert all elderly ({state.Population.Elderly}) to workers. -{MoraleHit} morale, +{UnrestHit} unrest. {DailyDeaths} death/day from exhaustion. Day {MinimumDay}+.";
     }
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.PeopleFirst)
         {
-            reason = "The people's covenant forbids this cruelty.";
             return false;
         }
 
         if (state.Flags.Tyranny < 1)
         {
-            reason = "Requires an authoritarian mandate.";
             return false;
         }
 
         if (state.Day < MinimumDay)
         {
-            reason = $"Available from Day {MinimumDay}.";
             return false;
         }
 
         if (state.Population.Elderly <= 0)
         {
-            reason = "No elderly remain.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

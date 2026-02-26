@@ -12,7 +12,7 @@ public interface IEmergencyOrder
 
     string GetTooltip(GameState state);
 
-    bool CanIssue(GameState state, out string reason);
+    bool CanIssue(GameState state);
 
     void Apply(GameState state, ResolutionEntry entry);
 }

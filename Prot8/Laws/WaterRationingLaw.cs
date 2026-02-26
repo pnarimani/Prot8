@@ -13,9 +13,8 @@ public sealed class WaterRationingLaw : ILaw
     public string Name => "Water Rationing";
     public string GetTooltip(GameState state) => $"-{(1 - WaterConsumptionMultiplier) * 100}% water consumption, +{DailySickness} sickness/day, +{DailyUnrest} unrest/day, -{MoraleHit} morale on enact.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
-        reason = string.Empty;
         return true;
     }
 

@@ -14,27 +14,23 @@ public sealed class OathOfMercyLaw : ILaw
     public string GetTooltip(GameState state) =>
         $"+{DailyMorale} morale/day, -{DailySicknessReduction} sickness/day, -10% production. Requires Faith >= 4 and Tyranny <= 2.";
 
-    public bool CanEnact(GameState state, out string reason)
+    public bool CanEnact(GameState state)
     {
         if (state.Flags.IronFist)
         {
-            reason = "The tyrant's iron fist crushes all mercy.";
             return false;
         }
 
         if (state.Flags.Faith < 4)
         {
-            reason = "Requires deep faith.";
             return false;
         }
 
         if (state.Flags.Tyranny > 2)
         {
-            reason = "Too much blood has been spilled for mercy.";
             return false;
         }
 
-        reason = string.Empty;
         return true;
     }
 

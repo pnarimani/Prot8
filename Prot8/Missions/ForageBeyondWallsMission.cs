@@ -29,9 +29,8 @@ public sealed class ForageBeyondWallsMission() : IMissionDefinition
         return $"+{HighFoodGain} Food ({highChance}%) | +{MediumFoodGain} Food ({mediumChance}%) | {AmbushDeaths} Deaths, +{AmbushUnrest} Unrest ({failChance}%)";
     }
 
-    public bool CanStart(GameState state, out string reason)
+    public bool CanStart(GameState state)
     {
-        reason = string.Empty;
         return true;
     }
 
