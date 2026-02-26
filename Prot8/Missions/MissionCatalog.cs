@@ -10,7 +10,8 @@ public static class MissionCatalog
         new NightRaidMission(),
         new SearchAbandonedHomesMission(),
         new NegotiateBlackMarketeersMission(),
-        new SabotageEnemySuppliesMission()
+        new SabotageEnemySuppliesMission(),
+        new ScoutingMission()
     };
 
     public static IReadOnlyList<IMissionDefinition> GetAll() => AllMissions;

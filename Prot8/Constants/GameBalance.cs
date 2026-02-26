@@ -77,6 +77,12 @@ public static class GameBalance
     public const double BuildingUpgradeBonusPerLevel = 0.5;
     public const int BuildingUpgradeDelayDays = 1;
 
+    // Scouting Mission
+    public static bool EnableScoutingMission => true;
+    public const int ScoutingSuccessChance = 55;
+    public const int ScoutingFailDeaths = 2;
+    public const int ScoutingFailUnrest = 5;
+
     // Spy Intel Event
     public static bool EnableSpyIntelEvent => true;
     public const int SpyIntelMinDay = 8;
