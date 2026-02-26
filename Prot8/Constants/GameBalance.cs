@@ -70,6 +70,13 @@ public static class GameBalance
     public const int RecoveryPerClinicSlot = 2;
     public const int MedicinePerRecovery = 1;
 
+    // Building Upgrades
+    public static bool EnableBuildingUpgrades => true;
+    public const int BuildingMaxUpgradeLevel = 3;
+    public const int BuildingUpgradeMaterialsCost = 30;
+    public const double BuildingUpgradeBonusPerLevel = 0.5;
+    public const int BuildingUpgradeDelayDays = 1;
+
     // Storage system
     public const int StorageBaseCapacity = 80;
     public const int StorageCapacityPerUpgrade = 40;

@@ -15,4 +15,6 @@ public sealed class BuildingState(BuildingDefinition definition)
     public int AssignedWorkers { get; set; }
     public bool IsDestroyed { get; set; }
     public bool IsActive { get; set; } = true;
+    public int UpgradeLevel { get; set; }
+    public int UpgradeDaysRemaining { get; set; }
 }

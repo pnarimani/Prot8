@@ -15,6 +15,7 @@ namespace Prot8.Cli.Commands;
 [JsonDerivedType(typeof(UpgradeStorageCommand), "upgrade_storage")]
 [JsonDerivedType(typeof(PriorityCommand), "set_priority")]
 [JsonDerivedType(typeof(ToggleBuildingCommand), "toggle_building")]
+[JsonDerivedType(typeof(UpgradeBuildingCommand), "upgrade_building")]
 public interface ICommand
 {
     CommandResult Execute(CommandContext context);

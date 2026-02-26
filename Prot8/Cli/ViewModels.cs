@@ -150,6 +150,9 @@ public sealed class BuildingViewModel
     public required List<ResourceQuantity> CurrentOutput { get; init; }
     public required List<ResourceQuantity> InputPerWorker { get; init; }
     public required List<ResourceQuantity> OutputPerWorker { get; init; }
+    public int UpgradeLevel { get; init; }
+    public int UpgradeDaysRemaining { get; init; }
+    public int MaxUpgradeLevel { get; init; }
 }
 
 public sealed class ZoneStorageViewModel

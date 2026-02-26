@@ -174,6 +174,19 @@ public class CommandParser
                 };
                 return true;
 
+            case "upgrade_building":
+                if (parts.Length != 2)
+                {
+                    error = "Usage: upgrade_building <Building>.";
+                    return false;
+                }
+
+                command = new UpgradeBuildingCommand
+                {
+                    BuildingIdStr = parts[1],
+                };
+                return true;
+
             case "toggle":
                 if (GameBalance.AllocationMode != WorkerAllocationMode.BuildingActivation)
                 {

@@ -402,6 +402,9 @@ public class GameViewModelFactory(GameState state)
                 CurrentInput = input,
                 InputPerWorker = building.Inputs.ToList(),
                 OutputPerWorker = building.Outputs.ToList(),
+                UpgradeLevel = building.UpgradeLevel,
+                UpgradeDaysRemaining = building.UpgradeDaysRemaining,
+                MaxUpgradeLevel = GameBalance.BuildingMaxUpgradeLevel,
             });
         }
 

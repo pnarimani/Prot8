@@ -176,6 +176,21 @@ public sealed class GameSimulationEngine(GameState state)
         {
             state.TaintedWellDaysRemaining -= 1;
         }
+
+        if (GameBalance.EnableBuildingUpgrades)
+        {
+            foreach (var building in state.GetActiveBuildings())
+            {
+                if (building.UpgradeDaysRemaining > 0)
+                {
+                    building.UpgradeDaysRemaining -= 1;
+                    if (building.UpgradeDaysRemaining <= 0)
+                    {
+                        building.UpgradeLevel++;
+                    }
+                }
+            }
+        }
     }
 
     static void ApplyPlayerAction(GameState state, TurnActionChoice action, DayResolutionReport report)
@@ -382,6 +397,11 @@ public sealed class GameSimulationEngine(GameState state)
             }
 
             resourceMultiplier *= GetResourceProductionMultiplier(state, building);
+
+            if (GameBalance.EnableBuildingUpgrades && building.UpgradeLevel > 0)
+            {
+                resourceMultiplier *= 1 + building.UpgradeLevel * GameBalance.BuildingUpgradeBonusPerLevel;
+            }
 
             var nominalCycles = workers * globalMultiplier * resourceMultiplier;
             if (nominalCycles <= 0)
