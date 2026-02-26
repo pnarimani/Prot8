@@ -27,6 +27,26 @@ public class CommandParser
                     return false;
                 }
 
+                if (parts[2] == "max")
+                {
+                    command = new AssignCommand
+                    {
+                        BuildingId = parts[1],
+                        DeltaWorkers = int.MaxValue, 
+                    };
+                    return true;
+                }
+                
+                if(parts[2] == "none")
+                {
+                    command = new AssignCommand
+                    {
+                        BuildingId = parts[1],
+                        DeltaWorkers = int.MinValue, 
+                    };
+                    return true;
+                }
+
                 if (!int.TryParse(parts[2], out var workers))
                 {
                     error = $"Invalid worker count '{parts[2]}'. Must be an integer.";
@@ -35,7 +55,7 @@ public class CommandParser
 
                 command = new AssignCommand
                 {
-                    BuildingIdStr = parts[1],
+                    BuildingId = parts[1],
                     DeltaWorkers = workers,
                 };
                 return true;

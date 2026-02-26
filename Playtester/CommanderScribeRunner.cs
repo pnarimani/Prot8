@@ -181,21 +181,6 @@ public class CommanderScribeRunner
             previousRunLearnings = ExtractLearnings(criticJson);
         }
 
-
-        static string RenderToString(Action<IAnsiConsole> render)
-        {
-            using var sw = new StringWriter();
-            var console = AnsiConsole.Create(new AnsiConsoleSettings
-            {
-                Out = new AnsiConsoleOutput(sw),
-                ColorSystem = ColorSystemSupport.NoColors,
-                Interactive = InteractionSupport.No,
-            });
-            render(console);
-            return sw.ToString();
-        }
-
-
         static string FormatNotebook(string json)
         {
             try

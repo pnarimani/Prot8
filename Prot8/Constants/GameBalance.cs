@@ -59,7 +59,7 @@ public static class GameBalance
     public const int StorageCapacityPerUpgrade = 40;
     public const int StorageMaxUpgradeLevel = 3;
     public const int StorageUpgradeMaterialsCost = 25;
-    public const bool WasteExcessResources = true;
+    public static bool WasteExcessResources => true;
     public const double EvacuationResourceSalvagePercent = 0.0;
 
     // Production penalty thresholds - penalties only apply after these values

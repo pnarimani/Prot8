@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using Prot8.Buildings;
 
 namespace Prot8.Cli.Commands;
@@ -11,56 +10,40 @@ public class RemoveWorkers : AssignCommand
 {
     public override CommandResult Execute(CommandContext context)
     {
-        return Perform(context, -Math.Abs(DeltaWorkers), BuildingIdStr);
+        return Perform(context, -Math.Abs(DeltaWorkers), BuildingId);
     }
 }
 
 public class AssignCommand : ICommand
 {
-    [JsonPropertyName("building_id")]
-    public required string BuildingIdStr { get; init; }
+    public required string BuildingId { get; init; }
     public int DeltaWorkers { get; init; }
 
-    public virtual CommandResult Execute(CommandContext context)
-    {
-        return Perform(context, DeltaWorkers, BuildingIdStr);
-    }
+    public virtual CommandResult Execute(CommandContext context) => Perform(context, DeltaWorkers, BuildingId);
 
     protected static CommandResult Perform(CommandContext context, int deltaWorkers, string buildingIdStr)
     {
         if (!TryResolveBuilding(buildingIdStr, out var buildingId, out var reason))
-        {
             return new CommandResult(false, reason);
-        }
 
         var building = context.State.GetBuilding(buildingId);
 
         if (building.IsDestroyed)
-        {
             return new CommandResult(false, $"{building.Name} is destroyed and cannot have workers assigned.");
-        }
 
         var available = context.State.IdleWorkers;
         var current = building.AssignedWorkers;
 
-        if (deltaWorkers > available)
+        if (deltaWorkers > 0)
         {
-            return new CommandResult(false,
-                $"Not enough available workers to assign {deltaWorkers} to {building.Name}. Available: {available}, Current: {current}/{building.MaxWorkers}.");
+            var canAssign = building.MaxWorkers - current;
+            deltaWorkers = Math.Min(deltaWorkers, canAssign);
         }
 
-        if (current + deltaWorkers < 0)
-        {
-            return new CommandResult(false,
-                $"Cannot assign negative workers to {building.Name}. Current: {current}, Attempted change: {deltaWorkers}.");
-        }
+        if (deltaWorkers < 0)
+            deltaWorkers = Math.Max(deltaWorkers, -current);
 
         var newCount = current + deltaWorkers;
-        if (newCount > building.MaxWorkers)
-        {
-            return new CommandResult(false,
-                $"Cannot assign {newCount} workers to {building.Name} (max {building.MaxWorkers}). Current: {current}.");
-        }
 
         context.State.Allocation.SetWorkers(buildingId, newCount);
         return new CommandResult(true,
