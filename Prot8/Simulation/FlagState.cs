@@ -18,6 +18,9 @@ public sealed class FlagState
     public BoolFlag GarrisonState { get; } = new();
     public BoolFlag WallsHold { get; } = new();
 
+    // ── Laws ──
+    public BoolFlag CannibalismEnacted { get; } = new();
+
     // ── Shared ──
     public IntFlag FearLevel { get; } = new(0, min: 0, max: 5);
 

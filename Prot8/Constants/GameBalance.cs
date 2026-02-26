@@ -157,6 +157,21 @@ public static class GameBalance
     public static bool WasteExcessResources => true;
     public const double EvacuationResourceSalvagePercent = 0.0;
 
+    // Cannibalism Law
+    public static bool EnableCannibalismLaw => true;
+    public const int CannibalismFoodThreshold = 5;
+    public const int CannibalismTyrannyGain = 3;
+    public const int CannibalismFearGain = 2;
+    public const int CannibalismOnEnactUnrest = 20;
+    public const int CannibalismOnEnactDesertions = 5;
+    public const int CannibalismFoodPerDeath = 3;
+    public const int CannibalismMaxFoodPerDay = 10;
+    public const int CannibalismDailyMorale = -5;
+    public const int CannibalismDailySickness = 3;
+    public const int CannibalismDailyUnrest = -3;
+    public const int CannibalismGuardDesertionChance = 15;
+    public const int CannibalismWorkerDesertionChance = 10;
+
     // Production penalty thresholds - penalties only apply after these values
     public const int MoraleProductionThreshold = 65;
     public const int UnrestProductionThreshold = 65;

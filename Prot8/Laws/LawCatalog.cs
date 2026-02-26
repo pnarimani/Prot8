@@ -26,6 +26,7 @@ public static class LawCatalog
         new CollectiveFarmsLaw(),
         new GarrisonMandateLaw(),
         new ScorchedEarthDoctrineLaw(),
+        new CannibalismLaw(),
     };
 
     public static IReadOnlyList<ILaw> GetAll() => AllLaws;

@@ -165,6 +165,8 @@ public sealed class GameState
 
     public int LastDayWaterConsumed { get; set; }
 
+    public int DeathsAtStartOfDay { get; set; }
+
     public ZoneState ActivePerimeterZone
     {
         get

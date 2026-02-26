@@ -187,6 +187,7 @@ public sealed class GameSimulationEngine(GameState state)
         state.FoodDeficitToday = false;
         state.WaterDeficitToday = false;
         state.FuelDeficitToday = false;
+        state.DeathsAtStartOfDay = state.TotalDeaths;
 
         state.Flags.TickDay();
 
