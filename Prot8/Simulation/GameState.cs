@@ -38,6 +38,9 @@ public sealed class GameState
         Resources.Add(ResourceKind.Medicine, GameBalance.StartingMedicine);
         Resources.Add(ResourceKind.Materials, GameBalance.StartingMaterials);
 
+        // Ensure first render shows current auto-allocation modes pre-assigned.
+        WorkerAllocationStrategy.ApplyAutomaticAllocation(this);
+
         Population.EnqueueRecovery(Population.SickWorkers, GameBalance.ComputeRecoveryDays(Sickness));
     }
 
