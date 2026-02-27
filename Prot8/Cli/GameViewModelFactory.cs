@@ -22,7 +22,9 @@ public class GameViewModelFactory(GameState state)
         return new DayStartViewModel
         {
             Day = state.Day,
-            TargetSurvivalDay = GameBalance.TargetSurvivalDay,
+            TargetSurvivalDay = GameBalance.EnableReliefArmy
+                ? state.ActualReliefDay - state.ReliefAcceleration
+                : GameBalance.TargetSurvivalDay,
             SiegeIntensity = state.SiegeIntensity,
             ActivePerimeterName = state.ActivePerimeterZone.Name,
             Morale = state.Morale,
@@ -108,6 +110,9 @@ public class GameViewModelFactory(GameState state)
             ActiveDiplomacyNames = state.ActiveDiplomacyIds.Select(id => DiplomacyCatalog.Find(id)?.Name ?? id).ToList(),
             Trading = GameBalance.EnableTradingPost ? CreateTradeViewModel(state) : null,
             NamedCharacters = GameBalance.EnableNamedCharacters ? CreateCharacterViewModels(state) : [],
+            ReliefArmyEstimate = GameBalance.EnableReliefArmy
+                ? $"Day {state.ReliefEstimateMin - state.ReliefAcceleration}-{state.ReliefEstimateMax - state.ReliefAcceleration}"
+                : null,
         };
     }
 

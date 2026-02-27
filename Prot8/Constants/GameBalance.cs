@@ -170,6 +170,20 @@ public static class GameBalance
     public const int TradingPostFaithBonusChance = 12;
     public const int TradingPostFaithBonusAmount = 2;
 
+    // Relief Army / Hope Timer
+    public static bool EnableReliefArmy => true;
+    public const int ReliefArmyBaseDay = 40;
+    public const int ReliefArmyVariance = 5;
+    public const int ReliefStartEstimateMin = 35;
+    public const int ReliefStartEstimateMax = 50;
+    public const int IntelNarrowPerLevel = 3;
+    public const int MaxIntelLevel = 3;
+    public const int MaxReliefAcceleration = 5;
+    public const int SignalFireFuelCost = 15;
+    public const int SignalFireMaterialsCost = 10;
+    public const int CorrespondenceAccelChance = 5;
+    public const int CorrespondenceMaxAccel = 2;
+
     // Humanity Score
     public static bool EnableHumanityScore => true;
     public const int HumanityLowThreshold = 20;
@@ -538,6 +552,10 @@ public static class GameBalance
         ["siege_engineers_arrive"] = 5,
         ["crisis_of_faith"] = 0,
         ["worker_takes_life"] = 10,
+        ["relief_dust_clouds"] = 0,
+        ["relief_horns"] = 0,
+        ["relief_banners"] = 0,
+        ["signal_fire"] = 0,
     };
 
     public static int ComputeRecoveryDays(int sickness)

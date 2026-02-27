@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Missions;
@@ -37,6 +38,11 @@ public sealed class DiplomaticEnvoyMission : IMissionDefinition
         if (roll <= SuccessChance)
         {
             state.SiegeEscalationDelayDays += SuccessDelay;
+            if (GameBalance.EnableReliefArmy && state.ReliefAcceleration < GameBalance.MaxReliefAcceleration)
+            {
+                state.ReliefAcceleration++;
+                entry.Write("The envoy's negotiations buy time — and word reaches allies. Relief accelerated by 1 day.");
+            }
             entry.Write($"The envoy spoke with eloquence and conviction. The enemy commander hesitates. Siege escalation delayed by {SuccessDelay} days.");
             return;
         }

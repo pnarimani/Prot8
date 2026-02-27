@@ -37,6 +37,16 @@ public sealed class ScoutingMission : IMissionDefinition
         {
             state.IntelBuffDaysRemaining = GameBalance.IntelBuffDurationDays;
             state.IntelWarningPending = true;
+
+            if (GameBalance.EnableReliefArmy && state.ReliefIntelGathered < GameBalance.MaxIntelLevel)
+            {
+                state.ReliefIntelGathered++;
+                var narrow = GameBalance.IntelNarrowPerLevel;
+                state.ReliefEstimateMin = Math.Min(state.ReliefEstimateMin + narrow, state.ActualReliefDay);
+                state.ReliefEstimateMax = Math.Max(state.ReliefEstimateMax - narrow, state.ActualReliefDay);
+                entry.Write($"Intel narrows relief army estimate to Day {state.ReliefEstimateMin}-{state.ReliefEstimateMax}.");
+            }
+
             entry.Write(
                 $"The scouts returned with valuable intelligence. Intel buff active for {GameBalance.IntelBuffDurationDays} days. Enemy movements mapped.");
             return;

@@ -46,6 +46,13 @@ public static class EventCatalog
         new NarrativeSiegeBeatEvent("narrative_horns", "Distant Horns",
             38, "Horns in the distance. Relief? Or the final assault? You cannot tell."),
         new WorkerTakesLifeEvent(),
+        new ReliefArmyNarrativeEvent("relief_dust_clouds", "Dust Clouds on the Horizon",
+            7, "Scouts on the watchtower report dust clouds to the east. Could be a caravan. Could be an army. Could be hope."),
+        new ReliefArmyNarrativeEvent("relief_horns", "Horns in the Distance",
+            3, "The unmistakable sound of war horns echoes from beyond the hills. Someone is coming. Friend or foe, you cannot yet tell."),
+        new ReliefArmyNarrativeEvent("relief_banners", "Banners on the Ridge",
+            1, "Banners appear on the eastern ridge — your kingdom's colors. The relief army is here. Hold one more day."),
+        new SignalFireEvent(),
     };
 
     public static IReadOnlyList<ITriggeredEvent> GetAll() => AllEvents;

@@ -454,6 +454,12 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             items.Add(new Markup($"[bold]Enacted Laws[/]  {list}"));
         }
 
+        // Relief army estimate
+        if (vm.ReliefArmyEstimate is not null)
+        {
+            items.Add(new Markup($"[bold]Relief Army[/]  est. {Esc(vm.ReliefArmyEstimate)}"));
+        }
+
         // Zone warnings
         if (vm.ZoneWarnings is not null)
         {

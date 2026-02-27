@@ -49,6 +49,13 @@ public sealed class GameState
         {
             NamedCharacters = CharacterRoster.CreateStartingCharacters();
         }
+
+        if (GameBalance.EnableReliefArmy)
+        {
+            ActualReliefDay = GameBalance.ReliefArmyBaseDay + Random.Next(-GameBalance.ReliefArmyVariance, GameBalance.ReliefArmyVariance + 1);
+            ReliefEstimateMin = GameBalance.ReliefStartEstimateMin;
+            ReliefEstimateMax = GameBalance.ReliefStartEstimateMax;
+        }
     }
 
     public int Day { get; set; } = 1;
@@ -202,6 +209,15 @@ public sealed class GameState
     public bool TradingPostBuilt { get; set; }
 
     public List<NamedCharacter> NamedCharacters { get; set; } = new();
+
+    // Relief Army / Hope Timer
+    public int ActualReliefDay { get; set; }
+    public int ReliefEstimateMin { get; set; }
+    public int ReliefEstimateMax { get; set; }
+    public int ReliefAcceleration { get; set; }
+    public int ReliefIntelGathered { get; set; }
+    public int CorrespondenceAccelerationApplied { get; set; }
+    public bool SignalFireLit { get; set; }
 
     // Night Phase / Scavenging
     public List<ScavengingLocation> AvailableScavengingLocations { get; set; } = new();

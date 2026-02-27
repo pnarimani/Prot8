@@ -1733,12 +1733,18 @@ public sealed class GameSimulationEngine(GameState state)
             }
         }
 
-        if (state is { GameOver: false, Day: >= GameBalance.TargetSurvivalDay })
+        var targetDay = GameBalance.EnableReliefArmy
+            ? state.ActualReliefDay - state.ReliefAcceleration
+            : GameBalance.TargetSurvivalDay;
+
+        if (state is { GameOver: false } && state.Day >= targetDay)
         {
             state.Survived = true;
             state.GameOver = true;
             state.GameOverCause = GameOverCause.None;
-            state.GameOverDetails = "Day 40 reached.";
+            state.GameOverDetails = GameBalance.EnableReliefArmy
+                ? "The relief army has arrived!"
+                : $"Day {GameBalance.TargetSurvivalDay} reached.";
         }
     }
 }

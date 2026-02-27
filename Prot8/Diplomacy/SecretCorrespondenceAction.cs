@@ -34,5 +34,14 @@ public sealed class SecretCorrespondenceAction : IDiplomaticAction
             state.AddResource(kind, GameBalance.CorrespondenceIntelResourceAmount, entry);
             entry.Write($"Intelligence from correspondents reveals hidden supplies: +{GameBalance.CorrespondenceIntelResourceAmount} {kind}.");
         }
+
+        if (GameBalance.EnableReliefArmy
+            && state.CorrespondenceAccelerationApplied < GameBalance.CorrespondenceMaxAccel
+            && state.RollPercent() <= GameBalance.CorrespondenceAccelChance)
+        {
+            state.ReliefAcceleration++;
+            state.CorrespondenceAccelerationApplied++;
+            entry.Write("Coded messages reveal a shortcut for the relief column. Estimated arrival accelerated.");
+        }
     }
 }

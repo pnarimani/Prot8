@@ -73,6 +73,7 @@ public sealed class DayStartViewModel
     public IReadOnlyList<string> ActiveDiplomacyNames { get; init; } = [];
 
     public TradeViewModel? Trading { get; init; }
+    public string? ReliefArmyEstimate { get; init; }
 
     public IReadOnlyList<CharacterViewModel> NamedCharacters { get; init; } = [];
 }
