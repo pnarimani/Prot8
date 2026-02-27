@@ -22,5 +22,8 @@ public sealed class TrackedMultiplier
 
     public IReadOnlyList<MultiplierEntry> Entries => _entries;
 
-    public void Apply(string source, double multiplier) => _entries.Add(new(source, multiplier));
+    public void Apply(string source, double multiplier)
+    {
+        _entries.Add(new MultiplierEntry(source, multiplier));
+    }
 }

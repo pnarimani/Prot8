@@ -11,6 +11,8 @@ public static class StatModifiers
     public static TrackedMultiplier ComputeGlobalProductionMultiplier(GameState state)
     {
         var result = new TrackedMultiplier();
+        if (!GameBalance.EnableProductionMultipliers)
+            return result;
 
         if (state.Morale < GameBalance.MoraleProductionThreshold)
         {
