@@ -215,6 +215,20 @@ public static class StateChangeApplier
             return applied;
         }
 
+        public void ApplyWounding(int count, ResolutionEntry entry)
+        {
+            if (!GameBalance.EnableWoundedSystem || count <= 0)
+                return;
+
+            var wounded = state.Population.RemoveHealthyWorkers(count);
+            if (wounded > 0)
+            {
+                state.Population.AddWoundedWorkers(wounded, GameBalance.WoundedBaseRecoveryDays);
+                state.Allocation.RemoveWorkersProportionally(wounded);
+                entry.Write($"{wounded} wounded");
+            }
+        }
+
         public int ApplyWorkerDesertion(int desertersRequested, ResolutionEntry entry)
         {
             var applied = state.ApplyWorkerDesertion(desertersRequested);

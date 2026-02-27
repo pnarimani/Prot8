@@ -109,9 +109,11 @@ public sealed class PopulationViewModel
     public int HealthyWorkers { get; init; }
     public int Guards { get; init; }
     public int SickWorkers { get; init; }
+    public int WoundedWorkers { get; init; }
     public int Elderly { get; init; }
-    public int TotalPopulation => HealthyWorkers + Guards + SickWorkers + Elderly;
+    public int TotalPopulation => HealthyWorkers + Guards + SickWorkers + WoundedWorkers + Elderly;
     public int SickReadyToRecover { get; init; }
+    public int WoundedReadyToRecover { get; init; }
     public int RecoveryDaysAtCurrentSickness { get; init; }
 }
 

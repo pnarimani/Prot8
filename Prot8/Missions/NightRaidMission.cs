@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Missions;
@@ -9,7 +10,9 @@ public sealed class NightRaidMission : IMissionDefinition
     const int GreatSiegeDelay = 3;
     const int OkSiegeDelay = 2;
     const int FailUnrest = 15;
-    const int FailDeaths = 6;
+    const int FailCasualties = 6;
+    const int FailDeaths = 2;
+    const int FailWounded = 4;
     const int GuardBonus = 5;
     const int GuardThreshold = 10;
 
@@ -21,7 +24,7 @@ public sealed class NightRaidMission : IMissionDefinition
     public string GetTooltip(GameState state)
     {
         var (greatChance, okChance) = GetChances(state);
-        return $"Siege Delay +{GreatSiegeDelay} days ({greatChance}%) | Siege Delay +{OkSiegeDelay} ({okChance}%) | {FailDeaths} Deaths, +{FailUnrest} Unrest ({100 - greatChance - okChance}%)";
+        return $"Siege Delay +{GreatSiegeDelay} days ({greatChance}%) | Siege Delay +{OkSiegeDelay} ({okChance}%) | {FailCasualties} Casualties, +{FailUnrest} Unrest ({100 - greatChance - okChance}%)";
     }
 
     public bool CanStart(GameState state)
@@ -49,8 +52,9 @@ public sealed class NightRaidMission : IMissionDefinition
         }
 
         state.ApplyDeath(FailDeaths, entry);
+        state.ApplyWounding(FailWounded, entry);
         state.AddUnrest(FailUnrest, entry);
-        entry.Write($"The raid failed catastrophically. The enemy was waiting. {FailDeaths} soldiers died for nothing. The city questions your leadership.");
+        entry.Write($"The raid failed catastrophically. The enemy was waiting. {FailCasualties} casualties — the city questions your leadership.");
     }
 
     (int greatChance, int okChance) GetChances(GameState state)

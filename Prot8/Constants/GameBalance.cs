@@ -170,6 +170,13 @@ public static class GameBalance
     public const int TradingPostFaithBonusChance = 12;
     public const int TradingPostFaithBonusAmount = 2;
 
+    // Wounded System
+    public static bool EnableWoundedSystem => true;
+    public const int WoundedBaseRecoveryDays = 2;
+    public const int WoundedDeathDays = 3;
+    public const int MedicinePerWoundedRecovery = 1;
+    public const double WoundedFromDeathsSplit = 0.6;
+
     // Relief Army / Hope Timer
     public static bool EnableReliefArmy => true;
     public const int ReliefArmyBaseDay = 40;

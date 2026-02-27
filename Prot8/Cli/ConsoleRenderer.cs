@@ -190,21 +190,35 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         table.AddColumn(new TableColumn("[bold]Healthy[/]").Centered());
         table.AddColumn(new TableColumn("[bold]Guards[/]").Centered());
         table.AddColumn(new TableColumn("[bold]Sick[/]").Centered());
+        if (GameBalance.EnableWoundedSystem)
+            table.AddColumn(new TableColumn("[bold]Wounded[/]").Centered());
         table.AddColumn(new TableColumn("[bold]Elderly[/]").Centered());
         table.AddColumn(new TableColumn("[bold]Total[/]").Centered());
         table.AddColumn(new TableColumn("[bold]On missions[/]").Centered());
         table.AddColumn(new TableColumn("[bold]Available[/]").Centered());
         table.AddColumn(new TableColumn("[bold]Idle[/]").Centered());
 
-        table.AddRow(
+        var dataRow = new List<string>
+        {
             pop.HealthyWorkers.ToString(),
             pop.Guards.ToString(),
             pop.SickWorkers.ToString(),
+        };
+        if (GameBalance.EnableWoundedSystem)
+        {
+            var woundedStr = pop.WoundedWorkers.ToString();
+            if (pop.WoundedReadyToRecover > 0)
+                woundedStr += $" [green]({pop.WoundedReadyToRecover} rdy)[/]";
+            dataRow.Add(woundedStr);
+        }
+        dataRow.AddRange([
             pop.Elderly.ToString(),
             pop.TotalPopulation.ToString(),
             onMissions.ToString(),
             $"[bold]{available}[/]",
-            $"[bold]{vm.IdleWorkersForAssignment}[/]");
+            $"[bold]{vm.IdleWorkersForAssignment}[/]",
+        ]);
+        table.AddRow(dataRow.Select(s => (IRenderable)new Markup(s)).ToArray());
 
         if (vm.Population.SickWorkers > 0)
         {
@@ -214,10 +228,10 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             var readyStr = vm.Population.SickReadyToRecover > 0
                 ? $"  [green]{vm.Population.SickReadyToRecover} to Recover[/]"
                 : "";
-            table.AddRow(
-                new Markup($"{recoveryInfo}{readyStr}"),
-                new Text(""), new Text(""), new Text(""),
-                new Text(""), new Text(""), new Text(""), new Text(""));
+            var emptyCols = GameBalance.EnableWoundedSystem ? 5 : 4;
+            var sickRow = new List<IRenderable> { new Markup($"{recoveryInfo}{readyStr}") };
+            for (var i = 0; i < emptyCols + 3; i++) sickRow.Add(new Text(""));
+            table.AddRow(sickRow.ToArray());
         }
 
         table.Title = new TableTitle("[bold]Population[/]");

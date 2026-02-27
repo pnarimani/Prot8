@@ -25,6 +25,7 @@ public sealed class GameState
             Guards = GameBalance.StartingGuards,
             SickWorkers = GameBalance.StartingSickWorkers,
             Elderly = GameBalance.StartingElderly,
+            WoundedWorkers = 0,
         };
         Morale = GameBalance.StartingMorale;
         Unrest = GameBalance.StartingUnrest;

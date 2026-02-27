@@ -46,8 +46,10 @@ public class GameViewModelFactory(GameState state)
                 HealthyWorkers = state.Population.HealthyWorkers,
                 Guards = state.Population.Guards,
                 SickWorkers = state.Population.SickWorkers,
+                WoundedWorkers = state.Population.WoundedWorkers,
                 Elderly = state.Population.Elderly,
                 SickReadyToRecover = state.Population.ReadyToRecoverCount(),
+                WoundedReadyToRecover = state.Population.WoundedReadyToRecoverCount(),
                 RecoveryDaysAtCurrentSickness = GameBalance.ComputeRecoveryDays(state.Sickness),
             },
             Zones = state.Zones.Select(zone => new ZoneViewModel
@@ -226,6 +228,7 @@ public class GameViewModelFactory(GameState state)
                 HealthyWorkers = state.Population.HealthyWorkers,
                 Guards = state.Population.Guards,
                 SickWorkers = state.Population.SickWorkers,
+                WoundedWorkers = state.Population.WoundedWorkers,
                 Elderly = state.Population.Elderly,
             },
             HumanityScore = GameBalance.EnableHumanityScore ? state.Flags.Humanity.Value : null,

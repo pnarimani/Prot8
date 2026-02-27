@@ -1188,6 +1188,37 @@ public sealed class GameSimulationEngine(GameState state)
             state.ApplyDeath(diseaseDeaths, entry);
         }
 
+        // Wounded recovery (before sick recovery, takes priority for medicine)
+        if (GameBalance.EnableWoundedSystem)
+        {
+            state.Population.AdvanceWoundedRecoveryTimers();
+
+            // Check for untreated wounded deaths
+            var untreatedDeaths = state.Population.WoundedUntreatedDeaths(GameBalance.WoundedDeathDays);
+            if (untreatedDeaths > 0)
+            {
+                state.Population.RemoveWoundedWorkers(untreatedDeaths);
+                state.TotalDeaths += untreatedDeaths;
+                entry.Write($"{untreatedDeaths} wounded died from untreated injuries.");
+            }
+
+            // Heal wounded with medicine (priority over sick)
+            var woundedReady = state.Population.WoundedReadyToRecoverCount();
+            if (woundedReady > 0)
+            {
+                var medAvailable = state.Resources[ResourceKind.Medicine];
+                var canHeal = Math.Min(woundedReady, medAvailable / Math.Max(1, GameBalance.MedicinePerWoundedRecovery));
+                if (canHeal > 0)
+                {
+                    var medCost = canHeal * GameBalance.MedicinePerWoundedRecovery;
+                    state.Resources.Consume(ResourceKind.Medicine, medCost);
+                    state.Population.RecoverWoundedWorkers(canHeal);
+                    state.TotalRecoveredWorkers += canHeal;
+                    entry.Write($"{canHeal} wounded recovered ({medCost} medicine used).");
+                }
+            }
+        }
+
         if (state.Sickness < GameBalance.RecoveryThresholdSickness)
         {
             report.RecoveryEnabledToday = true;
@@ -1513,13 +1544,36 @@ public sealed class GameSimulationEngine(GameState state)
             }
         }
 
-        // Apply deaths
-        if (deaths > 0)
+        // Apply casualties — split into dead + wounded
+        var actualDeaths = deaths;
+        var wounded = 0;
+        if (deaths > 0 && GameBalance.EnableWoundedSystem)
         {
-            state.Population.RemoveHealthyWorkers(deaths);
-            state.TotalDeaths += deaths;
-            state.Allocation.RemoveWorkersProportionally(deaths);
-            narrative = $"The scavengers took casualties at {location.Name}. {deaths} did not return.";
+            actualDeaths = Math.Max(1, (int)(deaths * (1.0 - GameBalance.WoundedFromDeathsSplit)));
+            wounded = deaths - actualDeaths;
+        }
+
+        if (actualDeaths > 0)
+        {
+            state.Population.RemoveHealthyWorkers(actualDeaths);
+            state.TotalDeaths += actualDeaths;
+            state.Allocation.RemoveWorkersProportionally(actualDeaths);
+        }
+
+        if (wounded > 0)
+        {
+            var actualWounded = state.Population.RemoveHealthyWorkers(wounded);
+            if (actualWounded > 0)
+            {
+                state.Population.AddWoundedWorkers(actualWounded, GameBalance.WoundedBaseRecoveryDays);
+                state.Allocation.RemoveWorkersProportionally(actualWounded);
+            }
+            wounded = actualWounded;
+        }
+
+        if (actualDeaths > 0 || wounded > 0)
+        {
+            narrative = $"The scavengers took casualties at {location.Name}. {actualDeaths} dead, {wounded} wounded.";
         }
         else
         {
@@ -1540,15 +1594,17 @@ public sealed class GameSimulationEngine(GameState state)
             intelGained = true;
         }
 
-        // Set fatigue
-        state.FatiguedWorkerCount = workers;
+        // Set fatigue — workers who returned alive and uninjured
+        var returnedWorkers = plan.AssignedWorkers - actualDeaths - wounded;
+        state.FatiguedWorkerCount = Math.Max(0, returnedWorkers);
 
         state.LastNightResult = new ScavengingResult
         {
             LocationName = location.Name,
             ResourcesGained = resourcesGained,
-            Deaths = deaths,
-            WorkersReturned = workers,
+            Deaths = actualDeaths,
+            Wounded = wounded,
+            WorkersReturned = Math.Max(0, returnedWorkers),
             LocationDepleted = location.VisitsRemaining <= 0,
             Narrative = narrative,
             IntelGained = intelGained,

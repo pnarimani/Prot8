@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Resources;
 using Prot8.Simulation;
 using Prot8.Zones;
@@ -16,7 +17,8 @@ public sealed class SiegeBombardmentEvent() : ITriggeredEvent
     const int DamagePerSiegeLevel = 2;
     const int BaseFoodLost = 5;
     const int FoodLostPerSiegeLevel = 3;
-    const int Deaths = 2;
+    const int Deaths = 1;
+    const int Wounded = 2;
 
     public bool ShouldTrigger(GameState state)
     {
@@ -55,6 +57,7 @@ public sealed class SiegeBombardmentEvent() : ITriggeredEvent
         var foodLost = BaseFoodLost + state.SiegeIntensity * FoodLostPerSiegeLevel;
         state.AddResource(ResourceKind.Food, -foodLost, entry);
         state.ApplyDeath(Deaths, entry);
+        state.ApplyWounding(Wounded, entry);
         entry.Write("The bombardment claims lives and destroys supplies. The siege grinds on.");
 
     }

@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Resources;
 using Prot8.Simulation;
 
@@ -12,7 +13,9 @@ public sealed class ForageBeyondWallsMission() : IMissionDefinition
     const int HighChanceSiege = 40;
     const int MediumChanceSiege = 20;
     const int SiegeThreshold = 4;
-    const int AmbushDeaths = 5;
+    const int AmbushCasualties = 5;
+    const int AmbushDeaths = 2;
+    const int AmbushWounded = 3;
     const int AmbushUnrest = 10;
     const int MoraleBonus = 5;
     const int MoraleThreshold = 60;
@@ -26,7 +29,7 @@ public sealed class ForageBeyondWallsMission() : IMissionDefinition
     {
         var (highChance, mediumChance) = GetChances(state);
         var failChance = 100 - highChance - mediumChance;
-        return $"+{HighFoodGain} Food ({highChance}%) | +{MediumFoodGain} Food ({mediumChance}%) | {AmbushDeaths} Deaths, +{AmbushUnrest} Unrest ({failChance}%)";
+        return $"+{HighFoodGain} Food ({highChance}%) | +{MediumFoodGain} Food ({mediumChance}%) | {AmbushCasualties} Casualties, +{AmbushUnrest} Unrest ({failChance}%)";
     }
 
     public bool CanStart(GameState state)
@@ -54,8 +57,9 @@ public sealed class ForageBeyondWallsMission() : IMissionDefinition
         }
 
         state.ApplyDeath(AmbushDeaths, entry);
+        state.ApplyWounding(AmbushWounded, entry);
         state.AddUnrest(AmbushUnrest, entry);
-        entry.Write($"Enemy scouts ambushed the foraging party. Only a handful return — {AmbushDeaths} lie dead in the fields. The city mourns.");
+        entry.Write($"Enemy scouts ambushed the foraging party. Only a handful return — {AmbushCasualties} casualties in the fields. The city mourns.");
     }
 
     (int highChance, int mediumChance) GetChances(GameState state)
