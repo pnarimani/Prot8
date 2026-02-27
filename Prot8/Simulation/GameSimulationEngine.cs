@@ -1609,6 +1609,15 @@ public sealed class GameSimulationEngine(GameState state)
             Narrative = narrative,
             IntelGained = intelGained,
         };
+
+        // Track scavenging success for mission streak
+        if (GameBalance.EnableGoodDayMoraleBoost)
+        {
+            if (actualDeaths == 0)
+                state.ConsecutiveMissionSuccesses++;
+            else
+                state.ConsecutiveMissionSuccesses = 0;
+        }
     }
 
     void ApplyCharacterTraitBonuses()
@@ -1711,9 +1720,19 @@ public sealed class GameSimulationEngine(GameState state)
 
             if (definition is not null)
             {
+                var deathsBefore = state.TotalDeaths;
                 var missionEntry = new ResolutionEntry { Title = $"Mission Completed: {definition.Name}" };
                 definition.ResolveOutcome(state, active, missionEntry);
                 report.Entries.Add(missionEntry);
+
+                // Track mission success for streak
+                if (GameBalance.EnableGoodDayMoraleBoost)
+                {
+                    if (state.TotalDeaths == deathsBefore)
+                        state.ConsecutiveMissionSuccesses++;
+                    else
+                        state.ConsecutiveMissionSuccesses = 0;
+                }
             }
         }
     }
@@ -1777,6 +1796,30 @@ public sealed class GameSimulationEngine(GameState state)
         {
             state.ConsecutiveBothFoodWaterZeroDays = 0;
         }
+
+        // Good Day Morale Boost streak tracking
+        if (GameBalance.EnableGoodDayMoraleBoost)
+        {
+            // No-deficit streak
+            if (!state.FoodDeficitToday && !state.WaterDeficitToday)
+                state.ConsecutiveNoDeficitDays++;
+            else
+                state.ConsecutiveNoDeficitDays = 0;
+
+            // Low sickness streak
+            if (state.Sickness < GameBalance.StreakLowSicknessThreshold)
+                state.ConsecutiveLowSicknessDays++;
+            else
+                state.ConsecutiveLowSicknessDays = 0;
+
+            // Zone held streak — perimeter not lost this day
+            if (!state.ZoneLossOccurred)
+                state.ConsecutiveZoneHeldDays++;
+            else
+                state.ConsecutiveZoneHeldDays = 0;
+        }
+
+        state.ZoneLossOccurred = false;
 
         // Night phase location refresh
         if (GameBalance.EnableNightPhase)

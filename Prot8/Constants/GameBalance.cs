@@ -177,6 +177,19 @@ public static class GameBalance
     public const int MedicinePerWoundedRecovery = 1;
     public const double WoundedFromDeathsSplit = 0.6;
 
+    // Good Day Morale Boost
+    public static bool EnableGoodDayMoraleBoost => true;
+    public const int StreakNoDeficitDaysRequired = 3;
+    public const int StreakNoDeficitMoraleBoost = 4;
+    public const int StreakLowSicknessDaysRequired = 5;
+    public const int StreakLowSicknessThreshold = 20;
+    public const int StreakLowSicknessMoraleBoost = 3;
+    public const int StreakLowSicknessUnrestReduction = 2;
+    public const int StreakZoneHeldDaysRequired = 3;
+    public const int StreakZoneHeldMoraleBoost = 5;
+    public const int StreakMissionSuccessRequired = 2;
+    public const int StreakMissionSuccessWorkerBonus = 2;
+
     // Relief Army / Hope Timer
     public static bool EnableReliefArmy => true;
     public const int ReliefArmyBaseDay = 40;
@@ -563,6 +576,10 @@ public static class GameBalance
         ["relief_horns"] = 0,
         ["relief_banners"] = 0,
         ["signal_fire"] = 0,
+        ["streak_no_deficit"] = 5,
+        ["streak_low_sickness"] = 7,
+        ["streak_zone_held"] = 5,
+        ["streak_mission_success"] = 5,
     };
 
     public static int ComputeRecoveryDays(int sickness)

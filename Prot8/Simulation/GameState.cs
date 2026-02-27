@@ -226,6 +226,12 @@ public sealed class GameState
     public int FatiguedWorkerCount { get; set; }
     public ScavengingResult? LastNightResult { get; set; }
 
+    // Streak counters for Good Day Morale Boost
+    public int ConsecutiveNoDeficitDays { get; set; }
+    public int ConsecutiveLowSicknessDays { get; set; }
+    public int ConsecutiveZoneHeldDays { get; set; }
+    public int ConsecutiveMissionSuccesses { get; set; }
+
     public IEnumerable<NamedCharacter> LivingCharacters() =>
         NamedCharacters.Where(c => c.IsAlive && !c.HasDeserted);
 

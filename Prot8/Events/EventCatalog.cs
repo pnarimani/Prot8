@@ -53,6 +53,10 @@ public static class EventCatalog
         new ReliefArmyNarrativeEvent("relief_banners", "Banners on the Ridge",
             1, "Banners appear on the eastern ridge — your kingdom's colors. The relief army is here. Hold one more day."),
         new SignalFireEvent(),
+        new StreakNoDeficitEvent(),
+        new StreakLowSicknessEvent(),
+        new StreakZoneHeldEvent(),
+        new StreakMissionSuccessEvent(),
     };
 
     public static IReadOnlyList<ITriggeredEvent> GetAll() => AllEvents;
