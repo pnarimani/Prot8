@@ -1,6 +1,7 @@
 using Prot8.Cli.Commands;
 using Prot8.Constants;
 
+
 namespace Prot8.Cli.Input;
 
 public class CommandParser
@@ -113,6 +114,12 @@ public class CommandParser
 
             case "mission":
             case "start_mission":
+                if (GameBalance.EnableNightPhase)
+                {
+                    error = "Missions are disabled. Use the night scavenging phase instead.";
+                    return false;
+                }
+
                 if (parts.Length != 2)
                 {
                     error = "Usage: mission <MissionId>.";

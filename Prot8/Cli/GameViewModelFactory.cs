@@ -9,6 +9,7 @@ using Prot8.Missions;
 using Prot8.Mood;
 using Prot8.Orders;
 using Prot8.Resources;
+using Prot8.Scavenging;
 using Prot8.Simulation;
 using Prot8.Trading;
 
@@ -72,7 +73,7 @@ public class GameViewModelFactory(GameState state)
             AvailableLaws = ToLawViewModels(state),
             AvailableOrders = ToOrderViewModels(state),
             OrderCooldowns = ComputeOrderCooldowns(state),
-            AvailableMissions = ToMissionViewModels(state),
+            AvailableMissions = GameBalance.EnableNightPhase ? [] : ToMissionViewModels(state),
             Buildings = CreateBuildingViewModels(state),
             ZoneStorages = CreateZoneStorageViewModels(state),
             ThreatProjection = ComputeThreatProjection(state),
@@ -719,6 +720,28 @@ public class GameViewModelFactory(GameState state)
         }
 
         return result;
+    }
+
+    public NightPhaseViewModel CreateNightPhaseViewModel()
+    {
+        return new NightPhaseViewModel
+        {
+            Locations = state.AvailableScavengingLocations
+                .Where(l => l.VisitsRemaining > 0)
+                .Select(l => new ScavengingLocationViewModel
+                {
+                    Id = l.Id,
+                    Name = l.Name,
+                    Description = l.Description,
+                    Danger = l.Danger.ToString(),
+                    VisitsRemaining = l.VisitsRemaining,
+                    Rewards = string.Join(", ", l.PossibleRewards.Select(r => $"{r.Min}-{r.Max} {r.Resource}")),
+                    ProvidesIntel = l.ProvidesIntel,
+                }).ToList(),
+            AvailableWorkers = state.Population.HealthyWorkers - state.ReservedWorkersForMissions,
+            MinWorkers = GameBalance.NightPhaseMinWorkers,
+            MaxWorkers = GameBalance.NightPhaseMaxWorkers,
+        };
     }
 
     static IReadOnlyList<CharacterViewModel> CreateCharacterViewModels(GameState state)

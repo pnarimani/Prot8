@@ -4,6 +4,7 @@ using Prot8.Cli.Output;
 using Prot8.Cli.ViewModels;
 using Prot8.Constants;
 using Prot8.Events;
+using Prot8.Scavenging;
 using Prot8.Simulation;
 
 namespace Prot8.Cli.Input;
@@ -165,6 +166,50 @@ public sealed class ConsoleInputReader(GameState state, GameViewModelFactory vmF
         }
 
         return new EventResponseChoice(pending.Event.Id, responseId);
+    }
+
+    public NightPlan ReadNightPlan(ConsoleRenderer renderer)
+    {
+        var nightVm = vmFactory.CreateNightPhaseViewModel();
+        renderer.RenderNightPhase(nightVm);
+
+        if (nightVm.Locations.Count == 0)
+        {
+            return new NightPlan { SelectedLocationId = null, AssignedWorkers = 0 };
+        }
+
+        while (true)
+        {
+            Console.Write("> ");
+            var line = Console.ReadLine()?.Trim();
+
+            if (string.IsNullOrEmpty(line) || line.Equals("skip", StringComparison.OrdinalIgnoreCase)
+                                           || line.Equals("hunker", StringComparison.OrdinalIgnoreCase))
+            {
+                return new NightPlan { SelectedLocationId = null, AssignedWorkers = 0 };
+            }
+
+            if (!int.TryParse(line, out var locId))
+            {
+                Console.WriteLine("Enter a location ID number or 'skip'.");
+                continue;
+            }
+
+            var loc = nightVm.Locations.FirstOrDefault(l => l.Id == locId);
+            if (loc is null)
+            {
+                Console.WriteLine($"No location with ID {locId}. Try again.");
+                continue;
+            }
+
+            Console.Write($"Workers to send ({nightVm.MinWorkers}-{nightVm.MaxWorkers}): ");
+            var workerLine = Console.ReadLine()?.Trim();
+            if (!int.TryParse(workerLine, out var workers))
+                workers = nightVm.MinWorkers;
+
+            workers = Math.Clamp(workers, nightVm.MinWorkers, Math.Min(nightVm.MaxWorkers, nightVm.AvailableWorkers));
+            return new NightPlan { SelectedLocationId = locId, AssignedWorkers = workers };
+        }
     }
 
     static bool TryParseTab(string input, out ActionTab tab)

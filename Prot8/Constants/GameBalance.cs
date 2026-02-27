@@ -170,6 +170,16 @@ public static class GameBalance
     public const int TradingPostFaithBonusChance = 12;
     public const int TradingPostFaithBonusAmount = 2;
 
+    // Night Scavenging Phase
+    public static bool EnableNightPhase => true;
+    public const int NightPhaseMinWorkers = 2;
+    public const int NightPhaseMaxWorkers = 4;
+    public const int ScavengingLocationRefreshDays = 3;
+    public const double FatiguedWorkerProductionPenalty = 0.10;
+    public const int NightPhaseDangerLowCasualty = 5;
+    public const int NightPhaseDangerMediumCasualty = 15;
+    public const int NightPhaseDangerHighCasualty = 30;
+
     // Named Characters
     public static bool EnableNamedCharacters => true;
     public const double NamedCharacterDeathChancePerDeath = 0.04;

@@ -1,6 +1,7 @@
 using Prot8.Cli;
 using Prot8.Cli.Input;
 using Prot8.Cli.Output;
+using Prot8.Constants;
 using Prot8.Simulation;
 using Prot8.Telemetry;
 using Spectre.Console;
@@ -39,6 +40,13 @@ while (!state.GameOver)
     var dayReportVm = GameViewModelFactory.ToDayReportViewModel(state, report);
     renderer.RenderDayReport(vm, dayReportVm);
     telemetry.LogDay(action, report);
+
+    // Night phase
+    if (GameBalance.EnableNightPhase && !state.GameOver)
+    {
+        var nightPlan = input.ReadNightPlan(renderer);
+        engine.ResolveNight(nightPlan);
+    }
 }
 
 var gameOverVm = GameViewModelFactory.ToGameOverViewModel(state);

@@ -7,6 +7,7 @@ using Prot8.Laws;
 using Prot8.Missions;
 using Prot8.Orders;
 using Prot8.Resources;
+using Prot8.Scavenging;
 using Prot8.Trading;
 using Prot8.Zones;
 
@@ -73,7 +74,43 @@ public sealed class GameSimulationEngine(GameState state)
             StartHealthyWorkers = state.Population.HealthyWorkers,
         };
 
+        // Show last night's scavenging result as dawn entry
+        if (GameBalance.EnableNightPhase && state.LastNightResult is { } nightResult)
+        {
+            var dawnEntry = new ResolutionEntry { Title = "Dawn: Night Scavenging Report" };
+            dawnEntry.Write(nightResult.Narrative);
+            foreach (var (kind, amount) in nightResult.ResourcesGained)
+            {
+                dawnEntry.Write($"  +{amount} {kind}");
+            }
+
+            if (nightResult.LocationDepleted)
+                dawnEntry.Write($"  {nightResult.LocationName} has been picked clean.");
+            if (nightResult.IntelGained)
+                dawnEntry.Write("  Enemy movements mapped from the watchtower.");
+
+            report.Entries.Add(dawnEntry);
+            state.LastNightResult = null;
+        }
+
         RollDailyDisruption();
+
+        // Night phase fatigue penalty from previous night's scavenging
+        if (GameBalance.EnableNightPhase && state.FatiguedWorkerCount > 0)
+        {
+            var total = state.Population.HealthyWorkers;
+            if (total > 0)
+            {
+                var penaltyFraction = (double)state.FatiguedWorkerCount / total;
+                var multiplier = 1.0 - penaltyFraction * GameBalance.FatiguedWorkerProductionPenalty;
+                if (multiplier < 1.0)
+                {
+                    state.DailyEffects.ProductionMultiplier.Apply("Scavenging Fatigue", multiplier);
+                }
+            }
+
+            state.FatiguedWorkerCount = 0;
+        }
 
         if (state.TaintedWellDaysRemaining > 0)
         {
@@ -194,7 +231,10 @@ public sealed class GameSimulationEngine(GameState state)
             report.Entries.Add(repairEntry);
         }
 
-        ResolveActiveMissions(state, report);
+        if (!GameBalance.EnableNightPhase)
+        {
+            ResolveActiveMissions(state, report);
+        }
 
         var statusEntry = new ResolutionEntry { Title = "Status" };
         CheckLossConditions(state, statusEntry);
@@ -1416,6 +1456,86 @@ public sealed class GameSimulationEngine(GameState state)
         }
     }
 
+    public void ResolveNight(NightPlan plan)
+    {
+        if (!GameBalance.EnableNightPhase)
+            return;
+
+        state.LastNightResult = null;
+
+        if (plan.SelectedLocationId is null)
+            return;
+
+        var location = state.AvailableScavengingLocations.FirstOrDefault(l => l.Id == plan.SelectedLocationId);
+        if (location is null || location.VisitsRemaining <= 0)
+            return;
+
+        location.VisitsRemaining--;
+        var workers = plan.AssignedWorkers;
+        var deaths = 0;
+        var narrative = "";
+
+        // Danger roll
+        if (state.RollPercent() <= location.CasualtyChancePercent)
+        {
+            deaths = Math.Min(location.MaxCasualties, workers);
+            workers -= deaths;
+        }
+
+        // Calculate rewards scaled by workers sent
+        var resourcesGained = new List<(ResourceKind Kind, int Amount)>();
+        foreach (var reward in location.PossibleRewards)
+        {
+            var baseAmount = state.Random.Next(reward.Min, reward.Max + 1);
+            var scaled = (int)(baseAmount * (plan.AssignedWorkers / (double)location.MaxWorkers));
+            if (scaled > 0)
+            {
+                resourcesGained.Add((reward.Resource, scaled));
+            }
+        }
+
+        // Apply deaths
+        if (deaths > 0)
+        {
+            state.Population.RemoveHealthyWorkers(deaths);
+            state.TotalDeaths += deaths;
+            state.Allocation.RemoveWorkersProportionally(deaths);
+            narrative = $"The scavengers took casualties at {location.Name}. {deaths} did not return.";
+        }
+        else
+        {
+            narrative = $"The scavengers returned safely from {location.Name}.";
+        }
+
+        // Apply resources
+        foreach (var (kind, amount) in resourcesGained)
+        {
+            state.Resources.Add(kind, amount);
+        }
+
+        // Intel bonus
+        var intelGained = false;
+        if (location.ProvidesIntel)
+        {
+            state.IntelBuffDaysRemaining = Math.Max(state.IntelBuffDaysRemaining, 3);
+            intelGained = true;
+        }
+
+        // Set fatigue
+        state.FatiguedWorkerCount = workers;
+
+        state.LastNightResult = new ScavengingResult
+        {
+            LocationName = location.Name,
+            ResourcesGained = resourcesGained,
+            Deaths = deaths,
+            WorkersReturned = workers,
+            LocationDepleted = location.VisitsRemaining <= 0,
+            Narrative = narrative,
+            IntelGained = intelGained,
+        };
+    }
+
     void ApplyCharacterTraitBonuses()
     {
         foreach (var character in state.LivingCharacters())
@@ -1581,6 +1701,17 @@ public sealed class GameSimulationEngine(GameState state)
         else
         {
             state.ConsecutiveBothFoodWaterZeroDays = 0;
+        }
+
+        // Night phase location refresh
+        if (GameBalance.EnableNightPhase)
+        {
+            if (state.AvailableScavengingLocations.Count == 0 ||
+                state.Day - state.ScavengingRefreshDay >= GameBalance.ScavengingLocationRefreshDays)
+            {
+                state.AvailableScavengingLocations = ScavengingLocationPool.GenerateNightLocations(state);
+                state.ScavengingRefreshDay = state.Day;
+            }
         }
 
         if (state is { GameOver: false, Day: >= GameBalance.TargetSurvivalDay })

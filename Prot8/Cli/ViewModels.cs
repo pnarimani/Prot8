@@ -236,6 +236,25 @@ public sealed class DayReportViewModel
     public string? AllocationAlert { get; init; }
 }
 
+public sealed class NightPhaseViewModel
+{
+    public IReadOnlyList<ScavengingLocationViewModel> Locations { get; init; } = [];
+    public int AvailableWorkers { get; init; }
+    public int MinWorkers { get; init; }
+    public int MaxWorkers { get; init; }
+}
+
+public sealed class ScavengingLocationViewModel
+{
+    public int Id { get; init; }
+    public string Name { get; init; } = "";
+    public string Description { get; init; } = "";
+    public string Danger { get; init; } = "";
+    public int VisitsRemaining { get; init; }
+    public string Rewards { get; init; } = "";
+    public bool ProvidesIntel { get; init; }
+}
+
 public sealed class CharacterViewModel
 {
     public string Name { get; init; } = "";

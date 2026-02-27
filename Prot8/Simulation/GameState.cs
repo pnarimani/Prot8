@@ -5,6 +5,7 @@ using Prot8.Defenses;
 using Prot8.Missions;
 using Prot8.Population;
 using Prot8.Resources;
+using Prot8.Scavenging;
 using Prot8.Zones;
 
 namespace Prot8.Simulation;
@@ -201,6 +202,12 @@ public sealed class GameState
     public bool TradingPostBuilt { get; set; }
 
     public List<NamedCharacter> NamedCharacters { get; set; } = new();
+
+    // Night Phase / Scavenging
+    public List<ScavengingLocation> AvailableScavengingLocations { get; set; } = new();
+    public int ScavengingRefreshDay { get; set; }
+    public int FatiguedWorkerCount { get; set; }
+    public ScavengingResult? LastNightResult { get; set; }
 
     public IEnumerable<NamedCharacter> LivingCharacters() =>
         NamedCharacters.Where(c => c.IsAlive && !c.HasDeserted);

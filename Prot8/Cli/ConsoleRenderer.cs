@@ -494,8 +494,10 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
         }
 
         var bar = TabLabel("Laws", lawCount, lawCd, ActionTab.Laws)
-                  + " " + TabLabel("Orders", orderCount, "", ActionTab.Orders)
-                  + " " + TabLabel("Missions", missionCount, "", ActionTab.Missions);
+                  + " " + TabLabel("Orders", orderCount, "", ActionTab.Orders);
+
+        if (!GameBalance.EnableNightPhase)
+            bar += " " + TabLabel("Missions", missionCount, "", ActionTab.Missions);
 
         return new Markup(bar);
     }
@@ -799,6 +801,53 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
 
         return panel;
+    }
+
+    public void RenderNightPhase(NightPhaseViewModel vm)
+    {
+        console.WriteLine();
+        console.Write(new Rule("[bold yellow]NIGHT FALLS[/]") { Style = Style.Parse("yellow") });
+        console.WriteLine();
+
+        if (vm.Locations.Count == 0)
+        {
+            console.MarkupLine("[grey]No scavenging locations available. You must hunker down.[/]");
+            console.MarkupLine("[grey]Press any key to continue...[/]");
+            Console.ReadKey(true);
+            return;
+        }
+
+        var table = new Table { Border = TableBorder.Rounded, Expand = true };
+        table.Title = new TableTitle("[bold]Scavenging Locations[/]");
+        table.AddColumn(new TableColumn("[bold]ID[/]").Centered());
+        table.AddColumn("[bold]Name[/]");
+        table.AddColumn("[bold]Danger[/]");
+        table.AddColumn("[bold]Visits Left[/]");
+        table.AddColumn("[bold]Rewards[/]");
+        table.AddColumn("[bold]Notes[/]");
+
+        foreach (var loc in vm.Locations)
+        {
+            var dangerColor = loc.Danger switch
+            {
+                "Low" => "green",
+                "Medium" => "yellow",
+                "High" => "red",
+                _ => "white",
+            };
+            var notes = loc.ProvidesIntel ? "[cyan]Intel[/]" : "";
+            table.AddRow(
+                loc.Id.ToString(),
+                Esc(loc.Name),
+                $"[{dangerColor}]{loc.Danger}[/]",
+                loc.VisitsRemaining.ToString(),
+                Esc(loc.Rewards),
+                notes);
+        }
+
+        console.Write(table);
+        console.MarkupLine($"[grey]Available workers: {vm.AvailableWorkers} | Send {vm.MinWorkers}-{vm.MaxWorkers} workers[/]");
+        console.MarkupLine("[grey]Enter location ID to scavenge, or 'skip' to hunker down.[/]");
     }
 
     static string FormatConsumptionWithBreakdown(int need, IReadOnlyList<MultiplierEntry> breakdown)
