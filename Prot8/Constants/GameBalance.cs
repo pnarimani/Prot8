@@ -75,7 +75,7 @@ public static class GameBalance
     public const int BuildingMaxUpgradeLevel = 3;
     public const int BuildingUpgradeMaterialsCost = 35;
     public const double BuildingUpgradeBonusPerLevel = 0.35;
-    public const int BuildingUpgradeDelayDays = 2;
+    public const int BuildingUpgradeDelayDays = 1;
 
     // Kitchen Recipes
     public static bool EnableKitchenRecipes => true;
@@ -86,7 +86,7 @@ public static class GameBalance
     public const int FeastMoralePerDay = 2;
 
     // Sortie Mission
-    public static bool EnableSortieMission => true;
+    public static bool EnableSortieMission => false;
     public const int SortieGuardCost = 5;
     public const int SortieSuccessChance = 25;
     public const int SortiePartialChance = 40;
@@ -128,7 +128,7 @@ public static class GameBalance
     public const int IntelBraceIntegrityBonus = 8;
 
     // Black Market Event
-    public static bool EnableBlackMarketEvent => false;
+    public static bool EnableBlackMarketEvent => true;
     public const int BlackMarketMinDay = 5;
     public const int BlackMarketRecurrenceMin = 6;
     public const int BlackMarketRecurrenceMax = 8;
