@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Orders;
@@ -41,6 +42,7 @@ public sealed class SacrificeTheSickOrder : IEmergencyOrder
     {
         state.Flags.Tyranny.Add(2);
         state.Flags.MercyDenied.Set();
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(-12);
         var killed = Math.Min(SickKilled, state.Population.SickWorkers);
         state.Population.RemoveSickWorkers(killed);
         state.TotalDeaths += killed;

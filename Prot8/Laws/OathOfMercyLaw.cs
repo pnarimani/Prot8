@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Laws;
@@ -38,6 +39,7 @@ public sealed class OathOfMercyLaw : ILaw
     {
         state.Flags.Faith.Add(3);
         state.Flags.PeopleFirst.Set();
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(10);
         entry.Write("An oath is sworn before the people: no life shall be taken by decree. The sick shall be tended, the hungry fed. Production slows, but hope endures.");
     }
 

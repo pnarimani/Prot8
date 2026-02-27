@@ -170,6 +170,16 @@ public static class GameBalance
     public const int TradingPostFaithBonusChance = 12;
     public const int TradingPostFaithBonusAmount = 2;
 
+    // Humanity Score
+    public static bool EnableHumanityScore => true;
+    public const int HumanityLowThreshold = 20;
+    public const int HumanityBleakThreshold = 35;
+    public const int HumanityHighThreshold = 65;
+    public const int HumanityHeroicThreshold = 80;
+    public const int HumanityMoraleBoostChance = 30;
+    public const int HumanityMoraleBoostAmount = 2;
+    public const int HumanityUnrestChance = 5;
+
     // Night Scavenging Phase
     public static bool EnableNightPhase => true;
     public const int NightPhaseMinWorkers = 2;
@@ -527,6 +537,7 @@ public static class GameBalance
         ["tyrants_reckoning"] = 0,
         ["siege_engineers_arrive"] = 5,
         ["crisis_of_faith"] = 0,
+        ["worker_takes_life"] = 10,
     };
 
     public static int ComputeRecoveryDays(int sickness)

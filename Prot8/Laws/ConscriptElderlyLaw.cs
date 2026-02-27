@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Laws;
@@ -48,6 +49,7 @@ public sealed class ConscriptElderlyLaw : ILaw
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
         state.Flags.Tyranny.Add(2);
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(-8);
         _converted = state.Population.Elderly;
         state.Population.Elderly = 0;
         state.Population.HealthyWorkers += _converted;

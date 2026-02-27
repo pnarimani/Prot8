@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 using Prot8.Zones;
 
@@ -33,6 +34,7 @@ public sealed class EmergencySheltersLaw : ILaw
     {
         state.Flags.Faith.Add(2);
         state.Flags.PeopleFirst.Set();
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(5);
         foreach (var zone in state.Zones)
         {
             if (!zone.IsLost)

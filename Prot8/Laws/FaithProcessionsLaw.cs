@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Laws;
@@ -34,6 +35,7 @@ public sealed class FaithProcessionsLaw : ILaw
     {
         state.Flags.Faith.Add(2);
         state.Flags.FaithRisen.Set();
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(5);
         state.AddMorale(MoraleGain, entry);
         state.AddResource(Resources.ResourceKind.Materials, -MaterialsCost, entry);
         state.AddUnrest(UnrestHit, entry);

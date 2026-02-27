@@ -24,11 +24,15 @@ public sealed class FlagState
     // ── Shared ──
     public IntFlag FearLevel { get; } = new(0, min: 0, max: 5);
 
+    // ── Humanity Score ──
+    public IntFlag Humanity { get; } = new(50, min: 0, max: 100);
+
     public void TickDay()
     {
         Tyranny.TickDay();
         Faith.TickDay();
         Fortification.TickDay();
         FearLevel.TickDay();
+        Humanity.TickDay();
     }
 }

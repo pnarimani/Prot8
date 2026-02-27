@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Laws;
@@ -38,6 +39,7 @@ public sealed class PurgeTheDisloyalLaw : ILaw
     {
         state.Flags.Tyranny.Add(2);
         state.Flags.FearLevel.Add(2);
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(-15);
         state.AddUnrest(-UnrestReduction, entry);
         state.AddMorale(-MoraleHit, entry);
         state.ApplyDeath(Deaths, entry);

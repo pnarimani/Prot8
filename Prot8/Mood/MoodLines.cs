@@ -13,6 +13,18 @@ public static class MoodLines
         var entries = new List<MoodEntry>();
 
         // ──────────────────────────────────────────────
+        // PRIORITY 100 — Crisis (Humanity)
+        // ──────────────────────────────────────────────
+
+        entries.Add(new MoodEntry(100, s => GameBalance.EnableHumanityScore && s.Flags.Humanity < GameBalance.HumanityLowThreshold,
+        [
+            "Something has broken in the soul of this city. People do terrible things without flinching.",
+            "The cruelty has become routine. No one protests anymore — they are afraid to.",
+            "Children hide from the guards. The city has become something unrecognizable.",
+            "Mercy is a word no one dares speak. The strong survive. The rest are forgotten.",
+        ]));
+
+        // ──────────────────────────────────────────────
         // PRIORITY 100 — Crisis
         // ──────────────────────────────────────────────
 
@@ -233,6 +245,29 @@ public static class MoodLines
             "Every able body takes a turn on the wall. Workers become part-time sentries.",
             "Mandatory guard duty drains the workforce but fills the watchtowers.",
             "Farmers stand watch with spears they barely know how to hold.",
+        ]));
+
+        // ──────────────────────────────────────────────
+        // PRIORITY 65 — Humanity bleak
+        // ──────────────────────────────────────────────
+
+        entries.Add(new MoodEntry(65, s => GameBalance.EnableHumanityScore && s.Flags.Humanity < GameBalance.HumanityBleakThreshold,
+        [
+            "The cost of survival weighs on every soul. Were the sacrifices worth it?",
+            "People avoid each other's eyes. Shame has settled over the city like fog.",
+            "The things we have done to survive... history will judge us harshly.",
+        ]));
+
+        // ──────────────────────────────────────────────
+        // PRIORITY 55 — Humanity heroic
+        // ──────────────────────────────────────────────
+
+        entries.Add(new MoodEntry(55, s => GameBalance.EnableHumanityScore && s.Flags.Humanity >= GameBalance.HumanityHeroicThreshold,
+        [
+            "Against all odds, the city has kept its humanity. People share what little they have.",
+            "Compassion endures within these walls. The siege has not broken their spirit.",
+            "The city stands not just as a fortress, but as a beacon of mercy.",
+            "Stories of kindness travel faster than news of the siege. Hope is a weapon too.",
         ]));
 
         // ──────────────────────────────────────────────

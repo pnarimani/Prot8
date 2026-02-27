@@ -30,6 +30,7 @@ public sealed class DayOfRemembranceOrder : IEmergencyOrder
         state.AddUnrest(GameBalance.DayOfRemembranceUnrest, entry);
         state.AddSickness(GameBalance.DayOfRemembranceSickness, entry);
         state.Flags.Faith.Add(GameBalance.DayOfRemembranceFaithGain);
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(3);
         entry.Write("All work ceases. Names of the fallen are read aloud. The city mourns together, and finds strength in shared grief.");
     }
 }

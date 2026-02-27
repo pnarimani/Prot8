@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Laws;
@@ -36,6 +37,7 @@ public sealed class PublicExecutionsLaw : ILaw
         state.Flags.Tyranny.Add(2);
         state.Flags.FearLevel.Add(2);
         state.Flags.IronFist.Set();
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(-10);
         entry.Write("Five bodies hang from the gallows. The crowd watches in silence. Fear keeps the streets calm — for now.");
     }
 

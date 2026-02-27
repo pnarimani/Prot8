@@ -45,6 +45,7 @@ public static class EventCatalog
             25, "Smoke rises beyond the walls. The enemy is burning the farms they captured. There will be nothing to reclaim."),
         new NarrativeSiegeBeatEvent("narrative_horns", "Distant Horns",
             38, "Horns in the distance. Relief? Or the final assault? You cannot tell."),
+        new WorkerTakesLifeEvent(),
     };
 
     public static IReadOnlyList<ITriggeredEvent> GetAll() => AllEvents;

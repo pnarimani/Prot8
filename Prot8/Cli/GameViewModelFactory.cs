@@ -223,6 +223,7 @@ public class GameViewModelFactory(GameState state)
                 SickWorkers = state.Population.SickWorkers,
                 Elderly = state.Population.Elderly,
             },
+            HumanityScore = GameBalance.EnableHumanityScore ? state.Flags.Humanity.Value : null,
         };
     }
 

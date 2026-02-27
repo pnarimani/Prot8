@@ -771,6 +771,22 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
             console.Write(panel);
         }
 
+        if (vm.HumanityScore.HasValue)
+        {
+            console.WriteLine();
+            var hs = vm.HumanityScore.Value;
+            var epilogue = hs switch
+            {
+                < 20 => "[red]The city survived, but its soul did not. History remembers a place of cruelty where mercy was a forgotten word. The survivors carry scars no healer can mend.[/]",
+                < 35 => "[yellow]The city endured through dark compromises. The choices made will haunt its people for generations. They survived, but at a cost few dare speak of.[/]",
+                < 65 => "[white]The city survived. Some choices were hard, others harder still. The people remember both the kindness and the cruelty, and history will judge them somewhere in between.[/]",
+                < 80 => "[green]The city held fast, and its people held onto their principles. Stories of compassion amid the siege will be told for years to come.[/]",
+                _ => "[bold green]Against all odds, the city emerged as a beacon of humanity. In the darkest siege, its people chose mercy over expedience, hope over fear. Their story becomes legend.[/]",
+            };
+            console.MarkupLine($"[bold]Humanity Score: {hs}/100[/]");
+            console.MarkupLine(epilogue);
+        }
+
         console.WriteLine();
     }
 

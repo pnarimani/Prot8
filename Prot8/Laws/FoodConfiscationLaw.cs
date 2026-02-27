@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Simulation;
 
 namespace Prot8.Laws;
@@ -33,6 +34,7 @@ public sealed class FoodConfiscationLaw : ILaw
     public void OnEnact(GameState state, ResolutionEntry entry)
     {
         state.Flags.Tyranny.Add(1);
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(-5);
         state.AddResource(Resources.ResourceKind.Food, FoodGain, entry);
         state.AddUnrest(UnrestHit, entry);
         state.AddMorale(-MoraleHit, entry);

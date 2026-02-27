@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Resources;
 using Prot8.Simulation;
 
@@ -47,6 +48,7 @@ public sealed class PlagueRatsEvent() : IRespondableEvent, ITriggeredEvent
             case "burn":
                 entry.Write(
                     "You order the quarter burned. The flames purge the rats, but also consume precious materials. At least the plague is contained.");
+                if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(1);
                 state.AddSickness(5, entry);
                 state.AddResource(ResourceKind.Materials, -10, entry);
                 state.PlagueRatsActive = false;
@@ -55,6 +57,7 @@ public sealed class PlagueRatsEvent() : IRespondableEvent, ITriggeredEvent
             default: // nothing
                 entry.Write(
                     "You do nothing. The rats multiply and spread through the city. Disease follows in their wake, spreading faster each day.");
+                if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(-3);
                 state.AddSickness(15, entry);
                 state.ApplyDeath(3, entry);
                 state.AddUnrest(10, entry);

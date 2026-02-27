@@ -275,4 +275,5 @@ public sealed class GameOverViewModel
     public int LostZones { get; init; }
     public ResourceViewModel FinalResources { get; init; } = new();
     public PopulationViewModel FinalPopulation { get; init; } = new();
+    public int? HumanityScore { get; init; }
 }

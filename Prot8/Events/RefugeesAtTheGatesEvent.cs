@@ -40,6 +40,7 @@ public sealed class RefugeesAtTheGatesEvent() : IRespondableEvent
                     "You open the gates. Eight refugees stream in." +
                     "Five healthy, three already coughing. " +
                     "Humanity triumphs over caution, for better or worse.");
+                if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(3);
                 state.Population.HealthyWorkers += 5;
                 var recoveryDays = GameBalance.ComputeRecoveryDays(state.Sickness);
                 state.Population.AddSickWorkers(3, recoveryDays);
@@ -61,6 +62,7 @@ public sealed class RefugeesAtTheGatesEvent() : IRespondableEvent
                     "You turn them all away. The gates remain sealed. The refugees vanish into the night, and the city earns a cruel reputation.");
                 state.AddMorale(-10, entry);
                 state.AddUnrest(5, entry);
+                if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(-5);
                 break;
         }
 

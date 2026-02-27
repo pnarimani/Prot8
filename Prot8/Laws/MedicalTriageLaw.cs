@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Resources;
 using Prot8.Simulation;
 
@@ -40,6 +41,7 @@ public sealed class MedicalTriageLaw : ILaw
     {
         state.Flags.Tyranny.Add(2);
         state.Flags.MercyDenied.Set();
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(-10);
         entry.Write("The sick ward becomes a sorting ground. Doctors must choose who receives medicine and who is left to die.");
     }
 

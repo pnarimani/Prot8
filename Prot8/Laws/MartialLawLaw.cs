@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Resources;
 using Prot8.Simulation;
 
@@ -46,6 +47,7 @@ public sealed class MartialLawLaw : ILaw
         state.Flags.Tyranny.Add(3);
         state.Flags.FearLevel.Add(1);
         state.Flags.MartialState.Set();
+        if (GameBalance.EnableHumanityScore) state.Flags.Humanity.Add(-8);
         entry.Write("The garrison takes control. Soldiers patrol every street. Dissent will be answered with steel.");
     }
 

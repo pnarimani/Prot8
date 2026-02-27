@@ -1274,6 +1274,16 @@ public sealed class GameSimulationEngine(GameState state)
                 unrestDelta -= 2;
         }
 
+        // Humanity score effects on unrest
+        if (GameBalance.EnableHumanityScore && state.Flags.Humanity < GameBalance.HumanityLowThreshold)
+        {
+            if (state.RollPercent() <= GameBalance.HumanityUnrestChance)
+            {
+                unrestDelta += 1;
+                entry.Write("A dark pall hangs over the city. The people sense something has been lost.");
+            }
+        }
+
         if (unrestDelta != 0)
         {
             state.AddUnrest(unrestDelta, entry);
@@ -1286,6 +1296,15 @@ public sealed class GameSimulationEngine(GameState state)
         {
             if (state.GetLivingCharacterWithTrait(CharacterTrait.Orator) is not null)
                 moraleTotal += 2;
+        }
+
+        // Humanity score effects on morale
+        if (GameBalance.EnableHumanityScore && state.Flags.Humanity >= GameBalance.HumanityHighThreshold)
+        {
+            if (state.RollPercent() <= GameBalance.HumanityMoraleBoostChance)
+            {
+                moraleTotal += GameBalance.HumanityMoraleBoostAmount;
+            }
         }
 
         if (moraleTotal != 0)
