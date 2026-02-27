@@ -1,4 +1,5 @@
 using Prot8.Buildings;
+using Prot8.Characters;
 using Prot8.Cli.ViewModels;
 using Prot8.Constants;
 using Prot8.Diplomacy;
@@ -105,6 +106,7 @@ public class GameViewModelFactory(GameState state)
             AvailableDiplomacy = ToDiplomacyViewModels(state),
             ActiveDiplomacyNames = state.ActiveDiplomacyIds.Select(id => DiplomacyCatalog.Find(id)?.Name ?? id).ToList(),
             Trading = GameBalance.EnableTradingPost ? CreateTradeViewModel(state) : null,
+            NamedCharacters = GameBalance.EnableNamedCharacters ? CreateCharacterViewModels(state) : [],
         };
     }
 
@@ -717,6 +719,18 @@ public class GameViewModelFactory(GameState state)
         }
 
         return result;
+    }
+
+    static IReadOnlyList<CharacterViewModel> CreateCharacterViewModels(GameState state)
+    {
+        return state.NamedCharacters.Select(c => new CharacterViewModel
+        {
+            Name = c.Name,
+            TraitName = CharacterRoster.GetTraitDisplayName(c.Trait),
+            TraitEffect = CharacterRoster.GetTraitEffect(c.Trait),
+            IsAlive = c.IsAlive,
+            HasDeserted = c.HasDeserted,
+        }).ToList();
     }
 
     static IReadOnlyList<ZoneStorageViewModel> CreateZoneStorageViewModels(GameState state)

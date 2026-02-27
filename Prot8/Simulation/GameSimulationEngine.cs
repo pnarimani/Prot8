@@ -1,4 +1,5 @@
 using Prot8.Buildings;
+using Prot8.Characters;
 using Prot8.Constants;
 using Prot8.Diplomacy;
 using Prot8.Events;
@@ -82,6 +83,11 @@ public sealed class GameSimulationEngine(GameState state)
         if (state.IntelBuffDaysRemaining > 0)
         {
             state.DailyEffects.MissionSuccessBonus += GameBalance.IntelMissionSuccessBonus;
+        }
+
+        if (GameBalance.EnableNamedCharacters)
+        {
+            ApplyCharacterTraitBonuses();
         }
 
         TriggerEvents();
@@ -1222,6 +1228,12 @@ public sealed class GameSimulationEngine(GameState state)
                 moraleBonusFromSpecs += GameBalance.SoupLineDailyMorale;
         }
 
+        if (GameBalance.EnableNamedCharacters)
+        {
+            if (state.GetLivingCharacterWithTrait(CharacterTrait.Elder) is not null)
+                unrestDelta -= 2;
+        }
+
         if (unrestDelta != 0)
         {
             state.AddUnrest(unrestDelta, entry);
@@ -1229,6 +1241,13 @@ public sealed class GameSimulationEngine(GameState state)
 
         var moraleDeltaTracked = StatModifiers.ComputeMoraleDrift(state);
         var moraleTotal = moraleDeltaTracked.Value + moraleBonusFromSpecs;
+
+        if (GameBalance.EnableNamedCharacters)
+        {
+            if (state.GetLivingCharacterWithTrait(CharacterTrait.Orator) is not null)
+                moraleTotal += 2;
+        }
+
         if (moraleTotal != 0)
         {
             state.AddMorale(moraleTotal, entry);
@@ -1394,6 +1413,38 @@ public sealed class GameSimulationEngine(GameState state)
         if (applied > 0)
         {
             entry.Write($"Repair crews restored {applied} integrity to {perimeter.Name}.");
+        }
+    }
+
+    void ApplyCharacterTraitBonuses()
+    {
+        foreach (var character in state.LivingCharacters())
+        {
+            switch (character.Trait)
+            {
+                case CharacterTrait.Herbalist:
+                    state.DailyEffects.MedicineUsageMultiplier.Apply("Herbalist: " + character.Name, 0.90);
+                    break;
+                case CharacterTrait.Engineer:
+                    state.DailyEffects.RepairProductionMultiplier.Apply("Engineer: " + character.Name, 1.10);
+                    break;
+                case CharacterTrait.Blacksmith:
+                    state.DailyEffects.MaterialsProductionMultiplier.Apply("Blacksmith: " + character.Name, 1.10);
+                    break;
+                case CharacterTrait.Strategist:
+                case CharacterTrait.Scout:
+                case CharacterTrait.Merchant:
+                    state.DailyEffects.MissionSuccessBonus += 0.05;
+                    break;
+                case CharacterTrait.FormerSoldier:
+                    // Treated as +1 effective guard in guard checks
+                    break;
+                case CharacterTrait.Orator:
+                case CharacterTrait.Elder:
+                case CharacterTrait.Healer:
+                    // Applied in ApplyUnrestProgression
+                    break;
+            }
         }
     }
 

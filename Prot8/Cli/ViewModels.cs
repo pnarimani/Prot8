@@ -73,6 +73,8 @@ public sealed class DayStartViewModel
     public IReadOnlyList<string> ActiveDiplomacyNames { get; init; } = [];
 
     public TradeViewModel? Trading { get; init; }
+
+    public IReadOnlyList<CharacterViewModel> NamedCharacters { get; init; } = [];
 }
 
 public sealed class TradeViewModel
@@ -232,6 +234,15 @@ public sealed class DayReportViewModel
     public string? RecoveryBlockedReason { get; init; }
     public string? DeltaSummary { get; init; }
     public string? AllocationAlert { get; init; }
+}
+
+public sealed class CharacterViewModel
+{
+    public string Name { get; init; } = "";
+    public string TraitName { get; init; } = "";
+    public string TraitEffect { get; init; } = "";
+    public bool IsAlive { get; init; }
+    public bool HasDeserted { get; init; }
 }
 
 public sealed class GameOverViewModel

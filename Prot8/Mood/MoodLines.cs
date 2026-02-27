@@ -1,3 +1,4 @@
+using Prot8.Constants;
 using Prot8.Resources;
 using Prot8.Simulation;
 
@@ -232,6 +233,31 @@ public static class MoodLines
             "Every able body takes a turn on the wall. Workers become part-time sentries.",
             "Mandatory guard duty drains the workforce but fills the watchtowers.",
             "Farmers stand watch with spears they barely know how to hold.",
+        ]));
+
+        // ──────────────────────────────────────────────
+        // PRIORITY 60-65 — Named Character reactions
+        // ──────────────────────────────────────────────
+
+        entries.Add(new MoodEntry(65, s => GameBalance.EnableNamedCharacters && s.LivingCharacters().Count() <= 3,
+        [
+            "The council has been shattered. Only a handful of leaders remain.",
+            "So many names crossed off the roster. The city has lost its guiding voices.",
+            "Three or fewer council members remain. The burden on each is immense.",
+        ]));
+
+        entries.Add(new MoodEntry(62, s => GameBalance.EnableNamedCharacters && s.NamedCharacters.Any(c => !c.IsAlive),
+        [
+            "The council mourns its fallen. Their chairs sit empty at the table.",
+            "A name has been struck from the roster. The loss echoes through the halls.",
+            "They held a quiet ceremony for the fallen leaders. The city grieves.",
+        ]));
+
+        entries.Add(new MoodEntry(55, s => GameBalance.EnableNamedCharacters && s.LivingCharacters().Count() == s.NamedCharacters.Count,
+        [
+            "The full council stands. Ten voices guide the city through the siege.",
+            "All council members live. Their unity gives the people strength.",
+            "The council meets each dawn, intact. A small miracle in dark times.",
         ]));
 
         // ──────────────────────────────────────────────

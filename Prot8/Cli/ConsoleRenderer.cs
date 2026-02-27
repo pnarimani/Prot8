@@ -25,20 +25,23 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
     public void RenderDayStart(DayStartViewModel vm, ActionTab activeTab = ActionTab.Laws)
     {
         Clear();
-        console.Write(
-            new Rows(
-                BuildHeader(vm),
-                new Columns(BuildResourcesTable(vm), BuildPopulationTable(vm)),
-                BuildStatusWarnings(vm),
-                new Columns(BuildBuildingsTable(vm), BuildZonesTable(vm)),
-                new Rule { Style = Style.Parse("grey") },
-                BuildStateSection(vm),
-                new Rule { Style = Style.Parse("grey") },
-                vm.CurrentEvent == null ? BuildActionsSection(vm, activeTab) : new Text(""),
-                vm.CurrentEvent == null ? BuildCommandPanel() : new Text(""),
-                vm.CurrentEvent != null ? RenderEventPrompt(vm.CurrentEvent) : new Text("")
-            )
-        );
+        var items = new List<IRenderable>
+        {
+            BuildHeader(vm),
+            new Columns(BuildResourcesTable(vm), BuildPopulationTable(vm)),
+        };
+        if (vm.NamedCharacters.Count > 0)
+            items.Add(BuildCharacterRosterTable(vm));
+        items.Add(BuildStatusWarnings(vm));
+        items.Add(new Columns(BuildBuildingsTable(vm), BuildZonesTable(vm)));
+        items.Add(new Rule { Style = Style.Parse("grey") });
+        items.Add(BuildStateSection(vm));
+        items.Add(new Rule { Style = Style.Parse("grey") });
+        items.Add(vm.CurrentEvent == null ? BuildActionsSection(vm, activeTab) : new Text(""));
+        items.Add(vm.CurrentEvent == null ? BuildCommandPanel() : new Text(""));
+        items.Add(vm.CurrentEvent != null ? RenderEventPrompt(vm.CurrentEvent) : new Text(""));
+
+        console.Write(new Rows(items));
     }
 
     static Rows BuildHeader(DayStartViewModel vm)
@@ -219,6 +222,56 @@ public sealed class ConsoleRenderer(IAnsiConsole console)
 
         table.Title = new TableTitle("[bold]Population[/]");
         return table;
+    }
+
+    static IRenderable BuildCharacterRosterTable(DayStartViewModel vm)
+    {
+        var table = new Table
+        {
+            Border = TableBorder.Rounded,
+            Expand = true,
+            Title = new TableTitle("[bold]Council[/]"),
+        };
+        // 2-column compact layout
+        table.AddColumn("Name");
+        table.AddColumn("Trait");
+        table.AddColumn("Effect");
+        table.AddColumn("Name");
+        table.AddColumn("Trait");
+        table.AddColumn("Effect");
+
+        var chars = vm.NamedCharacters;
+        var half = (chars.Count + 1) / 2;
+        for (var i = 0; i < half; i++)
+        {
+            var left = chars[i];
+            var leftName = FormatCharacterName(left);
+            var leftTrait = left.IsAlive && !left.HasDeserted ? Esc(left.TraitName) : "[grey]-[/]";
+            var leftEffect = left.IsAlive && !left.HasDeserted ? Esc(left.TraitEffect) : "[grey]-[/]";
+
+            var rightIdx = i + half;
+            if (rightIdx < chars.Count)
+            {
+                var right = chars[rightIdx];
+                var rightName = FormatCharacterName(right);
+                var rightTrait = right.IsAlive && !right.HasDeserted ? Esc(right.TraitName) : "[grey]-[/]";
+                var rightEffect = right.IsAlive && !right.HasDeserted ? Esc(right.TraitEffect) : "[grey]-[/]";
+                table.AddRow(leftName, leftTrait, leftEffect, rightName, rightTrait, rightEffect);
+            }
+            else
+            {
+                table.AddRow(leftName, leftTrait, leftEffect, "", "", "");
+            }
+        }
+
+        return table;
+    }
+
+    static string FormatCharacterName(CharacterViewModel c)
+    {
+        if (!c.IsAlive) return $"[grey strikethrough]{Esc(c.Name)} (Dead)[/]";
+        if (c.HasDeserted) return $"[grey strikethrough]{Esc(c.Name)} (Deserted)[/]";
+        return $"[green]{Esc(c.Name)}[/]";
     }
 
     static IRenderable BuildBuildingsTable(DayStartViewModel vm)

@@ -1,3 +1,4 @@
+using Prot8.Characters;
 using Prot8.Constants;
 using Prot8.Defenses;
 using Prot8.Resources;
@@ -177,6 +178,23 @@ public static class StateChangeApplier
                 state.TotalDeaths += applied;
                 state.Allocation.RemoveWorkersProportionally(applied);
                 entry.Write($"{applied} deaths");
+
+                if (GameBalance.EnableNamedCharacters)
+                {
+                    for (var i = 0; i < applied; i++)
+                    {
+                        if (state.Random.NextDouble() < GameBalance.NamedCharacterDeathChancePerDeath)
+                        {
+                            var living = state.LivingCharacters().ToList();
+                            if (living.Count > 0)
+                            {
+                                var victim = living[state.Random.Next(living.Count)];
+                                victim.IsAlive = false;
+                                entry.Write($"{victim.Name} ({CharacterRoster.GetTraitDisplayName(victim.Trait)}) has fallen.");
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -192,6 +210,27 @@ public static class StateChangeApplier
             {
                 state.TotalDesertions += applied;
                 state.Allocation.RemoveWorkersProportionally(applied);
+            }
+
+            return applied;
+        }
+
+        public int ApplyWorkerDesertion(int desertersRequested, ResolutionEntry entry)
+        {
+            var applied = state.ApplyWorkerDesertion(desertersRequested);
+
+            if (applied > 0 && GameBalance.EnableNamedCharacters)
+            {
+                if (state.Random.NextDouble() < GameBalance.NamedCharacterDesertionChance)
+                {
+                    var living = state.LivingCharacters().ToList();
+                    if (living.Count > 0)
+                    {
+                        var deserter = living[state.Random.Next(living.Count)];
+                        deserter.HasDeserted = true;
+                        entry.Write($"{deserter.Name} has deserted under cover of night.");
+                    }
+                }
             }
 
             return applied;

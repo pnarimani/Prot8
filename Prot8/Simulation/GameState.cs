@@ -1,4 +1,5 @@
 using Prot8.Buildings;
+using Prot8.Characters;
 using Prot8.Constants;
 using Prot8.Defenses;
 using Prot8.Missions;
@@ -42,6 +43,11 @@ public sealed class GameState
         WorkerAllocationStrategy.ApplyAutomaticAllocation(this);
 
         Population.EnqueueRecovery(Population.SickWorkers, GameBalance.ComputeRecoveryDays(Sickness));
+
+        if (GameBalance.EnableNamedCharacters)
+        {
+            NamedCharacters = CharacterRoster.CreateStartingCharacters();
+        }
     }
 
     public int Day { get; set; } = 1;
@@ -193,6 +199,14 @@ public sealed class GameState
     public int HostageExchangeDayCounter { get; set; }
 
     public bool TradingPostBuilt { get; set; }
+
+    public List<NamedCharacter> NamedCharacters { get; set; } = new();
+
+    public IEnumerable<NamedCharacter> LivingCharacters() =>
+        NamedCharacters.Where(c => c.IsAlive && !c.HasDeserted);
+
+    public NamedCharacter? GetLivingCharacterWithTrait(CharacterTrait trait) =>
+        NamedCharacters.FirstOrDefault(c => c.IsAlive && !c.HasDeserted && c.Trait == trait);
 
     public List<Trading.TradeOffer> StandingTrades { get; } = new();
 

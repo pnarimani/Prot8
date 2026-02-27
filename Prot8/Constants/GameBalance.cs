@@ -170,6 +170,11 @@ public static class GameBalance
     public const int TradingPostFaithBonusChance = 12;
     public const int TradingPostFaithBonusAmount = 2;
 
+    // Named Characters
+    public static bool EnableNamedCharacters => true;
+    public const double NamedCharacterDeathChancePerDeath = 0.04;
+    public const double NamedCharacterDesertionChance = 0.03;
+
     // Diplomacy & Negotiation
     public static bool EnableDiplomacy => true;
     public const int BribeFoodCost = 10;
